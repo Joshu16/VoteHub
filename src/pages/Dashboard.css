@@ -1,0 +1,65 @@
+.dashboard-page {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+}
+
+.dashboard-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.action-row button {
+  border: none;
+  border-radius: 10px;
+  background: #020617;
+  color: #ffffff;
+  padding: 14px 12px;
+  font-weight: 700;
+}
+
+.table-wrap {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+th {
+  font-size: 14px;
+  color: #475569;
+}
+
+.icon-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-right: 8px;
+}
+
+.icon-btn.danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
