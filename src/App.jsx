@@ -8,8 +8,6 @@ import Login from './pages/Login'
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/estadisticas', label: 'Estadisticas' },
-  { to: '/votacion', label: 'Votacion' },
-  { to: '/login', label: 'Login' },
 ]
 
 function Navigation() {
@@ -49,7 +47,8 @@ function HomeMenu() {
 
 function App() {
   const location = useLocation()
-  const showSidebar = location.pathname !== '/'
+  const showSidebar =
+    location.pathname === '/dashboard' || location.pathname === '/estadisticas'
 
   return (
     <main className="app-shell">
