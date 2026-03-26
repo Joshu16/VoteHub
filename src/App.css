@@ -43,6 +43,19 @@
   color: #ffffff;
 }
 
+/* ✅ ARREGLO PARA LOGIN Y VOTACION SIN ESPACIOS */
+.page-container:has(.login-page),
+.page-container:has(.voting-page) {
+  padding: 0;
+}
+
+/* ✅ opcional por si login ocupa toda la pantalla */
+.page-container:has(.login-page) .login-page,
+.page-container:has(.voting-page) .voting-page {
+  width: 100%;
+  min-height: 100vh;
+}
+
 @media (max-width: 780px) {
   .app-shell {
     display: block;

@@ -1,51 +1,147 @@
-.login-page {
-  min-height: calc(100vh - 52px);
-  display: grid;
-  place-items: center;
-}
-
-.login-card {
-  width: min(420px, 92vw);
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 28px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
-}
-
-.login-card h1 {
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.login-card p {
-  margin-top: 6px;
-  color: #64748b;
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f3f3;
 }
 
+/* CONTENEDOR */
+.login-page {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+}
+
+/* IZQUIERDA */
+.login-left {
+  width: 60%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 90px;
+  position: relative;
+  background: #f3f3f3;
+}
+
+/* LOGO */
+.login-header {
+  position: absolute;
+  top: 25px;
+  left: 90px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.logo-text {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.logo-text span {
+  color: #b8b8b8;
+}
+
+/* TEXTO */
+.login-content h2 {
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 40px;
+  max-width: 600px;
+  color: #0d1733;
+}
+
+/* FORM */
 .login-form {
-  display: grid;
-  gap: 10px;
-  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.login-form label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
+/* INPUTS */
 .login-form input {
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
+  width: 320px;
+  height: 50px;
+  border: none;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 0 18px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  outline: none;
 }
 
-.login-btn {
-  margin-top: 8px;
-  text-align: center;
-  text-decoration: none;
-  background: #0f172a;
-  color: #ffffff;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-weight: 600;
+/* BOTÓN */
+.login-form button {
+  width: 320px;
+  height: 50px;
+  margin-top: 20px;
+  border: none;
+  background: #000;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: 0.2s ease;
+}
+
+.login-form button:hover {
+  transform: scale(1.02);
+}
+
+/* DERECHA (IMAGEN) */
+.login-right {
+  width: 40%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  overflow: visible;
+}
+
+/* IMAGEN */
+.login-right img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  /* 🔥 CLAVE PARA QUE NO SE CORTE */
+  object-position: 80% center;
+
+  transform: scale(1.2);
+  display: block;
+
+  /* 🔥 MEJOR VISIBILIDAD */
+  filter: brightness(1.15) contrast(1.05);
+  overflow: visible;
+}
+
+/* OVERLAY SUAVE */
+.right-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.02),
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.25)
+  );
 }

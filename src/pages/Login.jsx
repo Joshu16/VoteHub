@@ -1,27 +1,45 @@
-import './Login.css'
-import { Link } from 'react-router-dom'
+import React from "react";
+import "./Login.css";
 
 function Login() {
   return (
-    <section className="login-page">
-      <div className="login-card">
-        <h1>VoteHub</h1>
-        <p>Acceso administrativo</p>
+    <div className="login-page">
+      <div className="login-left">
+        <header className="login-header">
+          <div className="logo-icon">◐</div>
+          <h1 className="logo-text">
+            Vote<span>Hub</span>
+          </h1>
+        </header>
 
-        <form className="login-form">
-          <label htmlFor="email">Correo</label>
-          <input id="email" type="email" placeholder="admin@votehub.com" />
+        <div className="login-content">
+          <h2>
+       <h2>
+  ¿Estás listo para votar y
+  <br />
+  hacer un cambio?
+</h2>
+            <br />
+            
+          </h2>
 
-          <label htmlFor="password">Contrasena</label>
-          <input id="password" type="password" placeholder="********" />
-
-          <Link to="/dashboard" className="login-btn">
-            Ingresar
-          </Link>
-        </form>
+          <form className="login-form">
+            <input type="text" placeholder="NOMBRE" />
+            <input type="text" placeholder="CÉDULA" />
+            <button type="submit">INICIAR SESIÓN</button>
+          </form>
+        </div>
       </div>
-    </section>
-  )
+
+      <div className="login-right">
+        <img
+          src="src/assets/Mano.png"
+          alt="Votación"
+        />
+        <div className="right-overlay"></div>
+      </div>
+    </div>
+  );
 }
 
-export default Login
+export default Login;
