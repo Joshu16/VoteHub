@@ -1,3 +1,8 @@
+:root {
+  --accent: #00bec9;
+  --ink: #1e2a44;
+}
+
 body {
   margin: 0;
   font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;

@@ -7,7 +7,7 @@ const parties = [
     name: "Partido PAC",
     image:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqXyElwIRSdGc9gRMq0cDKTDUemBjT0CUvJg&s",
-    bg: "white",
+    bg: "#e9e9e9",
   },
   {
     id: 2,
@@ -28,7 +28,13 @@ const parties = [
     name: "Unidad",
     image:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzmAx6xx56CK3bs7ml0K_jnC5VR0trwsLCOQ&s",
-    bg: "white",
+    bg: "#e9e9e9",
+  },
+  {
+    id: 5,
+    name: "Voto nulo",
+    image: null,
+    bg: "#f7d77a",
   },
 ];
 
@@ -41,7 +47,6 @@ function Voting() {
     <div className="voting-page">
       <header className="voting-header">
         <h1>Bienvenido [nombre], realiza tu voto</h1>
-        <div className="logo-text">VoteHub</div>
       </header>
 
       <main className="voting-content">
@@ -52,7 +57,11 @@ function Voting() {
                 className="party-image-box"
                 style={{ backgroundColor: party.bg }}
               >
-                <img src={party.image} alt={party.name} />
+                {party.image ? (
+                  <img src={party.image} alt={party.name} />
+                ) : (
+                  <p className="null-vote-label">NULO</p>
+                )}
               </div>
 
               <div className="party-info">

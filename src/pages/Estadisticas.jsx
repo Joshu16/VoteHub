@@ -15,36 +15,59 @@ function Estadisticas() {
         <p>Vista visual sin logica, lista para integracion.</p>
       </header>
 
-      <div className="kpi-grid">
-        <article className="kpi-card">
-          <span>Votos Totales</span>
-          <strong>2212</strong>
-        </article>
-        <article className="kpi-card">
-          <span>Partidos</span>
-          <strong>4</strong>
-        </article>
-        <article className="kpi-card">
-          <span>Estudiantes</span>
-          <strong>15</strong>
-        </article>
-        <article className="kpi-card">
-          <span>Votos Nulos</span>
-          <strong>03</strong>
-        </article>
-      </div>
+      <div className="stats-layout">
+        <div className="stats-main">
+          <div className="kpi-grid">
+            <article className="kpi-card">
+              <span>Votos Totales</span>
+              <strong>2212</strong>
+            </article>
+            <article className="kpi-card">
+              <span>Partidos</span>
+              <strong>4</strong>
+            </article>
+            <article className="kpi-card">
+              <span>Estudiantes</span>
+              <strong>15</strong>
+            </article>
+            <article className="kpi-card">
+              <span>Votos Nulos</span>
+              <strong>03</strong>
+            </article>
+          </div>
 
-      <section className="chart-card">
-        <h2>Votos por partido</h2>
-        <div className="bar-chart">
-          {barras.map((item) => (
-            <div key={item.nombre} className="bar-item">
-              <div className="bar" style={{ height: `${item.votos / 4}px` }} />
-              <span>{item.nombre}</span>
+          <section className="chart-card">
+            <h2>Votos por partido</h2>
+            <div className="bar-chart">
+              {barras.map((item, index) => (
+                <div key={item.nombre} className="bar-item">
+                  <div className={`bar tone-${index + 1}`} style={{ height: `${item.votos / 4}px` }} />
+                  <span>{item.nombre}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </section>
         </div>
-      </section>
+
+        <aside className="abstention-card">
+          <h2>Niveles de abstinencia</h2>
+          <p className="abstention-voted">
+            <span className="dot dot-accent"></span>
+            Votaron
+          </p>
+          <div className="donut-wrap">
+            <div className="donut-chart">
+              <div className="donut-inner">33%</div>
+            </div>
+          </div>
+          <ul className="abstention-list">
+            <li><span className="dot tone-1"></span>Partido 1: 1000 votos</li>
+            <li><span className="dot tone-2"></span>Partido 2: 1000 votos</li>
+            <li><span className="dot tone-3"></span>Partido 3: 1000 votos</li>
+            <li><span className="dot tone-4"></span>Partido 4: 1000 votos</li>
+          </ul>
+        </aside>
+      </div>
     </section>
   )
 }

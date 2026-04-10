@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
 const partidos = [
@@ -8,6 +9,13 @@ const partidos = [
 ]
 
 function Dashboard() {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdminLogged')
+    navigate('/admin-login')
+  }
+
   return (
     <section className="dashboard-page">
       <header className="dashboard-header">
@@ -18,7 +26,6 @@ function Dashboard() {
       <div className="action-row">
         <button type="button">Iniciar Elecciones</button>
         <button type="button">Terminar Elecciones</button>
-        <button type="button">Exportar Datos</button>
         <button type="button">Anadir Partido</button>
       </div>
 
@@ -48,6 +55,13 @@ function Dashboard() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="bottom-actions">
+        <button type="button">Exportar Datos</button>
+        <button type="button" className="logout-btn" onClick={handleLogout}>
+          Cerrar sesion
+        </button>
       </div>
     </section>
   )

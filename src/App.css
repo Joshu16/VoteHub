@@ -7,10 +7,12 @@
 .page-container {
   padding: 26px;
   flex: 1;
+  overflow-y: auto;
 }
 
 .page-container.with-sidebar {
-  margin-left: 220px;
+  margin-left: 0;
+  padding-left: 286px;
 }
 
 .side-nav {
@@ -24,32 +26,48 @@
   flex-direction: column;
   gap: 10px;
   background: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid var(--accent);
 }
 
 .nav-btn {
   text-decoration: none;
-  background: #e2e8f0;
-  color: #0f172a;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--accent);
   padding: 10px 14px;
   border-radius: 10px;
   font-weight: 600;
   font-size: 14px;
   display: block;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+  background: var(--accent);
+  color: #fff;
+  outline: none;
 }
 
 .nav-btn.active {
-  background: #0f172a;
-  color: #ffffff;
+  background: var(--accent);
+  color: #fff;
 }
 
-/* ✅ ARREGLO PARA LOGIN Y VOTACION SIN ESPACIOS */
 .page-container:has(.login-page),
 .page-container:has(.voting-page) {
   padding: 0;
 }
 
-/* ✅ opcional por si login ocupa toda la pantalla */
+.page-container:has(.voting-page) {
+  overflow-y: auto;
+}
+
+.page-container > .login-page,
+.page-container > .voting-page {
+  padding: 0;
+}
+
 .page-container:has(.login-page) .login-page,
 .page-container:has(.voting-page) .voting-page {
   width: 100%;
@@ -66,10 +84,10 @@
     width: auto;
     height: auto;
     border-right: 0;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--accent);
   }
 
   .page-container.with-sidebar {
-    margin-left: 0;
+    padding-left: 26px;
   }
 }

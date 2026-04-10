@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Estadisticas from './pages/Estadisticas'
 import Voting from './pages/Voting'
 import Login from './pages/Login'
+import AdminLogin from './pages/AdminLogin'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -40,6 +41,9 @@ function HomeMenu() {
         <li>
           <NavLink to="/login">Login</NavLink>
         </li>
+        <li>
+          <NavLink to="/admin-login">Login Administrativo</NavLink>
+        </li>
       </ul>
     </section>
   )
@@ -61,6 +65,7 @@ function App() {
           <Route path="/estadisticas" element={<Estadisticas />} />
           <Route path="/votacion" element={<Voting />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </section>

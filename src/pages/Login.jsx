@@ -5,35 +5,24 @@ function Login() {
   return (
     <div className="login-page">
       <div className="login-left">
-        <header className="login-header">
-          <div className="logo-icon">◐</div>
-          <h1 className="logo-text">
-            Vote<span>Hub</span>
-          </h1>
-        </header>
-
         <div className="login-content">
-          <h2>
-       <h2>
-  ¿Estás listo para votar y
-  <br />
-  hacer un cambio?
-</h2>
+          <h2 className="login-title">
+            ¿Estás listo para votar y
             <br />
-            
+            hacer un cambio?
           </h2>
 
           <form className="login-form">
-            <input type="text" placeholder="NOMBRE" />
-            <input type="text" placeholder="CÉDULA" />
-            <button type="submit">INICIAR SESIÓN</button>
+            <input type="text" placeholder="Nombre" />
+            <input type="text" placeholder="Cédula" />
+            <button type="submit">Iniciar sesión</button>
           </form>
         </div>
       </div>
 
       <div className="login-right">
         <img
-          src="src/assets/Mano.png"
+          src="src/assets/Votando.jpg"
           alt="Votación"
         />
         <div className="right-overlay"></div>

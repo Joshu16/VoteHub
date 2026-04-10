@@ -1,15 +1,34 @@
 .stats-page {
+  --soft-blue: var(--accent);
+  --soft-yellow: var(--accent);
+  --soft-red: var(--accent);
+  --soft-ink: var(--ink);
+  display: grid;
+  gap: 16px;
+  max-width: 1200px;
+}
+
+.stats-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+}
+
+.stats-main {
   display: grid;
   gap: 16px;
 }
 
 .stats-header h1 {
   margin: 0;
+  font-size: 30px;
+  color: var(--soft-ink);
 }
 
 .stats-header p {
   margin: 4px 0 0;
-  color: #64748b;
+  color: #51607c;
+  font-size: 15px;
 }
 
 .kpi-grid {
@@ -20,8 +39,8 @@
 
 .kpi-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
   padding: 14px;
   display: grid;
   gap: 6px;
@@ -33,20 +52,106 @@
 }
 
 .kpi-card strong {
-  font-size: 24px;
+  font-size: 26px;
+  color: var(--soft-ink);
 }
 
 .chart-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 18px;
 }
 
 .chart-card h2 {
   margin: 0 0 14px;
   font-size: 18px;
 }
+
+.abstention-card {
+  background: #ffffff;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 16px 14px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.abstention-card h2 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.05;
+  color: var(--soft-ink);
+}
+
+.abstention-voted {
+  margin: 0;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-accent {
+  background: var(--accent);
+}
+
+.donut-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.donut-chart {
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) 0 33%, #d1d5db 33% 100%);
+  display: grid;
+  place-items: center;
+}
+
+.donut-inner {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  color: #4b5563;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.abstention-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.abstention-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--soft-ink);
+  font-size: 22px;
+}
+
+.tone-1 { background: #00bec9; }
+.tone-2 { background: #23c8d1; }
+.tone-3 { background: #4fd4db; }
+.tone-4 { background: #7ce0e5; }
 
 .bar-chart {
   display: grid;
@@ -58,17 +163,27 @@
 
 .bar-item {
   text-align: center;
+  background: transparent;
+  border-radius: 12px;
+  padding: 10px 8px 12px;
+  border: none;
 }
 
 .bar {
   width: 100%;
-  max-width: 90px;
-  margin: 0 auto 8px;
+  max-width: 70px;
+  margin: 0 auto 10px;
   border-radius: 10px 10px 0 0;
-  background: linear-gradient(180deg, #0f172a, #334155);
+  background: var(--accent);
 }
 
 .bar-item span {
   font-size: 13px;
   color: #475569;
+}
+
+@media (max-width: 1080px) {
+  .stats-layout {
+    grid-template-columns: 1fr;
+  }
 }

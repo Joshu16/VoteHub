@@ -1,83 +1,89 @@
-* {
+.voting-page,
+.voting-page * {
   margin: 0 !important;
   padding: 0 !important;
   box-sizing: border-box;
   font-family: Arial, sans-serif;
 }
 
-html,
-body {
-  width: 100% !important;
-  min-height: 100% !important;
-  overflow-x: hidden !important;
-  overflow-y: scroll !important;
-}
-
-body {
-  background-color: #e9e9e9;
-}
-
 .voting-page {
+  --soft-blue: var(--accent);
+  --soft-yellow: var(--accent);
+  --soft-red: var(--accent);
+  --soft-ink: var(--ink);
   width: 100% !important;
   min-height: 100vh !important;
-  background-color: #e9e9e9;
+  background-color: #bfc3c7;
   display: flex;
   flex-direction: column;
 }
 
 .voting-header {
   width: 100% !important;
-  background-color: #000;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--accent);
   color: white;
-  padding: 24px 32px !important;
+  padding: 20px 28px !important;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: 20px;
 }
 
 .voting-header h1 {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 700;
+  color: var(--soft-ink);
+  text-align: center;
 }
 
 .logo-text {
   font-size: 1.8rem;
   font-weight: 700;
+  color: #000;
 }
 
 .voting-content {
   width: 100% !important;
   flex: 1;
-  background-color: #e9e9e9;
-  padding: 28px 24px 40px !important;
+  background-color: #bfc3c7;
+  padding: 24px 28px 34px !important;
   display: flex;
   justify-content: center;
 }
 
 .cards-container {
-  width: 100% !important;
-  max-width: 1400px !important;
+  width: min(1200px, 100%) !important;
+  max-width: 1200px !important;
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
-  gap: 50px 120px;
-  justify-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
 }
 
 .party-card {
   width: 100% !important;
-  max-width: 380px !important;
-  border: 3px solid #000;
-  border-radius: 28px;
+  max-width: 100% !important;
+  border: none;
+  border-radius: 20px;
   overflow: hidden;
-  background-color: #1c1c1f;
+  background-color: #2a2d31;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
 }
 
 .party-image-box {
-  height: 260px !important;
+  height: 220px !important;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.null-vote-label {
+  font-size: 38px;
+  font-weight: 800;
+  color: #1e2a44;
 }
 
 .party-image-box img {
@@ -93,10 +99,11 @@ body {
 }
 
 .party-info {
-  background-color: #1c1c1f;
-  color: white;
+  background-color: transparent;
+  color: #ffffff;
   text-align: center;
-  padding: 22px 18px 24px !important;
+  padding: 16px 16px 20px !important;
+  margin-top: auto;
 }
 
 .party-info p {
@@ -105,20 +112,27 @@ body {
 }
 
 .party-info button {
-  background-color: white;
-  color: black;
-  border: none;
-  border-radius: 14px;
-  padding: 14px 30px !important;
+  background-color: var(--soft-blue);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 12px 24px !important;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  width: 100%;
+  max-width: 180px;
+}
+
+.party-info button:hover {
+  background-color: var(--soft-red);
 }
 
 .voting-footer {
   width: 100% !important;
-  background-color: #000;
-  color: white;
-  padding: 18px 24px !important;
+  background-color: #ffffff;
+  border-top: 1px solid var(--accent);
+  color: var(--soft-ink);
+  padding: 14px 20px !important;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -136,56 +150,34 @@ body {
 
 @media (max-width: 1100px) {
   .cards-container {
-    gap: 36px 40px;
-  }
-
-  .party-card {
-    max-width: 340px !important;
-  }
-
-  .party-image-box {
-    height: 230px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .voting-header h1 {
-    font-size: 1.9rem;
-  }
-
-  .logo-text {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 }
 
 @media (max-width: 768px) {
   .voting-header {
-    flex-direction: column;
-    text-align: center;
-    padding: 20px 16px !important;
+    padding: 16px 14px !important;
   }
 
   .voting-header h1 {
     font-size: 1.6rem;
   }
 
-  .logo-text {
-    font-size: 1.4rem;
-  }
-
   .voting-content {
-    padding: 20px 14px 30px !important;
+    padding: 18px 14px 24px !important;
   }
 
   .cards-container {
     grid-template-columns: 1fr;
-    gap: 28px;
-  }
-
-  .party-card {
-    max-width: 360px !important;
+    gap: 16px;
   }
 
   .party-image-box {
-    height: 220px !important;
+    height: 190px !important;
   }
 
   .party-image-box img {
@@ -199,7 +191,7 @@ body {
   }
 
   .voting-footer {
-    padding: 16px 14px !important;
+    padding: 12px 14px !important;
   }
 }
 
@@ -208,16 +200,8 @@ body {
     font-size: 1.3rem;
   }
 
-  .logo-text {
-    font-size: 1.2rem;
-  }
-
-  .party-card {
-    max-width: 100% !important;
-  }
-
   .party-image-box {
-    height: 190px !important;
+    height: 170px !important;
   }
 
   .party-info p {
@@ -225,7 +209,6 @@ body {
   }
 
   .party-info button {
-    padding: 12px 24px !important;
-    font-size: 0.95rem;
+    max-width: 100%;
   }
 }
