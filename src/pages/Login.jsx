@@ -4,6 +4,7 @@ import './Login.css'
 import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
 
+/* Formato de nombre */
 /* Mayúscula al inicio de cada palabra */
 function toTitleCase(value) {
   return String(value || '')
@@ -14,6 +15,7 @@ function toTitleCase(value) {
     .join(' ')
 }
 
+/* Estado del formulario */
 /* Login de votante */
 function Login() {
   const navigate = useNavigate()
@@ -64,6 +66,7 @@ function Login() {
     }
   }
 
+  /* Layout del login y modal */
   return (
     <div className="login-page">
       <div className="login-left">

@@ -34,6 +34,7 @@ function getWinnerLabel(election) {
   return `Empate: ${winners.join(', ')}`
 }
 
+/* Estado de carga y listado */
 /* Historial de elecciones */
 function Registros() {
   const [elections, setElections] = useState([])
@@ -77,6 +78,7 @@ function Registros() {
       .catch(() => window.alert('No se pudo eliminar la elección.'))
   }
 
+  /* Tabla de historial */
   return (
     <section className="registros-page">
       <header className="registros-header">

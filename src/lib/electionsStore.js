@@ -1,11 +1,11 @@
 import { supabase } from './supabaseClient'
 
-/* Cuando la BD todavía no tiene image_url */
 function isImageColumnError(error) {
   const text = `${error?.message || ''} ${error?.details || ''}`.toLowerCase()
   return text.includes('image_url')
 }
 
+/* Lecturas internas */
 /* Buscar elección por año */
 async function getElectionByYear(year) {
   const { data, error } = await supabase
@@ -49,6 +49,7 @@ async function getPartiesByElectionId(electionId) {
   return (withoutImage.data || []).map((party) => ({ ...party, image_url: null }))
 }
 
+/* Gestión de elecciones */
 /* Crear elección si no existe */
 export async function ensureElection(year) {
   const existing = await getElectionByYear(year)
@@ -101,6 +102,7 @@ export async function stopElection(year) {
   }
 }
 
+/* Gestión de partidos */
 /* Agregar partido */
 export async function addParty(year, name, imageUrl) {
   const election = await ensureElection(year)
@@ -208,6 +210,7 @@ export async function removeParty(year, partyId) {
   }
 }
 
+/* Consultas para UI */
 /* Traer elección activa */
 export async function getActiveElection() {
   const { data, error } = await supabase
@@ -302,6 +305,7 @@ export async function deleteElectionByYear(year) {
   }
 }
 
+/* Votación */
 /* Registrar voto */
 export async function voteParty(year, partyId, voterCedula) {
   const election = await getElectionByYear(year)

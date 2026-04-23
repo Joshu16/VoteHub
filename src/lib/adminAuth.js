@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 
+/* Constantes de acceso */
 /* Credenciales admin */
 export const ADMIN_EMAIL = 'ctpcit@gmail.com'
 const ADMIN_PASSWORD_FALLBACK = '1234'
@@ -23,6 +24,7 @@ export async function signInAdmin(email, password) {
     return data
   }
 
+  /* Fallback local cuando falla Supabase */
   if (password === ADMIN_PASSWORD_FALLBACK) {
     localStorage.setItem(LOCAL_ADMIN_SESSION_KEY, '1')
     return { user: { email: normalizedEmail } }
@@ -31,6 +33,7 @@ export async function signInAdmin(email, password) {
   throw error
 }
 
+/* Estado de sesión */
 /* Verificar sesión admin */
 export async function isAdminSessionActive() {
   if (localStorage.getItem(LOCAL_ADMIN_SESSION_KEY) === '1') {

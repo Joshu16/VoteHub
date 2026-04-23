@@ -3,6 +3,7 @@ import './Estadisticas.css'
 import { getActiveElection } from '../lib/electionsStore'
 import { getVotersCountFromExcel } from '../lib/voterExcel'
 
+/* Estado y datos base */
 /* Estadísticas del proceso actual */
 function Estadisticas() {
   const [activeElection, setActiveElection] = useState(null)
@@ -46,6 +47,7 @@ function Estadisticas() {
     }
   }, [])
 
+  /* Cálculos de participación */
   const barras = (activeElection?.parties || []).map((party) => ({
     nombre: party.name,
     votos: Number(party.votes || 0),
@@ -59,6 +61,7 @@ function Estadisticas() {
       : rawAbstentionPercent
   const abstentionPercentLabel = `${abstentionPercent.toFixed(1)}%`
 
+  /* Vista de indicadores y gráficos */
   return (
     <section className="stats-page">
       <header className="stats-header">

@@ -27,6 +27,7 @@ function AdminLogin() {
     }
   }
 
+  /* Tarjeta de acceso */
   return (
     <section className="admin-login-page">
       <div className="admin-login-card">

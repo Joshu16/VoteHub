@@ -9,6 +9,7 @@ import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
 import { isAdminSessionActive } from './lib/adminAuth'
 
+/* Navegación lateral */
 /* Sidebar admin */
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -40,8 +41,10 @@ const pageIcons = {
 
 /* Poner metadata */
 function setPageMetadata(pathname) {
+  /* Título de pestaña */
   document.title = pageTitles[pathname] || 'VoteHub'
 
+  /* Ícono por ruta */
   const iconHref = pageIcons[pathname] || '/icons.svg'
   let iconLink = document.querySelector("link[rel='icon']")
   if (!iconLink) {
@@ -53,6 +56,7 @@ function setPageMetadata(pathname) {
   iconLink.setAttribute('type', 'image/svg+xml')
 }
 
+/* Barra lateral */
 function Navigation() {
   return (
     <nav className="side-nav">
@@ -100,12 +104,13 @@ function App() {
   const location = useLocation()
   const [isAdminLogged, setIsAdminLogged] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
+  /* Mostrar sidebar solo en panel admin */
   const showSidebar =
     location.pathname === '/dashboard' ||
     location.pathname === '/estadisticas' ||
     location.pathname === '/registros'
 
-  /* Cambiar metadata según ruta */
+  /* Cambiar metadata según la ruta */
   useEffect(() => {
     setPageMetadata(location.pathname)
   }, [location.pathname])
@@ -126,6 +131,7 @@ function App() {
     return <main className="app-shell">Cargando...</main>
   }
 
+  /* Layout con rutas protegidas */
   return (
     <main className="app-shell">
       {showSidebar && <Navigation />}

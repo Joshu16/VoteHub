@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import excelFileUrl from '../../cedula nombre por niveles 2026.xlsx?url'
 
+/* Estado en memoria */
 /* Cache del padrón */
 let votersCache = null
 
@@ -53,6 +54,7 @@ async function loadVoters() {
   const workbook = XLSX.read(await response.arrayBuffer(), { type: 'array' })
   const voters = []
 
+  /* Lectura de todas las hojas */
   workbook.SheetNames.forEach((sheetName) => {
     const sheet = workbook.Sheets[sheetName]
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' })
@@ -82,7 +84,7 @@ export async function validateVoterFromExcel(nombre, cedula) {
   return voter ?? null
 }
 
-/* Validación actual solo por cédula */
+/* Validación por cédula */
 export async function validateVoterCedulaFromExcel(cedula) {
   const normalizedCedula = normalizeCedula(cedula)
   const voters = await loadVoters()
@@ -90,7 +92,7 @@ export async function validateVoterCedulaFromExcel(cedula) {
   return voter ?? null
 }
 
-/* Cantidad total en padrón */
+/* Contar votantes */
 export async function getVotersCountFromExcel() {
   const voters = await loadVoters()
   return voters.length

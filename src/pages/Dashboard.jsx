@@ -11,6 +11,7 @@ import {
   stopElection,
 } from '../lib/electionsStore'
 
+/* Estados del panel */
 /* Centro de control admin */
 function Dashboard() {
   const navigate = useNavigate()
@@ -28,6 +29,7 @@ function Dashboard() {
   const [isSavingParty, setIsSavingParty] = useState(false)
   const [isDeletingParty, setIsDeletingParty] = useState(false)
 
+  /* Recarga de elección actual */
   /* Cargar datos del año actual */
   const loadData = async () => {
     setIsLoading(true)
@@ -173,6 +175,7 @@ function Dashboard() {
       return
     }
 
+    /* Encabezados y filas CSV */
     const rows = [['Año', 'Partido', 'Votos', 'Imagen']]
     for (const party of parties) {
       rows.push([String(currentYear), party.name, String(party.votes || 0), party.image_url || ''])
@@ -181,6 +184,7 @@ function Dashboard() {
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n')
 
+    /* Descarga local del archivo */
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -206,6 +210,7 @@ function Dashboard() {
       .finally(() => setIsDeletingParty(false))
   }
 
+  /* Vista principal del dashboard */
   return (
     <section className="dashboard-page">
       <header className="dashboard-header">
@@ -287,6 +292,8 @@ function Dashboard() {
       </div>
 
       {modalMode && (
+        <>
+          {/* Modal reutilizable para CRUD de partidos */}
         <div className="modal-backdrop">
           <div className="party-modal">
             {modalMode === 'add' && <h3>Añadir partido</h3>}
@@ -336,6 +343,7 @@ function Dashboard() {
             )}
           </div>
         </div>
+        </>
       )}
     </section>
   )

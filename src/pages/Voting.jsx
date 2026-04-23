@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import './Voting.css'
 import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
 
-/* Pantalla de votación */
 function Voting() {
   const navigate = useNavigate()
   const voterName = localStorage.getItem('voterName') || 'Estudiante'
@@ -80,6 +79,7 @@ function Voting() {
     }
   }
 
+  /* Vista de partidos y confirmación */
   return (
     <div className="voting-page">
       <header className="voting-header">
