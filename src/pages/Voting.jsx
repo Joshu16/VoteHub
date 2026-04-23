@@ -1,75 +1,115 @@
-import React from "react";
-import "./Voting.css";
-
-const parties = [
-  {
-    id: 1,
-    name: "Partido PAC",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqXyElwIRSdGc9gRMq0cDKTDUemBjT0CUvJg&s",
-    bg: "#e9e9e9",
-  },
-  {
-    id: 2,
-    name: "Partido Liberación",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZsEK3xn5OdYyoZg8sM-mY74lqX2M6O-bo_g&s",
-    bg: "#0f7a4b",
-  },
-  {
-    id: 3,
-    name: "Frente Amplio",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5eti0pkDJ4CGtEEzeZbZ4RL6yeTWX5WVKrg&s",
-    bg: "#f3d000",
-  },
-  {
-    id: 4,
-    name: "Unidad",
-    image:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzmAx6xx56CK3bs7ml0K_jnC5VR0trwsLCOQ&s",
-    bg: "#e9e9e9",
-  },
-  {
-    id: 5,
-    name: "Voto nulo",
-    image: null,
-    bg: "#f7d77a",
-  },
-];
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import './Voting.css'
+import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
 
 function Voting() {
-  const handleVote = (party) => {
-    alert(`Has votado por ${party}`);
-  };
+  const navigate = useNavigate()
+  const voterName = localStorage.getItem('voterName') || 'Estudiante'
+  const voterCedula = localStorage.getItem('voterCedula') || ''
+  const [activeElection, setActiveElection] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [modalMessage, setModalMessage] = useState('')
+  const [isVoting, setIsVoting] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const election = await getActiveElection()
+        setActiveElection(election)
+        setError('')
+
+        if (election && voterCedula) {
+          const voted = await hasVotedInElection(election.year, voterCedula)
+          if (voted) {
+            sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
+            navigate('/login', { replace: true })
+            return
+          }
+        }
+      } catch {
+        setActiveElection(null)
+        setError('No se pudo cargar la elección activa.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    load()
+  }, [navigate, voterCedula])
+
+  const handleVote = async (party) => {
+    if (isVoting) {
+      return
+    }
+
+    if (!activeElection) {
+      setModalMessage('No hay elecciones activas.')
+      return
+    }
+
+    if (!voterCedula) {
+      setModalMessage('Debes iniciar sesión para votar.')
+      return
+    }
+
+    try {
+      setIsVoting(true)
+      const result = await voteParty(activeElection.year, party.id, voterCedula)
+      if (!result.ok && result.reason === 'ALREADY_VOTED') {
+        sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
+        navigate('/login', { replace: true })
+        return
+      }
+      if (!result.ok) {
+        setModalMessage('No se pudo registrar el voto.')
+        return
+      }
+
+      setModalMessage(`Has votado por ${party.name}`)
+      const election = await getActiveElection()
+      setActiveElection(election)
+    } catch {
+      setModalMessage('No se pudo registrar el voto.')
+    } finally {
+      setIsVoting(false)
+    }
+  }
 
   return (
     <div className="voting-page">
       <header className="voting-header">
-        <h1>Bienvenido [nombre], realiza tu voto</h1>
+        <h1>Bienvenido {voterName}, realiza tu voto</h1>
       </header>
 
       <main className="voting-content">
+        {isLoading && <p>Cargando...</p>}
+        {!isLoading && error && <p>{error}</p>}
+        {!isLoading && !activeElection && <p>No hay elecciones activas en este momento.</p>}
+        {!isLoading && activeElection && activeElection.parties.length === 0 && (
+          <p>La elección activa no tiene partidos registrados.</p>
+        )}
         <div className="cards-container">
-          {parties.map((party) => (
+          {!isLoading &&
+            (activeElection?.parties ?? []).map((party) => (
             <div className="party-card" key={party.id}>
-              <div
-                className="party-image-box"
-                style={{ backgroundColor: party.bg }}
-              >
-                {party.image ? (
-                  <img src={party.image} alt={party.name} />
+              <div className="party-image-box" style={{ backgroundColor: '#e9e9e9' }}>
+                {party.image_url ? (
+                  <img src={party.image_url} alt={party.name} />
                 ) : (
-                  <p className="null-vote-label">NULO</p>
+                  <p className="null-vote-label">{party.name.slice(0, 3).toUpperCase()}</p>
                 )}
               </div>
 
               <div className="party-info">
                 <p>{party.name}</p>
-                <button onClick={() => handleVote(party.name)}>Votar</button>
+                <button onClick={() => handleVote(party)} disabled={isVoting}>
+                  {isVoting ? 'Registrando...' : 'Votar'}
+                </button>
               </div>
             </div>
-          ))}
+            ))}
         </div>
       </main>
 
@@ -78,11 +118,29 @@ function Voting() {
         <img
           src="https://complejoeducativocit.ed.cr/wp-content/uploads/2025/08/Complejo-Educativo-CIT.png"
           alt="CTP"
-          style={{ width: "55px", height: "55px", objectFit: "contain" }}
+          style={{ width: '55px', height: '55px', objectFit: 'contain' }}
         />
       </footer>
+
+      {modalMessage && (
+        <div className="vote-modal-backdrop">
+          <div className="vote-modal">
+            <p>{modalMessage}</p>
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
+                setModalMessage('')
+                navigate('/login', { replace: true })
+              }}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  )
 }
 
-export default Voting;
+export default Voting

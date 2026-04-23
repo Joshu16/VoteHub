@@ -1,18 +1,71 @@
+import { useEffect, useState } from 'react'
 import './Estadisticas.css'
-
-const barras = [
-  { nombre: 'Partido 1', votos: 650 },
-  { nombre: 'Partido 2', votos: 820 },
-  { nombre: 'Partido 3', votos: 740 },
-  { nombre: 'Partido 4', votos: 980 },
-]
+import { getActiveElection } from '../lib/electionsStore'
+import { getVotersCountFromExcel } from '../lib/voterExcel'
 
 function Estadisticas() {
+  const [activeElection, setActiveElection] = useState(null)
+  const [totalVoters, setTotalVoters] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadStats = async () => {
+      try {
+        const [election, votersCount] = await Promise.all([
+          getActiveElection(),
+          getVotersCountFromExcel(),
+        ])
+        if (!isMounted) {
+          return
+        }
+        setActiveElection(election)
+        setTotalVoters(votersCount)
+      } catch {
+        if (!isMounted) {
+          return
+        }
+        setActiveElection(null)
+        setTotalVoters(0)
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadStats()
+    const intervalId = setInterval(loadStats, 5000)
+
+    return () => {
+      isMounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
+
+  const barras = (activeElection?.parties || []).map((party) => ({
+    nombre: party.name,
+    votos: Number(party.votes || 0),
+  }))
+  const totalVotes = barras.reduce((total, item) => total + item.votos, 0)
+  const abstentions = Math.max(totalVoters - totalVotes, 0)
+  const rawAbstentionPercent = totalVoters ? (abstentions / totalVoters) * 100 : 0
+  const abstentionPercent =
+    abstentions > 0 && totalVotes > 0
+      ? Math.min(rawAbstentionPercent, 99.9)
+      : rawAbstentionPercent
+  const abstentionPercentLabel = `${abstentionPercent.toFixed(1)}%`
+
   return (
     <section className="stats-page">
       <header className="stats-header">
-        <h1>Estadisticas Administrativas</h1>
-        <p>Vista visual sin logica, lista para integracion.</p>
+        <h1>Estadísticas Administrativas</h1>
+        {!isLoading && <p>
+          {activeElection
+            ? `Elección activa del año ${activeElection.year}.`
+            : 'No hay elección activa.'}
+        </p>}
       </header>
 
       <div className="stats-layout">
@@ -20,51 +73,62 @@ function Estadisticas() {
           <div className="kpi-grid">
             <article className="kpi-card">
               <span>Votos Totales</span>
-              <strong>2212</strong>
+              <strong>{totalVotes}</strong>
             </article>
             <article className="kpi-card">
               <span>Partidos</span>
-              <strong>4</strong>
+              <strong>{barras.length}</strong>
             </article>
             <article className="kpi-card">
               <span>Estudiantes</span>
-              <strong>15</strong>
+              <strong>{totalVoters}</strong>
             </article>
             <article className="kpi-card">
-              <span>Votos Nulos</span>
-              <strong>03</strong>
+              <span>Abstención</span>
+              <strong>{abstentions}</strong>
             </article>
           </div>
 
           <section className="chart-card">
             <h2>Votos por partido</h2>
             <div className="bar-chart">
-              {barras.map((item, index) => (
+              {isLoading && <p>Cargando...</p>}
+              {!isLoading &&
+                barras.map((item, index) => (
                 <div key={item.nombre} className="bar-item">
-                  <div className={`bar tone-${index + 1}`} style={{ height: `${item.votos / 4}px` }} />
+                  <div className={`bar tone-${index + 1}`} style={{ height: `${Math.max(item.votos, 4)}px` }} />
                   <span>{item.nombre}</span>
                 </div>
-              ))}
+                ))}
+              {!isLoading && barras.length === 0 && <p>Sin datos para mostrar.</p>}
             </div>
           </section>
         </div>
 
         <aside className="abstention-card">
-          <h2>Niveles de abstinencia</h2>
+          <h2>Niveles de abstención</h2>
           <p className="abstention-voted">
             <span className="dot dot-accent"></span>
-            Votaron
+            Votaron: {totalVotes}
           </p>
           <div className="donut-wrap">
-            <div className="donut-chart">
-              <div className="donut-inner">33%</div>
+            <div
+              className="donut-chart"
+              style={{
+                background: `conic-gradient(var(--accent) 0 ${abstentionPercent}%, #d1d5db ${abstentionPercent}% 100%)`,
+              }}
+            >
+              <div className="donut-inner">{abstentionPercentLabel}</div>
             </div>
           </div>
           <ul className="abstention-list">
-            <li><span className="dot tone-1"></span>Partido 1: 1000 votos</li>
-            <li><span className="dot tone-2"></span>Partido 2: 1000 votos</li>
-            <li><span className="dot tone-3"></span>Partido 3: 1000 votos</li>
-            <li><span className="dot tone-4"></span>Partido 4: 1000 votos</li>
+            <li>Abstenciones: {abstentions}</li>
+            {barras.map((item, index) => (
+              <li key={item.nombre}>
+                <span className={`dot tone-${index + 1}`}></span>
+                {item.nombre}: {item.votos} votos
+              </li>
+            ))}
           </ul>
         </aside>
       </div>

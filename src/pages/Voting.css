@@ -13,7 +13,7 @@
   --soft-ink: var(--ink);
   width: 100% !important;
   min-height: 100vh !important;
-  background-color: #bfc3c7;
+  background: linear-gradient(180deg, #eef2f7 0%, #e8edf3 100%);
   display: flex;
   flex-direction: column;
 }
@@ -46,17 +46,20 @@
 .voting-content {
   width: 100% !important;
   flex: 1;
-  background-color: #bfc3c7;
+  background: transparent;
   padding: 24px 28px 34px !important;
   display: flex;
   justify-content: center;
+  align-content: start;
+  gap: 14px;
 }
 
 .cards-container {
-  width: min(1200px, 100%) !important;
-  max-width: 1200px !important;
+  width: min(1100px, 100%) !important;
+  max-width: 1100px !important;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(270px, 320px));
+  justify-content: center;
   gap: 24px;
   align-items: stretch;
 }
@@ -64,13 +67,14 @@
 .party-card {
   width: 100% !important;
   max-width: 100% !important;
-  border: none;
+  border: 1px solid #d6deea;
   border-radius: 20px;
   overflow: hidden;
-  background-color: #2a2d31;
+  background-color: #111827;
   min-height: 360px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .party-image-box {
@@ -78,6 +82,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #f8fafc;
+  overflow: hidden;
 }
 
 .null-vote-label {
@@ -87,15 +93,10 @@
 }
 
 .party-image-box img {
-  max-width: 180px !important;
-  max-height: 150px !important;
-  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
   display: block;
-}
-
-.party-image-box img[alt="Partido Liberación"] {
-  max-width: 240px !important;
-  max-height: 150px !important;
 }
 
 .party-info {
@@ -127,6 +128,46 @@
   background-color: var(--soft-red);
 }
 
+.party-info button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.vote-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+  display: grid;
+  place-items: center;
+  z-index: 1300;
+  padding: 16px;
+}
+
+.vote-modal {
+  width: min(100%, 420px);
+  background: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 18px !important;
+  display: grid;
+  gap: 12px;
+}
+
+.vote-modal p {
+  color: #0f172a;
+  text-align: center;
+}
+
+.vote-modal button {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 14px !important;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .voting-footer {
   width: 100% !important;
   background-color: #ffffff;
@@ -150,7 +191,7 @@
 
 @media (max-width: 1100px) {
   .cards-container {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
 
   .voting-header h1 {
@@ -178,16 +219,6 @@
 
   .party-image-box {
     height: 190px !important;
-  }
-
-  .party-image-box img {
-    max-width: 160px !important;
-    max-height: 130px !important;
-  }
-
-  .party-image-box img[alt="Partido Liberación"] {
-    max-width: 210px !important;
-    max-height: 130px !important;
   }
 
   .voting-footer {

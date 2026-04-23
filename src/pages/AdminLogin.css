@@ -1,22 +1,23 @@
 .admin-login-page {
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   min-height: 100vh;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, #e7f9fb 0%, #f3f4f6 50%, #dff7f9 100%);
-  padding: 16px;
+  padding: 24px 16px;
   overflow: hidden;
 }
 
 .admin-login-card {
   width: 100%;
-  max-width: 420px;
+  max-width: 520px;
   background: #ffffff;
   border: 1px solid var(--accent);
   border-radius: 16px;
-  padding: 26px;
+  padding: 30px 34px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   text-align: center;
 }
 
@@ -32,26 +33,45 @@
   line-height: 1.4;
 }
 
-.google-btn {
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-login-form input,
+.admin-login-btn {
+  width: min(100%, 420px);
   height: 46px;
-  border: 1px solid var(--accent);
   border-radius: 10px;
+  font-size: 14px;
+  padding: 0 12px;
+}
+
+.admin-login-form input {
+  border: 1px solid var(--accent);
+}
+
+.admin-login-btn {
+  border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
 }
 
-.google-btn:hover {
+.admin-login-btn:hover {
   background: #0d9ea8;
 }
 
-.google-icon {
-  width: 22px;
-  height: 22px;
-  display: inline-block;
+.admin-login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.admin-login-error {
+  margin: 0;
+  color: #c53030;
+  font-size: 14px;
 }

@@ -114,7 +114,7 @@
   width: 124px;
   height: 124px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) 0 33%, #d1d5db 33% 100%);
+  background: conic-gradient(var(--accent) 0 0%, #d1d5db 0% 100%);
   display: grid;
   place-items: center;
 }

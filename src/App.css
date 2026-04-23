@@ -55,7 +55,8 @@
 }
 
 .page-container:has(.login-page),
-.page-container:has(.voting-page) {
+.page-container:has(.voting-page),
+.page-container:has(.admin-login-page) {
   padding: 0;
 }
 
@@ -64,12 +65,14 @@
 }
 
 .page-container > .login-page,
-.page-container > .voting-page {
+.page-container > .voting-page,
+.page-container > .admin-login-page {
   padding: 0;
 }
 
 .page-container:has(.login-page) .login-page,
-.page-container:has(.voting-page) .voting-page {
+.page-container:has(.voting-page) .voting-page,
+.page-container:has(.admin-login-page) .admin-login-page {
   width: 100%;
   min-height: 100vh;
 }
