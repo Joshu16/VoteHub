@@ -193,6 +193,12 @@
   cursor: pointer;
 }
 
+.login-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .login-right::after {
   content: "";
   position: absolute;

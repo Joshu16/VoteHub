@@ -15,6 +15,10 @@ function toTitleCase(value) {
     .join(' ')
 }
 
+function normalizeCedula(value) {
+  return String(value ?? '').replace(/\D/g, '')
+}
+
 /* Estado del formulario */
 /* Login de votante */
 function Login() {
@@ -23,6 +27,8 @@ function Login() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
+  const [confirmVoterName, setConfirmVoterName] = useState('')
+  const [pendingCedula, setPendingCedula] = useState('')
 
   /* Mostrar modal pendiente si viene de votación */
   useEffect(() => {
@@ -40,27 +46,68 @@ function Login() {
     setIsLoading(true)
 
     try {
-      const voter = await validateVoterCedulaFromExcel(cedula)
-
-      if (!voter) {
-        setError('Cédula no encontrada en el padrón.')
+      const normalizedCedula = normalizeCedula(cedula)
+      if (!normalizedCedula) {
+        setError('Ingresa una cédula válida.')
         return
       }
 
+      const voter = await validateVoterCedulaFromExcel(normalizedCedula)
+
+      if (!voter) {
+        setError('Cédula no encontrada.')
+        return
+      }
+
+      const voterName = toTitleCase(voter.nombre || 'Estudiante')
+      setPendingCedula(normalizedCedula)
+      setConfirmVoterName(voterName)
+      return
+
+    } catch (error) {
+      const message = String(error?.message || '')
+      if (message.includes('Excel')) {
+        setError('No se pudo validar con el archivo de cédulas.')
+        return
+      }
+      setError('No se pudo validar la cédula en este momento.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConfirmVoter = async () => {
+    if (!pendingCedula || !confirmVoterName) {
+      return
+    }
+
+    setError('')
+    setIsLoading(true)
+
+    try {
       const activeElection = await getActiveElection()
       if (activeElection) {
-        const voted = await hasVotedInElection(activeElection.year, cedula.trim())
+        const voted = await hasVotedInElection(activeElection.year, pendingCedula)
         if (voted) {
           setModalMessage('Ya has votado en estas elecciones.')
+          setConfirmVoterName('')
+          setPendingCedula('')
           return
         }
       }
 
-      localStorage.setItem('voterCedula', cedula.trim())
-      localStorage.setItem('voterName', toTitleCase(voter.nombre || 'Estudiante'))
+      localStorage.setItem('voterCedula', pendingCedula)
+      localStorage.setItem('voterName', confirmVoterName)
+      setConfirmVoterName('')
+      setPendingCedula('')
       navigate('/votacion')
-    } catch {
-      setError('No se pudo validar con el archivo de cédulas.')
+    } catch (error) {
+      const message = String(error?.message || '')
+      if (message.includes('Excel')) {
+        setError('No se pudo validar con el archivo de cédulas.')
+        return
+      }
+      setError('No se pudo validar la cédula en este momento.')
     } finally {
       setIsLoading(false)
     }
@@ -105,6 +152,29 @@ function Login() {
             <button type="button" onClick={() => setModalMessage('')}>
               Entendido
             </button>
+          </div>
+        </div>
+      )}
+
+      {confirmVoterName && (
+        <div className="login-modal-backdrop">
+          <div className="login-modal">
+            <p>¿Eres {confirmVoterName}?</p>
+            <div className="login-modal-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmVoterName('')
+                  setPendingCedula('')
+                  setError('Verifica tu cédula e inténtalo de nuevo.')
+                }}
+              >
+                No
+              </button>
+              <button type="button" onClick={handleConfirmVoter} disabled={isLoading}>
+                Sí
+              </button>
+            </div>
           </div>
         </div>
       )}

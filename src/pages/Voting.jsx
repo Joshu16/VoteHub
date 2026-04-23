@@ -12,6 +12,7 @@ function Voting() {
   const [error, setError] = useState('')
   const [modalMessage, setModalMessage] = useState('')
   const [isVoting, setIsVoting] = useState(false)
+  const [confirmParty, setConfirmParty] = useState(null)
 
   /* Cargar elección activa y validar si ya votó */
   useEffect(() => {
@@ -41,6 +42,30 @@ function Voting() {
   }, [navigate, voterCedula])
 
   /* Registrar voto */
+  const performVote = async (party) => {
+    try {
+      setIsVoting(true)
+      const result = await voteParty(activeElection.year, party.id, voterCedula)
+      if (!result.ok && result.reason === 'ALREADY_VOTED') {
+        sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
+        navigate('/login', { replace: true })
+        return
+      }
+      if (!result.ok) {
+        setModalMessage('No se pudo registrar el voto.')
+        return
+      }
+
+      setModalMessage('Tu voto ha sido registrado con éxito.')
+      const election = await getActiveElection()
+      setActiveElection(election)
+    } catch {
+      setModalMessage('No se pudo registrar el voto.')
+    } finally {
+      setIsVoting(false)
+    }
+  }
+
   const handleVote = async (party) => {
     if (isVoting) {
       return
@@ -56,27 +81,7 @@ function Voting() {
       return
     }
 
-    try {
-      setIsVoting(true)
-      const result = await voteParty(activeElection.year, party.id, voterCedula)
-      if (!result.ok && result.reason === 'ALREADY_VOTED') {
-        sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
-        navigate('/login', { replace: true })
-        return
-      }
-      if (!result.ok) {
-        setModalMessage('No se pudo registrar el voto.')
-        return
-      }
-
-      setModalMessage(`Has votado por ${party.name}`)
-      const election = await getActiveElection()
-      setActiveElection(election)
-    } catch {
-      setModalMessage('No se pudo registrar el voto.')
-    } finally {
-      setIsVoting(false)
-    }
+    setConfirmParty(party)
   }
 
   /* Vista de partidos y confirmación */
@@ -132,13 +137,38 @@ function Voting() {
             <button
               type="button"
               onClick={() => {
-                sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
+                if (modalMessage === 'Tu voto ha sido registrado con éxito.') {
+                  navigate('/login', { replace: true })
+                }
                 setModalMessage('')
-                navigate('/login', { replace: true })
               }}
             >
               Entendido
             </button>
+          </div>
+        </div>
+      )}
+
+      {confirmParty && (
+        <div className="vote-modal-backdrop">
+          <div className="vote-modal">
+            <p>Vas a votar por {confirmParty.name}. ¿Deseas continuar?</p>
+            <div className="vote-modal-actions">
+              <button type="button" onClick={() => setConfirmParty(null)} disabled={isVoting}>
+                No
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const partyToVote = confirmParty
+                  setConfirmParty(null)
+                  await performVote(partyToVote)
+                }}
+                disabled={isVoting}
+              >
+                Sí
+              </button>
+            </div>
           </div>
         </div>
       )}

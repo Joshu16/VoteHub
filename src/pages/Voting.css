@@ -168,6 +168,12 @@
   cursor: pointer;
 }
 
+.vote-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .voting-footer {
   width: 100% !important;
   background-color: #ffffff;
