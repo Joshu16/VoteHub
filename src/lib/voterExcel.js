@@ -1,8 +1,10 @@
 import * as XLSX from 'xlsx'
 import excelFileUrl from '../../cedula nombre por niveles 2026.xlsx?url'
 
+/* Cache del padrón */
 let votersCache = null
 
+/* Normalizar texto */
 function normalizeValue(value) {
   return String(value ?? '')
     .trim()
@@ -10,10 +12,12 @@ function normalizeValue(value) {
     .replace(/\s+/g, ' ')
 }
 
+/* Normalizar cédula */
 function normalizeCedula(value) {
   return String(value ?? '').replace(/\D/g, '')
 }
 
+/* Convertir fila del excel a votante */
 function mapRowToVoter(row) {
   const entries = Object.entries(row)
   if (entries.length === 0) {
@@ -35,6 +39,7 @@ function mapRowToVoter(row) {
   return { cedula, nombre }
 }
 
+/* Se llama al excel y se arma la lista */
 async function loadVoters() {
   if (votersCache) {
     return votersCache
@@ -64,6 +69,7 @@ async function loadVoters() {
   return voters
 }
 
+/* Validación vieja nombre + cédula */
 export async function validateVoterFromExcel(nombre, cedula) {
   const normalizedNombre = normalizeValue(nombre)
   const normalizedCedula = normalizeCedula(cedula)
@@ -76,6 +82,7 @@ export async function validateVoterFromExcel(nombre, cedula) {
   return voter ?? null
 }
 
+/* Validación actual solo por cédula */
 export async function validateVoterCedulaFromExcel(cedula) {
   const normalizedCedula = normalizeCedula(cedula)
   const voters = await loadVoters()
@@ -83,6 +90,7 @@ export async function validateVoterCedulaFromExcel(cedula) {
   return voter ?? null
 }
 
+/* Cantidad total en padrón */
 export async function getVotersCountFromExcel() {
   const voters = await loadVoters()
   return voters.length

@@ -1,10 +1,12 @@
 import { supabase } from './supabaseClient'
 
+/* Cuando la BD todavía no tiene image_url */
 function isImageColumnError(error) {
   const text = `${error?.message || ''} ${error?.details || ''}`.toLowerCase()
   return text.includes('image_url')
 }
 
+/* Buscar elección por año */
 async function getElectionByYear(year) {
   const { data, error } = await supabase
     .from('elections')
@@ -19,6 +21,7 @@ async function getElectionByYear(year) {
   return data
 }
 
+/* Traer partidos de una elección */
 async function getPartiesByElectionId(electionId) {
   const withImage = await supabase
     .from('parties')
@@ -46,6 +49,7 @@ async function getPartiesByElectionId(electionId) {
   return (withoutImage.data || []).map((party) => ({ ...party, image_url: null }))
 }
 
+/* Crear elección si no existe */
 export async function ensureElection(year) {
   const existing = await getElectionByYear(year)
   if (existing) {
@@ -66,6 +70,7 @@ export async function ensureElection(year) {
   return { ...data, isActive: data.is_active, parties: [] }
 }
 
+/* Activar elección del año y desactivar las demás */
 export async function startElection(year) {
   const election = await ensureElection(year)
 
@@ -83,6 +88,7 @@ export async function startElection(year) {
   }
 }
 
+/* Detener elección del año */
 export async function stopElection(year) {
   const election = await getElectionByYear(year)
   if (!election) {
@@ -95,6 +101,7 @@ export async function stopElection(year) {
   }
 }
 
+/* Agregar partido */
 export async function addParty(year, name, imageUrl) {
   const election = await ensureElection(year)
   const normalizedName = name.trim()
@@ -137,6 +144,7 @@ export async function addParty(year, name, imageUrl) {
   return true
 }
 
+/* Editar partido */
 export async function editParty(year, partyId, nextName, imageUrl) {
   const election = await ensureElection(year)
   const normalizedName = nextName.trim()
@@ -178,6 +186,7 @@ export async function editParty(year, partyId, nextName, imageUrl) {
   return true
 }
 
+/* Eliminar partido y sus votos */
 export async function removeParty(year, partyId) {
   const election = await ensureElection(year)
   const { error: votesError } = await supabase
@@ -199,6 +208,7 @@ export async function removeParty(year, partyId) {
   }
 }
 
+/* Traer elección activa */
 export async function getActiveElection() {
   const { data, error } = await supabase
     .from('elections')
@@ -218,6 +228,7 @@ export async function getActiveElection() {
   return { ...data, isActive: data.is_active, parties }
 }
 
+/* Traer historial de elecciones */
 export async function getAllElections() {
   const { data: elections, error } = await supabase
     .from('elections')
@@ -268,6 +279,7 @@ export async function getAllElections() {
   }))
 }
 
+/* Borrar una elección completa */
 export async function deleteElectionByYear(year) {
   const election = await getElectionByYear(year)
   if (!election) {
@@ -290,6 +302,7 @@ export async function deleteElectionByYear(year) {
   }
 }
 
+/* Registrar voto */
 export async function voteParty(year, partyId, voterCedula) {
   const election = await getElectionByYear(year)
   if (!election || !election.is_active) {
@@ -330,6 +343,7 @@ export async function voteParty(year, partyId, voterCedula) {
   return { ok: true }
 }
 
+/* Revisar si una cédula ya votó */
 export async function hasVotedInElection(year, voterCedula) {
   const election = await getElectionByYear(year)
   if (!election) {

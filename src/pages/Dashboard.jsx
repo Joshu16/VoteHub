@@ -11,6 +11,7 @@ import {
   stopElection,
 } from '../lib/electionsStore'
 
+/* Centro de control admin */
 function Dashboard() {
   const navigate = useNavigate()
   const currentYear = new Date().getFullYear()
@@ -27,6 +28,7 @@ function Dashboard() {
   const [isSavingParty, setIsSavingParty] = useState(false)
   const [isDeletingParty, setIsDeletingParty] = useState(false)
 
+  /* Cargar datos del año actual */
   const loadData = async () => {
     setIsLoading(true)
     try {
@@ -39,6 +41,7 @@ function Dashboard() {
     }
   }
 
+  /* Carga inicial */
   useEffect(() => {
     setIsLoading(true)
     ensureElection(currentYear)
@@ -49,11 +52,13 @@ function Dashboard() {
       .finally(() => setIsLoading(false))
   }, [currentYear])
 
+  /* Salir de panel admin */
   const handleLogout = async () => {
     await signOutAdmin()
     navigate('/admin-login')
   }
 
+  /* Iniciar elección */
   const handleStartElection = () => {
     setIsStarting(true)
     startElection(currentYear)
@@ -67,6 +72,7 @@ function Dashboard() {
       .finally(() => setIsStarting(false))
   }
 
+  /* Terminar elección */
   const handleStopElection = () => {
     setIsStopping(true)
     stopElection(currentYear)
@@ -80,6 +86,7 @@ function Dashboard() {
       .finally(() => setIsStopping(false))
   }
 
+  /* Cerrar modal */
   const closeModal = () => {
     setModalMode('')
     setPartyName('')
@@ -88,6 +95,7 @@ function Dashboard() {
     setModalError('')
   }
 
+  /* Abrir modal para crear partido */
   const openAddModal = () => {
     setModalMode('add')
     setPartyName('')
@@ -96,6 +104,7 @@ function Dashboard() {
     setModalError('')
   }
 
+  /* Abrir modal para editar partido */
   const openEditModal = (party) => {
     setModalMode('edit')
     setPartyName(party.name)
@@ -104,6 +113,7 @@ function Dashboard() {
     setModalError('')
   }
 
+  /* Abrir modal para eliminar partido */
   const openDeleteModal = (party) => {
     setModalMode('delete')
     setPartyName(party.name)
@@ -112,6 +122,7 @@ function Dashboard() {
     setModalError('')
   }
 
+  /* Cargar imagen del partido */
   const handleImageFileChange = (event) => {
     const file = event.target.files?.[0]
     if (!file) {
@@ -132,6 +143,7 @@ function Dashboard() {
     reader.readAsDataURL(file)
   }
 
+  /* Guardar partido (crear o editar) */
   const handleSaveParty = () => {
     setIsSavingParty(true)
     const action =
@@ -154,6 +166,7 @@ function Dashboard() {
       .finally(() => setIsSavingParty(false))
   }
 
+  /* Exportar resultados en CSV */
   const handleExportData = () => {
     const parties = election?.parties || []
     if (election?.isActive || !parties.length) {
@@ -178,6 +191,7 @@ function Dashboard() {
     setFeedback('Datos exportados.')
   }
 
+  /* Eliminar partido */
   const handleDeleteParty = () => {
     setIsDeletingParty(true)
     removeParty(currentYear, selectedParty.id)

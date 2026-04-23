@@ -3,11 +3,13 @@ import './Estadisticas.css'
 import { getActiveElection } from '../lib/electionsStore'
 import { getVotersCountFromExcel } from '../lib/voterExcel'
 
+/* Estadísticas del proceso actual */
 function Estadisticas() {
   const [activeElection, setActiveElection] = useState(null)
   const [totalVoters, setTotalVoters] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
+  /* Refresco automático de datos */
   useEffect(() => {
     let isMounted = true
 

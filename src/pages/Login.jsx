@@ -4,6 +4,7 @@ import './Login.css'
 import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
 
+/* Mayúscula al inicio de cada palabra */
 function toTitleCase(value) {
   return String(value || '')
     .trim()
@@ -13,6 +14,7 @@ function toTitleCase(value) {
     .join(' ')
 }
 
+/* Login de votante */
 function Login() {
   const navigate = useNavigate()
   const [cedula, setCedula] = useState('')
@@ -20,6 +22,7 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
 
+  /* Mostrar modal pendiente si viene de votación */
   useEffect(() => {
     const message = sessionStorage.getItem('votehub_voting_modal')
     if (message) {
@@ -28,6 +31,7 @@ function Login() {
     }
   }, [])
 
+  /* Validar cédula y dejar pasar a votar */
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')

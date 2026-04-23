@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './Voting.css'
 import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
 
+/* Pantalla de votación */
 function Voting() {
   const navigate = useNavigate()
   const voterName = localStorage.getItem('voterName') || 'Estudiante'
@@ -13,6 +14,7 @@ function Voting() {
   const [modalMessage, setModalMessage] = useState('')
   const [isVoting, setIsVoting] = useState(false)
 
+  /* Cargar elección activa y validar si ya votó */
   useEffect(() => {
     const load = async () => {
       try {
@@ -39,6 +41,7 @@ function Voting() {
     load()
   }, [navigate, voterCedula])
 
+  /* Registrar voto */
   const handleVote = async (party) => {
     if (isVoting) {
       return

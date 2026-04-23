@@ -9,11 +9,49 @@ import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
 import { isAdminSessionActive } from './lib/adminAuth'
 
+/* Sidebar admin */
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/estadisticas', label: 'Estadísticas' },
   { to: '/registros', label: 'Registros' },
 ]
+
+/* Título por página */
+const pageTitles = {
+  '/': 'VoteHub | Inicio',
+  '/dashboard': 'VoteHub | Dashboard',
+  '/estadisticas': 'VoteHub | Estadísticas',
+  '/registros': 'VoteHub | Registros',
+  '/votacion': 'VoteHub | Votación',
+  '/login': 'VoteHub | Login',
+  '/admin-login': 'VoteHub | Login Admin',
+}
+
+/* Icono por página */
+const pageIcons = {
+  '/': '/icons.svg',
+  '/dashboard': '/icons.svg',
+  '/estadisticas': '/icons.svg',
+  '/registros': '/icons.svg',
+  '/votacion': '/icons.svg',
+  '/login': '/icons.svg',
+  '/admin-login': '/icons.svg',
+}
+
+/* Poner metadata */
+function setPageMetadata(pathname) {
+  document.title = pageTitles[pathname] || 'VoteHub'
+
+  const iconHref = pageIcons[pathname] || '/icons.svg'
+  let iconLink = document.querySelector("link[rel='icon']")
+  if (!iconLink) {
+    iconLink = document.createElement('link')
+    iconLink.setAttribute('rel', 'icon')
+    document.head.appendChild(iconLink)
+  }
+  iconLink.setAttribute('href', iconHref)
+  iconLink.setAttribute('type', 'image/svg+xml')
+}
 
 function Navigation() {
   return (
@@ -27,6 +65,7 @@ function Navigation() {
   )
 }
 
+/* Menú de inicio */
 function HomeMenu() {
   return (
     <section>
@@ -56,6 +95,7 @@ function HomeMenu() {
   )
 }
 
+/* App principal y rutas */
 function App() {
   const location = useLocation()
   const [isAdminLogged, setIsAdminLogged] = useState(false)
@@ -65,6 +105,12 @@ function App() {
     location.pathname === '/estadisticas' ||
     location.pathname === '/registros'
 
+  /* Cambiar metadata según ruta */
+  useEffect(() => {
+    setPageMetadata(location.pathname)
+  }, [location.pathname])
+
+  /* Revisar sesión admin al cambiar de ruta */
   useEffect(() => {
     const checkSession = async () => {
       const active = await isAdminSessionActive()
@@ -75,6 +121,7 @@ function App() {
     checkSession()
   }, [location.pathname])
 
+  /* Pantalla de carga mientras valida sesión */
   if (isCheckingSession) {
     return <main className="app-shell">Cargando...</main>
   }

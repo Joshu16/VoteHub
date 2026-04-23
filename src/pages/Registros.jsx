@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import './Registros.css'
 import { deleteElectionByYear, getAllElections } from '../lib/electionsStore'
 
+/* Revisar ganador por votos */
 function getWinnerLabel(election) {
   if (!election.parties.length) {
     return 'Sin partidos'
@@ -33,10 +34,12 @@ function getWinnerLabel(election) {
   return `Empate: ${winners.join(', ')}`
 }
 
+/* Historial de elecciones */
 function Registros() {
   const [elections, setElections] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
+  /* Cargar registros */
   const loadData = async () => {
     setIsLoading(true)
     try {
@@ -50,6 +53,7 @@ function Registros() {
     }
   }
 
+  /* Carga inicial */
   useEffect(() => {
     setIsLoading(true)
     getAllElections()
@@ -61,6 +65,7 @@ function Registros() {
       .finally(() => setIsLoading(false))
   }, [])
 
+  /* Eliminar una elección completa */
   const handleDeleteElection = (year) => {
     const shouldDelete = window.confirm(`Eliminar la elección del año ${year}?`)
     if (!shouldDelete) {

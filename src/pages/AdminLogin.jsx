@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './AdminLogin.css'
 import { ADMIN_EMAIL, signInAdmin } from '../lib/adminAuth'
 
+/* Login administrativo */
 function AdminLogin() {
   const navigate = useNavigate()
   const [email, setEmail] = useState(ADMIN_EMAIL)
@@ -10,6 +11,7 @@ function AdminLogin() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  /* Enviar login */
   const handleAdminLogin = async (event) => {
     event.preventDefault()
     setError('')
