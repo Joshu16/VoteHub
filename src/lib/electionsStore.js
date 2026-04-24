@@ -65,6 +65,13 @@ export async function ensureElection(year) {
     .single()
 
   if (error) {
+    if (error.code === '23505') {
+      const afterConflict = await getElectionByYear(year)
+      if (afterConflict) {
+        const parties = await getPartiesByElectionId(afterConflict.id)
+        return { ...afterConflict, isActive: afterConflict.is_active, parties }
+      }
+    }
     throw error
   }
 
