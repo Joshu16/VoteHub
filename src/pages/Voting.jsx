@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Voting.css'
 import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
+import { navigateWithTransition } from '../lib/pageTransition'
 
 function Voting() {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ function Voting() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [modalMessage, setModalMessage] = useState('')
+  const [modalType, setModalType] = useState('')
   const [isVoting, setIsVoting] = useState(false)
   const [confirmParty, setConfirmParty] = useState(null)
 
@@ -26,7 +28,7 @@ function Voting() {
           const voted = await hasVotedInElection(election.year, voterCedula)
           if (voted) {
             sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
-            navigate('/login', { replace: true })
+            navigateWithTransition(navigate, '/login', { replace: true })
             return
           }
         }
@@ -48,18 +50,24 @@ function Voting() {
       const result = await voteParty(activeElection.year, party.id, voterCedula)
       if (!result.ok && result.reason === 'ALREADY_VOTED') {
         sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
-        navigate('/login', { replace: true })
+        navigateWithTransition(navigate, '/login', { replace: true })
         return
       }
       if (!result.ok) {
+        setModalType('error')
         setModalMessage('No se pudo registrar el voto.')
         return
       }
 
-      setModalMessage('Tu voto ha sido registrado con éxito.')
+      setModalType('success')
+      setModalMessage('Has terminado el proceso.')
       const election = await getActiveElection()
       setActiveElection(election)
+      window.setTimeout(() => {
+        navigateWithTransition(navigate, '/login', { replace: true })
+      }, 900)
     } catch {
+      setModalType('error')
       setModalMessage('No se pudo registrar el voto.')
     } finally {
       setIsVoting(false)
@@ -132,19 +140,26 @@ function Voting() {
 
       {modalMessage && (
         <div className="vote-modal-backdrop">
-          <div className="vote-modal">
+          <div className={`vote-modal ${modalType === 'success' ? 'vote-modal-success' : ''}`}>
+            {modalType === 'success' && (
+              <img
+                className="vote-success-gif"
+                src="https://media.tenor.com/6eVfQ0P6sGAAAAAC/check.gif"
+                alt="Voto confirmado"
+              />
+            )}
             <p>{modalMessage}</p>
-            <button
-              type="button"
-              onClick={() => {
-                if (modalMessage === 'Tu voto ha sido registrado con éxito.') {
-                  navigate('/login', { replace: true })
-                }
-                setModalMessage('')
-              }}
-            >
-              Entendido
-            </button>
+            {modalType !== 'success' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setModalMessage('')
+                  setModalType('')
+                }}
+              >
+                Entendido
+              </button>
+            )}
           </div>
         </div>
       )}

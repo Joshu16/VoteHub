@@ -39,6 +39,7 @@ function getWinnerLabel(election) {
 function Registros() {
   const [elections, setElections] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [deletingYear, setDeletingYear] = useState(null)
 
   /* Cargar registros */
   const loadData = async () => {
@@ -73,9 +74,11 @@ function Registros() {
       return
     }
 
+    setDeletingYear(year)
     deleteElectionByYear(year)
       .then(loadData)
       .catch(() => window.alert('No se pudo eliminar la elección.'))
+      .finally(() => setDeletingYear(null))
   }
 
   /* Tabla de historial */
@@ -110,8 +113,9 @@ function Registros() {
                     type="button"
                     className="icon-btn danger"
                     onClick={() => handleDeleteElection(item.year)}
+                    disabled={deletingYear === item.year}
                   >
-                    Eliminar
+                    {deletingYear === item.year ? 'Cargando...' : 'Eliminar'}
                   </button>
                 </td>
               </tr>

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
+import { navigateWithTransition } from '../lib/pageTransition'
 
 /* Formato de nombre */
-/* Mayúscula al inicio de cada palabra */
 function toTitleCase(value) {
   return String(value || '')
     .trim()
@@ -19,13 +19,13 @@ function normalizeCedula(value) {
   return String(value ?? '').replace(/\D/g, '')
 }
 
-/* Estado del formulario */
 /* Login de votante */
 function Login() {
   const navigate = useNavigate()
   const [cedula, setCedula] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isStarting, setIsStarting] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
   const [confirmVoterName, setConfirmVoterName] = useState('')
   const [pendingCedula, setPendingCedula] = useState('')
@@ -83,24 +83,33 @@ function Login() {
 
     setError('')
     setIsLoading(true)
+    setIsStarting(true)
 
     try {
       const activeElection = await getActiveElection()
-      if (activeElection) {
-        const voted = await hasVotedInElection(activeElection.year, pendingCedula)
-        if (voted) {
-          setModalMessage('Ya has votado en estas elecciones.')
-          setConfirmVoterName('')
-          setPendingCedula('')
-          return
-        }
+      const availableParties = (activeElection?.parties || []).filter(
+        (party) => party.name.trim().toLowerCase() !== 'voto nulo',
+      )
+      if (!activeElection || availableParties.length === 0) {
+        setModalMessage('No hay elecciones activas en este momento.')
+        setConfirmVoterName('')
+        setPendingCedula('')
+        return
+      }
+
+      const voted = await hasVotedInElection(activeElection.year, pendingCedula)
+      if (voted) {
+        setModalMessage('Ya has votado en estas elecciones.')
+        setConfirmVoterName('')
+        setPendingCedula('')
+        return
       }
 
       localStorage.setItem('voterCedula', pendingCedula)
       localStorage.setItem('voterName', confirmVoterName)
       setConfirmVoterName('')
       setPendingCedula('')
-      navigate('/votacion')
+      navigateWithTransition(navigate, '/votacion')
     } catch (error) {
       const message = String(error?.message || '')
       if (message.includes('Excel')) {
@@ -110,6 +119,7 @@ function Login() {
       setError('No se pudo validar la cédula en este momento.')
     } finally {
       setIsLoading(false)
+      setIsStarting(false)
     }
   }
 
@@ -172,7 +182,7 @@ function Login() {
                 No
               </button>
               <button type="button" onClick={handleConfirmVoter} disabled={isLoading}>
-                Sí
+                {isStarting ? 'Iniciando...' : 'Sí'}
               </button>
             </div>
           </div>

@@ -88,6 +88,17 @@ function Dashboard() {
       .finally(() => setIsStopping(false))
   }
 
+  const isElectionActive = Boolean(election?.isActive)
+  const isTogglingElection = isStarting || isStopping
+
+  const handleToggleElection = () => {
+    if (isElectionActive) {
+      handleStopElection()
+      return
+    }
+    handleStartElection()
+  }
+
   /* Cerrar modal */
   const closeModal = () => {
     setModalMode('')
@@ -219,20 +230,28 @@ function Dashboard() {
       </header>
 
       <div className="action-row">
-        <button type="button" onClick={handleStartElection} disabled={isStarting || isStopping}>
-          {isStarting ? 'Iniciando...' : 'Iniciar Elecciones'}
+        <button
+          type="button"
+          onClick={handleToggleElection}
+          disabled={isTogglingElection}
+          className={isElectionActive ? 'toggle-election-btn stop' : 'toggle-election-btn start'}
+        >
+          {isStarting
+            ? 'Iniciando...'
+            : isStopping
+              ? 'Terminando...'
+              : isElectionActive
+                ? 'Terminar Elecciones'
+                : 'Iniciar Elecciones'}
         </button>
-        <button type="button" onClick={handleStopElection} disabled={isStarting || isStopping}>
-          {isStopping ? 'Terminando...' : 'Terminar Elecciones'}
-        </button>
-        <button type="button" onClick={openAddModal} disabled={isStarting || isStopping}>
+        <button type="button" onClick={openAddModal} disabled={isTogglingElection}>
           Añadir Partido
         </button>
       </div>
       {feedback && <p className="dashboard-feedback">{feedback}</p>}
 
-      <p className={`election-state ${election?.isActive ? 'active' : 'inactive'}`}>
-        Estado {currentYear}: {election?.isActive ? 'Activa' : 'Detenida'}
+      <p className={`election-state ${isElectionActive ? 'active' : 'inactive'}`}>
+        Estado {currentYear}: {isElectionActive ? 'Activa' : 'Detenida'}
       </p>
 
       <div className="table-wrap">

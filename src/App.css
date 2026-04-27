@@ -5,6 +5,7 @@
 }
 
 .page-container {
+  position: relative;
   padding: 26px;
   flex: 1;
   overflow-y: auto;
@@ -15,10 +16,46 @@
   padding-left: 286px;
 }
 
+.route-stage {
+  animation: route-stage-enter 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.page-transition-overlay.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.page-transition-overlay::before,
+.page-transition-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.page-transition-overlay::before {
+  background: var(--accent);
+  clip-path: circle(0 at 50% 50%);
+}
+
+.page-transition-overlay::after {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 48%, rgba(255, 255, 255, 0) 72%);
+  opacity: 0;
+}
+
 .side-nav {
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 40;
   width: 220px;
   height: 100vh;
   padding: 26px 14px;
@@ -75,6 +112,126 @@
 .page-container:has(.admin-login-page) .admin-login-page {
   width: 100%;
   min-height: 100vh;
+}
+
+/* Overlay cover -> route change -> overlay reveal */
+.page-transition-overlay.phase-cover.cycle-0::before {
+  animation: transition-cover-a var(--cover-ms, 300ms) cubic-bezier(0.22, 0.7, 0.25, 1) forwards;
+}
+
+.page-transition-overlay.phase-cover.cycle-1::before {
+  animation: transition-cover-b var(--cover-ms, 300ms) cubic-bezier(0.22, 0.7, 0.25, 1) forwards;
+}
+
+.page-transition-overlay.phase-cover.cycle-0::after {
+  animation: transition-glow-a var(--cover-ms, 300ms) ease-out forwards;
+}
+
+.page-transition-overlay.phase-cover.cycle-1::after {
+  animation: transition-glow-b var(--cover-ms, 300ms) ease-out forwards;
+}
+
+.page-transition-overlay.phase-reveal.cycle-0::before {
+  clip-path: circle(150% at 50% 50%);
+  animation: transition-reveal-a 220ms cubic-bezier(0.35, 0, 0.25, 1) forwards;
+}
+
+.page-transition-overlay.phase-reveal.cycle-1::before {
+  clip-path: circle(150% at 50% 50%);
+  animation: transition-reveal-b 220ms cubic-bezier(0.35, 0, 0.25, 1) forwards;
+}
+
+.page-transition-overlay.phase-reveal::after {
+  opacity: 0.2;
+  animation: transition-glow-fade 220ms ease-out forwards;
+}
+
+@keyframes route-stage-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-stage,
+  .page-transition-overlay::before,
+  .page-transition-overlay::after {
+    animation: none;
+  }
+}
+
+@keyframes transition-cover-a {
+  from {
+    clip-path: circle(0 at 50% 50%);
+  }
+  to {
+    clip-path: circle(150% at 50% 50%);
+  }
+}
+
+@keyframes transition-cover-b {
+  from {
+    clip-path: circle(0 at 50% 50%);
+  }
+  to {
+    clip-path: circle(150% at 50% 50%);
+  }
+}
+
+@keyframes transition-reveal-a {
+  from {
+    clip-path: circle(150% at 50% 50%);
+  }
+  to {
+    clip-path: circle(0 at 50% 50%);
+  }
+}
+
+@keyframes transition-reveal-b {
+  from {
+    clip-path: circle(150% at 50% 50%);
+  }
+  to {
+    clip-path: circle(0 at 50% 50%);
+  }
+}
+
+@keyframes transition-glow-a {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0.16;
+  }
+}
+
+@keyframes transition-glow-b {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0.16;
+  }
+}
+
+@keyframes transition-glow-fade {
+  from {
+    opacity: 0.22;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 780px) {

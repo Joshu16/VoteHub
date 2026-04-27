@@ -39,9 +39,18 @@
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
+.action-row .toggle-election-btn.stop {
+  border-color: #dc2626;
+  background: #dc2626;
+}
+
 .action-row button:hover {
   background: var(--soft-red);
   transform: translateY(-1px);
+}
+
+.action-row .toggle-election-btn.stop:hover {
+  background: #b91c1c;
 }
 
 .action-row button:focus-visible {

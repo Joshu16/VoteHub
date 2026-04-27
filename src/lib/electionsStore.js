@@ -49,11 +49,39 @@ async function getPartiesByElectionId(electionId) {
   return (withoutImage.data || []).map((party) => ({ ...party, image_url: null }))
 }
 
+async function ensureNullVoteParty(electionId) {
+  const parties = await getPartiesByElectionId(electionId)
+  const hasNullVote = parties.some(
+    (party) => party.name.trim().toLowerCase() === 'voto nulo',
+  )
+  if (hasNullVote) {
+    return
+  }
+
+  const withImage = await supabase
+    .from('parties')
+    .insert({ election_id: electionId, name: 'Voto nulo', votes: 0, image_url: null })
+  if (!withImage.error) {
+    return
+  }
+  if (!isImageColumnError(withImage.error)) {
+    throw withImage.error
+  }
+
+  const withoutImage = await supabase
+    .from('parties')
+    .insert({ election_id: electionId, name: 'Voto nulo', votes: 0 })
+  if (withoutImage.error) {
+    throw withoutImage.error
+  }
+}
+
 /* Gestión de elecciones */
 /* Crear elección si no existe */
 export async function ensureElection(year) {
   const existing = await getElectionByYear(year)
   if (existing) {
+    await ensureNullVoteParty(existing.id)
     const parties = await getPartiesByElectionId(existing.id)
     return { ...existing, isActive: existing.is_active, parties }
   }
@@ -68,6 +96,7 @@ export async function ensureElection(year) {
     if (error.code === '23505') {
       const afterConflict = await getElectionByYear(year)
       if (afterConflict) {
+        await ensureNullVoteParty(afterConflict.id)
         const parties = await getPartiesByElectionId(afterConflict.id)
         return { ...afterConflict, isActive: afterConflict.is_active, parties }
       }
@@ -75,7 +104,9 @@ export async function ensureElection(year) {
     throw error
   }
 
-  return { ...data, isActive: data.is_active, parties: [] }
+  await ensureNullVoteParty(data.id)
+  const parties = await getPartiesByElectionId(data.id)
+  return { ...data, isActive: data.is_active, parties }
 }
 
 /* Activar elección del año y desactivar las demás */
