@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './AdminLogin.css'
 import { ADMIN_EMAIL, signInAdmin } from '../lib/adminAuth'
 
-/* Login administrativo */
+/* Login admin */
 function AdminLogin() {
   const navigate = useNavigate()
   const [email, setEmail] = useState(ADMIN_EMAIL)
@@ -11,7 +11,7 @@ function AdminLogin() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  /* Enviar login */
+  /* Envio del formulario de acceso */
   const handleAdminLogin = async (event) => {
     event.preventDefault()
     setError('')
@@ -27,7 +27,7 @@ function AdminLogin() {
     }
   }
 
-  /* Tarjeta de acceso */
+  /* Tarjeta de login */
   return (
     <section className="admin-login-page">
       <div className="admin-login-card">

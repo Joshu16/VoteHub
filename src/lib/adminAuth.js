@@ -1,57 +1,49 @@
 import { supabase } from './supabaseClient'
 
-/* Constantes de acceso */
-/* Credenciales admin */
+/* Correo permitido para panel admin */
 export const ADMIN_EMAIL = 'ctpcit@gmail.com'
-const ADMIN_PASSWORD_FALLBACK = '1234'
-const LOCAL_ADMIN_SESSION_KEY = 'votehub_admin_session'
 
-/* Login admin */
+const PASS_LOCAL = '1234'
+/* Marca local si falla login remoto y la clave coincide */
+const KEY_LOCAL = 'votehub_admin_session'
+
 export async function signInAdmin(email, password) {
-  const normalizedEmail = email.trim().toLowerCase()
-
-  if (normalizedEmail !== ADMIN_EMAIL) {
+  const em = email.trim().toLowerCase()
+  if (em !== ADMIN_EMAIL) {
     throw new Error('Solo el correo administrador puede ingresar.')
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: normalizedEmail,
-    password,
-  })
-
-  if (!error) {
-    localStorage.setItem(LOCAL_ADMIN_SESSION_KEY, '0')
-    return data
+  const sesion = await supabase.auth.signInWithPassword({ email: em, password })
+  if (!sesion.error) {
+    localStorage.setItem(KEY_LOCAL, '0')
+    return sesion.data
   }
 
-  /* Fallback local cuando falla Supabase */
-  if (password === ADMIN_PASSWORD_FALLBACK) {
-    localStorage.setItem(LOCAL_ADMIN_SESSION_KEY, '1')
-    return { user: { email: normalizedEmail } }
+  if (password === PASS_LOCAL) {
+    localStorage.setItem(KEY_LOCAL, '1')
+    return { user: { email: em } }
   }
 
-  throw error
+  throw sesion.error
 }
 
-/* Estado de sesión */
-/* Verificar sesión admin */
+/* Sesion remota valida o respaldo local */
 export async function isAdminSessionActive() {
-  if (localStorage.getItem(LOCAL_ADMIN_SESSION_KEY) === '1') {
+  if (localStorage.getItem(KEY_LOCAL) === '1') {
     return true
   }
 
-  const { data, error } = await supabase.auth.getSession()
-
-  if (error) {
+  const sesion = await supabase.auth.getSession()
+  if (sesion.error) {
     return false
   }
 
-  const sessionEmail = data.session?.user?.email?.toLowerCase()
-  return Boolean(sessionEmail && sessionEmail === ADMIN_EMAIL)
+  const em = sesion.data.session?.user?.email?.toLowerCase()
+  return em === ADMIN_EMAIL
 }
 
-/* Cerrar sesión admin */
+/* Quita marca local y cierra sesion remota */
 export async function signOutAdmin() {
-  localStorage.removeItem(LOCAL_ADMIN_SESSION_KEY)
+  localStorage.removeItem(KEY_LOCAL)
   await supabase.auth.signOut()
 }

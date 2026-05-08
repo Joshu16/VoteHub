@@ -4,6 +4,10 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 
+/* Quita datos viejos de votante del almacenamiento local */
+localStorage.removeItem('voterCedula')
+localStorage.removeItem('voterName')
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

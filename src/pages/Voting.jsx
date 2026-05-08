@@ -2,21 +2,24 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Voting.css'
 import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
-import { navigateWithTransition } from '../lib/pageTransition'
 
+/* Flujo de voto del estudiante */
 function Voting() {
   const navigate = useNavigate()
-  const voterName = localStorage.getItem('voterName') || 'Estudiante'
-  const voterCedula = localStorage.getItem('voterCedula') || ''
+  /* Sesion corta se borra al cambiar de pantalla */
+  const voterName = sessionStorage.getItem('voterName') || ''
+  const voterCedula = sessionStorage.getItem('voterCedula') || ''
   const [activeElection, setActiveElection] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  /* Mensaje modal de exito o error al votar */
   const [modalMessage, setModalMessage] = useState('')
   const [modalType, setModalType] = useState('')
   const [isVoting, setIsVoting] = useState(false)
+  /* Partido elegido antes de confirmar */
   const [confirmParty, setConfirmParty] = useState(null)
 
-  /* Cargar elección activa y validar si ya votó */
+  /* Carga elección y chequeo de voto */
   useEffect(() => {
     const load = async () => {
       try {
@@ -24,15 +27,17 @@ function Voting() {
         setActiveElection(election)
         setError('')
 
+        /* Evita pantalla de voto si ya votó */
         if (election && voterCedula) {
           const voted = await hasVotedInElection(election.year, voterCedula)
           if (voted) {
             sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
-            navigateWithTransition(navigate, '/login', { replace: true })
+            navigate('/login', { replace: true })
             return
           }
         }
       } catch {
+        /* Fallo de red o servidor */
         setActiveElection(null)
         setError('No se pudo cargar la elección activa.')
       } finally {
@@ -43,14 +48,14 @@ function Voting() {
     load()
   }, [navigate, voterCedula])
 
-  /* Registrar voto */
+  /* Envía voto */
   const performVote = async (party) => {
     try {
       setIsVoting(true)
       const result = await voteParty(activeElection.year, party.id, voterCedula)
       if (!result.ok && result.reason === 'ALREADY_VOTED') {
         sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
-        navigateWithTransition(navigate, '/login', { replace: true })
+        navigate('/login', { replace: true })
         return
       }
       if (!result.ok) {
@@ -59,12 +64,13 @@ function Voting() {
         return
       }
 
+      /* Exito mensaje corto y vuelta al login */
       setModalType('success')
       setModalMessage('Has terminado el proceso.')
       const election = await getActiveElection()
       setActiveElection(election)
       window.setTimeout(() => {
-        navigateWithTransition(navigate, '/login', { replace: true })
+        navigate('/login', { replace: true })
       }, 900)
     } catch {
       setModalType('error')
@@ -74,6 +80,7 @@ function Voting() {
     }
   }
 
+  /* Abre modal de confirmación o mensaje de error */
   const handleVote = async (party) => {
     if (isVoting) {
       return
@@ -92,14 +99,16 @@ function Voting() {
     setConfirmParty(party)
   }
 
-  /* Vista de partidos y confirmación */
+  /* Tarjetas y modales */
   return (
     <div className="voting-page">
       <header className="voting-header">
+        {/* Saludo con nombre del padrón */}
         <h1>Bienvenido {voterName}, realiza tu voto</h1>
       </header>
 
       <main className="voting-content">
+        {/* Estados sin datos error o cargando */}
         {isLoading && <p>Cargando...</p>}
         {!isLoading && error && <p>{error}</p>}
         {!isLoading && !activeElection && <p>No hay elecciones activas en este momento.</p>}
@@ -107,6 +116,7 @@ function Voting() {
           <p>La elección activa no tiene partidos registrados.</p>
         )}
         <div className="cards-container">
+          {/* Una tarjeta por partido */}
           {!isLoading &&
             (activeElection?.parties ?? []).map((party) => (
             <div className="party-card" key={party.id}>
@@ -130,6 +140,7 @@ function Voting() {
       </main>
 
       <footer className="voting-footer">
+        {/* Pie institucional */}
         <p>Estudiantes de Apps 2026</p>
         <img
           src="https://complejoeducativocit.ed.cr/wp-content/uploads/2025/08/Complejo-Educativo-CIT.png"
@@ -140,6 +151,7 @@ function Voting() {
 
       {modalMessage && (
         <div className="vote-modal-backdrop">
+          {/* Modal exito con icono animado */}
           <div className={`vote-modal ${modalType === 'success' ? 'vote-modal-success' : ''}`}>
             {modalType === 'success' && (
               <img
@@ -166,6 +178,7 @@ function Voting() {
 
       {confirmParty && (
         <div className="vote-modal-backdrop">
+          {/* Confirmar o cancelar antes de guardar */}
           <div className="vote-modal">
             <p>Vas a votar por {confirmParty.name}. ¿Deseas continuar?</p>
             <div className="vote-modal-actions">

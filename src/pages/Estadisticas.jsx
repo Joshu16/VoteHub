@@ -3,19 +3,20 @@ import './Estadisticas.css'
 import { getActiveElection } from '../lib/electionsStore'
 import { getVotersCountFromExcel } from '../lib/voterExcel'
 
-/* Estado y datos base */
-/* Estadísticas del proceso actual */
+/* Estadísticas electorales */
 function Estadisticas() {
   const [activeElection, setActiveElection] = useState(null)
+  /* Total personas en padron desde archivo */
   const [totalVoters, setTotalVoters] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
-  /* Refresco automático de datos */
+  /* Refresco periodico cada cinco segundos */
   useEffect(() => {
     let isMounted = true
 
     const loadStats = async () => {
       try {
+        /* Carga a la vez eleccion activa y padron */
         const [election, votersCount] = await Promise.all([
           getActiveElection(),
           getVotersCountFromExcel(),
@@ -47,7 +48,7 @@ function Estadisticas() {
     }
   }, [])
 
-  /* Cálculos de participación */
+  /* Barras y abstención */
   const barras = (activeElection?.parties || []).map((party) => ({
     nombre: party.name,
     votos: Number(party.votes || 0),
@@ -61,7 +62,7 @@ function Estadisticas() {
       : rawAbstentionPercent
   const abstentionPercentLabel = `${abstentionPercent.toFixed(1)}%`
 
-  /* Vista de indicadores y gráficos */
+  /* Resumen en tarjetas barras y donut de abstencion */
   return (
     <section className="stats-page">
       <header className="stats-header">
@@ -76,6 +77,7 @@ function Estadisticas() {
       <div className="stats-layout">
         <div className="stats-main">
           <div className="kpi-grid">
+            {/* Tarjetas resumen */}
             <article className="kpi-card">
               <span>Votos Totales</span>
               <strong>{totalVotes}</strong>
@@ -95,6 +97,7 @@ function Estadisticas() {
           </div>
 
           <section className="chart-card">
+            {/* Altura ligada a cantidad de votos */}
             <h2>Votos por partido</h2>
             <div className="bar-chart">
               {isLoading && <p>Cargando...</p>}
@@ -111,6 +114,7 @@ function Estadisticas() {
         </div>
 
         <aside className="abstention-card">
+          {/* Grafico circular de abstencion */}
           <h2>Niveles de abstención</h2>
           <p className="abstention-voted">
             <span className="dot dot-accent"></span>

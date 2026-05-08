@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import './Registros.css'
 import { deleteElectionByYear, getAllElections } from '../lib/electionsStore'
 
-/* Revisar ganador por votos */
+/* Etiqueta del ganador */
 function getWinnerLabel(election) {
   if (!election.parties.length) {
     return 'Sin partidos'
   }
 
+  /* Mayor número de votos */
   let maxVotes = 0
   for (const party of election.parties) {
     const votes = Number(party.votes || 0)
@@ -20,6 +21,7 @@ function getWinnerLabel(election) {
     return 'Sin votos'
   }
 
+  /* Puede haber empate */
   const winners = []
   for (const party of election.parties) {
     if (Number(party.votes || 0) === maxVotes) {
@@ -34,14 +36,14 @@ function getWinnerLabel(election) {
   return `Empate: ${winners.join(', ')}`
 }
 
-/* Estado de carga y listado */
-/* Historial de elecciones */
+/* Listado histórico de elecciones */
 function Registros() {
   const [elections, setElections] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  /* Año que esta borrandose en este momento */
   const [deletingYear, setDeletingYear] = useState(null)
 
-  /* Cargar registros */
+  /* Recarga desde servidor */
   const loadData = async () => {
     setIsLoading(true)
     try {
@@ -67,7 +69,7 @@ function Registros() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  /* Eliminar una elección completa */
+  /* Borra elección por año */
   const handleDeleteElection = (year) => {
     const shouldDelete = window.confirm(`Eliminar la elección del año ${year}?`)
     if (!shouldDelete) {
@@ -101,6 +103,7 @@ function Registros() {
             </tr>
           </thead>
           <tbody>
+            {/* Una fila por año en historial */}
             {!isLoading &&
               elections.map((item) => (
               <tr key={item.year}>

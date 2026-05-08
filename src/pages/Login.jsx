@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
-import { navigateWithTransition } from '../lib/pageTransition'
 
-/* Formato de nombre */
+/* Titulo tipo nombre propio */
 function toTitleCase(value) {
   return String(value || '')
     .trim()
@@ -15,22 +14,25 @@ function toTitleCase(value) {
     .join(' ')
 }
 
+/* Cédula sin caracteres no numéricos */
 function normalizeCedula(value) {
   return String(value ?? '').replace(/\D/g, '')
 }
 
-/* Login de votante */
+/* Login votante */
 function Login() {
   const navigate = useNavigate()
+  /* Primer paso cedula en formulario */
   const [cedula, setCedula] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
   const [modalMessage, setModalMessage] = useState('')
+  /* Segundo paso nombre del padron y cedula pendiente */
   const [confirmVoterName, setConfirmVoterName] = useState('')
   const [pendingCedula, setPendingCedula] = useState('')
 
-  /* Mostrar modal pendiente si viene de votación */
+  /* Modal tras votar */
   useEffect(() => {
     const message = sessionStorage.getItem('votehub_voting_modal')
     if (message) {
@@ -39,7 +41,7 @@ function Login() {
     }
   }, [])
 
-  /* Validar cédula y dejar pasar a votar */
+  /* Valida cedula contra archivo padron */
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
@@ -52,6 +54,7 @@ function Login() {
         return
       }
 
+      /* Comprueba si esta en el padron */
       const voter = await validateVoterCedulaFromExcel(normalizedCedula)
 
       if (!voter) {
@@ -76,6 +79,7 @@ function Login() {
     }
   }
 
+  /* Confirma identidad y entra a votacion */
   const handleConfirmVoter = async () => {
     if (!pendingCedula || !confirmVoterName) {
       return
@@ -87,6 +91,7 @@ function Login() {
 
     try {
       const activeElection = await getActiveElection()
+      /* Quita el partido voto nulo del chequeo */
       const availableParties = (activeElection?.parties || []).filter(
         (party) => party.name.trim().toLowerCase() !== 'voto nulo',
       )
@@ -105,11 +110,11 @@ function Login() {
         return
       }
 
-      localStorage.setItem('voterCedula', pendingCedula)
-      localStorage.setItem('voterName', confirmVoterName)
+      sessionStorage.setItem('voterCedula', pendingCedula)
+      sessionStorage.setItem('voterName', confirmVoterName)
       setConfirmVoterName('')
       setPendingCedula('')
-      navigateWithTransition(navigate, '/votacion')
+      navigate('/votacion')
     } catch (error) {
       const message = String(error?.message || '')
       if (message.includes('Excel')) {
@@ -123,10 +128,11 @@ function Login() {
     }
   }
 
-  /* Layout del login y modal */
+  /* Maquetacion de la pantalla */
   return (
     <div className="login-page">
       <div className="login-left">
+        {/* Formulario cédula */}
         <div className="login-content">
           <h2 className="login-title">
             ¿Estás listo para votar y
@@ -151,12 +157,14 @@ function Login() {
       </div>
 
       <div className="login-right">
+        {/* Foto lateral */}
         <img src="src/assets/Votando.jpg" alt="Votación" />
         <div className="right-overlay"></div>
       </div>
 
       {modalMessage && (
         <div className="login-modal-backdrop">
+          {/* Avisos sin eleccion o ya voto */}
           <div className="login-modal">
             <p>{modalMessage}</p>
             <button type="button" onClick={() => setModalMessage('')}>
@@ -168,6 +176,7 @@ function Login() {
 
       {confirmVoterName && (
         <div className="login-modal-backdrop">
+          {/* Confirma el nombre del padron */}
           <div className="login-modal">
             <p>¿Eres {confirmVoterName}?</p>
             <div className="login-modal-actions">

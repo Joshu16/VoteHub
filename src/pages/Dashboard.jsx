@@ -11,11 +11,11 @@ import {
   stopElection,
 } from '../lib/electionsStore'
 
-/* Estados del panel */
-/* Centro de control admin */
+/* Panel de control electoral */
 function Dashboard() {
   const navigate = useNavigate()
   const currentYear = new Date().getFullYear()
+  /* election + datos del modal de partidos */
   const [election, setElection] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [modalMode, setModalMode] = useState('')
@@ -28,9 +28,9 @@ function Dashboard() {
   const [isStopping, setIsStopping] = useState(false)
   const [isSavingParty, setIsSavingParty] = useState(false)
   const [isDeletingParty, setIsDeletingParty] = useState(false)
+  /* Estado modal vacio agregar editar o borrar */
 
-  /* Recarga de elección actual */
-  /* Cargar datos del año actual */
+  /* Refresca eleccion desde servidor */
   const loadData = async () => {
     setIsLoading(true)
     try {
@@ -54,13 +54,13 @@ function Dashboard() {
       .finally(() => setIsLoading(false))
   }, [currentYear])
 
-  /* Salir de panel admin */
+  /* Cierra sesion del administrador */
   const handleLogout = async () => {
     await signOutAdmin()
     navigate('/admin-login')
   }
 
-  /* Iniciar elección */
+  /* Activa elección */
   const handleStartElection = () => {
     setIsStarting(true)
     startElection(currentYear)
@@ -74,7 +74,7 @@ function Dashboard() {
       .finally(() => setIsStarting(false))
   }
 
-  /* Terminar elección */
+  /* Detiene elección */
   const handleStopElection = () => {
     setIsStopping(true)
     stopElection(currentYear)
@@ -91,6 +91,7 @@ function Dashboard() {
   const isElectionActive = Boolean(election?.isActive)
   const isTogglingElection = isStarting || isStopping
 
+  /* Alterna iniciar o terminar eleccion */
   const handleToggleElection = () => {
     if (isElectionActive) {
       handleStopElection()
@@ -99,7 +100,7 @@ function Dashboard() {
     handleStartElection()
   }
 
-  /* Cerrar modal */
+  /* Cierra modal */
   const closeModal = () => {
     setModalMode('')
     setPartyName('')
@@ -108,7 +109,7 @@ function Dashboard() {
     setModalError('')
   }
 
-  /* Abrir modal para crear partido */
+  /* Modal nuevo partido */
   const openAddModal = () => {
     setModalMode('add')
     setPartyName('')
@@ -117,7 +118,7 @@ function Dashboard() {
     setModalError('')
   }
 
-  /* Abrir modal para editar partido */
+  /* Modal editar partido */
   const openEditModal = (party) => {
     setModalMode('edit')
     setPartyName(party.name)
@@ -126,7 +127,7 @@ function Dashboard() {
     setModalError('')
   }
 
-  /* Abrir modal para eliminar partido */
+  /* Modal eliminar partido */
   const openDeleteModal = (party) => {
     setModalMode('delete')
     setPartyName(party.name)
@@ -135,19 +136,21 @@ function Dashboard() {
     setModalError('')
   }
 
-  /* Cargar imagen del partido */
+  /* Imagen del partido (archivo) */
   const handleImageFileChange = (event) => {
     const file = event.target.files?.[0]
     if (!file) {
       return
     }
 
+    /* Tipos permitidos */
     const isValidType = file.type === 'image/png' || file.type === 'image/jpeg'
     if (!isValidType) {
       setModalError('Solo se permite PNG o JPG.')
       return
     }
 
+    /* Imagen en texto para vista previa y guardado */
     const reader = new FileReader()
     reader.onload = () => {
       setPartyImage(typeof reader.result === 'string' ? reader.result : '')
@@ -156,9 +159,10 @@ function Dashboard() {
     reader.readAsDataURL(file)
   }
 
-  /* Guardar partido (crear o editar) */
+  /* Guarda partido nuevo o editado */
   const handleSaveParty = () => {
     setIsSavingParty(true)
+    /* Alta o edicion segun el modal abierto */
     const action =
       modalMode === 'add'
         ? addParty(currentYear, partyName, partyImage)
@@ -179,14 +183,15 @@ function Dashboard() {
       .finally(() => setIsSavingParty(false))
   }
 
-  /* Exportar resultados en CSV */
+  /* Exporta archivo de resultados */
   const handleExportData = () => {
     const parties = election?.parties || []
+    /* Solo con elección cerrada y con datos */
     if (election?.isActive || !parties.length) {
       return
     }
 
-    /* Encabezados y filas CSV */
+    /* Lineas del archivo exportado */
     const rows = [['Año', 'Partido', 'Votos', 'Imagen']]
     for (const party of parties) {
       rows.push([String(currentYear), party.name, String(party.votes || 0), party.image_url || ''])
@@ -195,7 +200,7 @@ function Dashboard() {
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n')
 
-    /* Descarga local del archivo */
+    /* Descarga con enlace temporal oculto */
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -206,7 +211,7 @@ function Dashboard() {
     setFeedback('Datos exportados.')
   }
 
-  /* Eliminar partido */
+  /* Borra partido en servidor */
   const handleDeleteParty = () => {
     setIsDeletingParty(true)
     removeParty(currentYear, selectedParty.id)
@@ -221,15 +226,17 @@ function Dashboard() {
       .finally(() => setIsDeletingParty(false))
   }
 
-  /* Vista principal del dashboard */
+  /* Vista del panel */
   return (
     <section className="dashboard-page">
       <header className="dashboard-header">
+        {/* Título y año */}
         <h1>Centro de Control</h1>
         <p>Elecciones del año {currentYear}</p>
       </header>
 
       <div className="action-row">
+        {/* Boton de estado de eleccion y nuevo partido */}
         <button
           type="button"
           onClick={handleToggleElection}
@@ -255,6 +262,7 @@ function Dashboard() {
       </p>
 
       <div className="table-wrap">
+        {/* Partidos del año con acciones */}
         <table>
           <thead>
             <tr>
@@ -298,6 +306,7 @@ function Dashboard() {
       </div>
 
       <div className="bottom-actions">
+        {/* Exportar solo si eleccion cerrada */}
         <button
           type="button"
           onClick={handleExportData}
@@ -312,7 +321,7 @@ function Dashboard() {
 
       {modalMode && (
         <>
-          {/* Modal reutilizable para CRUD de partidos */}
+          {/* Modal crear editar borrar partidos */}
         <div className="modal-backdrop">
           <div className="party-modal">
             {modalMode === 'add' && <h3>Añadir partido</h3>}
@@ -321,6 +330,7 @@ function Dashboard() {
 
             {(modalMode === 'add' || modalMode === 'edit') && (
               <>
+                {/* Nombre y selector de imagen */}
                 <input
                   type="text"
                   value={partyName}

@@ -5,7 +5,7 @@
   box-sizing: border-box;
 }
 
-/* LAYOUT */
+/* Layout pantalla login */
 .login-page {
   --soft-blue: var(--accent);
   --soft-yellow: var(--accent);
@@ -76,7 +76,7 @@
   margin: 0 0 40px 0;
 }
 
-/* FORMULARIO */
+/* Bloque formulario */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -208,7 +208,7 @@
   pointer-events: none;
 }
 
-/* RESPONSIVE */
+/* Pantallas mas angostas */
 
 @media (max-width: 1200px) {
   .login-left {
