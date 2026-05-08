@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './Dashboard.css'
 import {
   addParty,
@@ -32,10 +33,19 @@ function Dashboard() {
   const [isCleaningData, setIsCleaningData] = useState(false)
   const [usedYears, setUsedYears] = useState([])
   const [stopFlowElection, setStopFlowElection] = useState(null)
-  /* Estado modal vacio agregar editar o borrar */
+  const [selectedStartYear, setSelectedStartYear] = useState(currentYear)
   const electionYear = Number(election?.year ?? currentYear)
   const maxUsedYear = usedYears.length ? Math.max(...usedYears) : null
   const nextSeasonStartYear = maxUsedYear === null ? currentYear : maxUsedYear + 1
+  const minOptionYear = currentYear
+  const maxOptionYear = Math.max(nextSeasonStartYear + 10, currentYear + 10)
+  const generatedYears = []
+  for (let year = maxOptionYear; year >= minOptionYear; year -= 1) {
+    generatedYears.push(year)
+  }
+  const startYearOptions = Array.from(
+    new Set([...generatedYears, ...usedYears.filter((year) => year >= currentYear)]),
+  ).sort((a, b) => b - a)
 
   const refreshUsedYears = async () => {
     const all = await getAllElections()
@@ -121,6 +131,7 @@ function Dashboard() {
       setModalMode('stop-election')
       return
     }
+    setSelectedStartYear(nextSeasonStartYear)
     setModalMode('start-election')
   }
 
@@ -131,6 +142,7 @@ function Dashboard() {
     setPartyImage('')
     setSelectedParty(null)
     setStopFlowElection(null)
+    setSelectedStartYear(nextSeasonStartYear)
     setModalError('')
   }
 
@@ -217,13 +229,12 @@ function Dashboard() {
     }
 
     /* Lineas del archivo exportado */
-    const rows = [['Periodo', 'Partido', 'Votos', 'Imagen']]
+    const rows = [['Periodo', 'Partido', 'Votos']]
     for (const party of parties) {
       rows.push([
         formatElectionPeriod(targetElection.year),
         party.name,
         String(party.votes || 0),
-        party.image_url || '',
       ])
     }
     const csv = rows
@@ -367,11 +378,12 @@ function Dashboard() {
         </button>
       </div>
 
-      {modalMode && (
-        <>
-          {/* Modal crear editar borrar partidos */}
-        <div className="modal-backdrop">
-          <div className="party-modal">
+      {modalMode &&
+        createPortal(
+          <>
+            {/* Modal crear editar borrar partidos */}
+          <div className="modal-backdrop">
+            <div className="party-modal">
             {modalMode === 'add' && <h3>Añadir partido</h3>}
             {modalMode === 'edit' && <h3>Editar partido</h3>}
             {modalMode === 'delete' && <h3>Eliminar partido</h3>}
@@ -428,7 +440,18 @@ function Dashboard() {
             {modalMode === 'start-election' && (
               <>
                 <p>Seleccione el periodo a iniciar.</p>
-                <p className="season-pill">{formatElectionPeriod(nextSeasonStartYear)}</p>
+                <select
+                  className="modal-select"
+                  value={selectedStartYear}
+                  onChange={(event) => setSelectedStartYear(Number(event.target.value))}
+                >
+                  {startYearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {formatElectionPeriod(year)}
+                    </option>
+                  ))}
+                </select>
+                <p className="season-pill">{formatElectionPeriod(selectedStartYear)}</p>
                 <div className="modal-actions">
                   <button type="button" className="icon-btn" onClick={closeModal}>
                     Cancelar
@@ -436,7 +459,7 @@ function Dashboard() {
                   <button
                     type="button"
                     className="icon-btn"
-                    onClick={() => handleStartElection(nextSeasonStartYear)}
+                    onClick={() => handleStartElection(selectedStartYear)}
                     disabled={isStarting}
                   >
                     {isStarting ? 'Iniciando...' : 'Iniciar'}
@@ -537,10 +560,11 @@ function Dashboard() {
                 </div>
               </>
             )}
+            </div>
           </div>
-        </div>
-        </>
-      )}
+          </>,
+          document.body,
+        )}
     </section>
   )
 }

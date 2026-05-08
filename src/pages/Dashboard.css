@@ -232,11 +232,27 @@ tbody td:last-child {
 }
 
 .modal-select {
-  border: 1px solid var(--accent);
+  width: 100%;
+  border: 1px solid #c8d7ea;
   border-radius: 10px;
-  height: 42px;
+  height: 44px;
   padding: 0 12px;
   background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-select:hover {
+  border-color: var(--accent);
+}
+
+.modal-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 158, 168, 0.22);
 }
 
 .season-pill {

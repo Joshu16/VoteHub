@@ -35,6 +35,18 @@
   border-right: 1px solid var(--accent);
 }
 
+.side-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.side-nav-actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .nav-btn {
   text-decoration: none;
   background: transparent;
@@ -67,7 +79,6 @@ button.nav-btn {
 }
 
 .nav-btn-logout {
-  margin-top: auto;
   border-color: #dc2626;
   color: #dc2626;
 }
@@ -134,4 +145,5 @@ button.nav-btn {
   .page-container.with-sidebar {
     padding-left: 26px;
   }
+
 }

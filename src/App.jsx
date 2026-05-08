@@ -9,6 +9,7 @@ import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
+import { getActiveElection } from './lib/electionsStore'
 
 /* Ítems menú lateral admin */
 const navItems = [
@@ -63,18 +64,22 @@ function Navigation() {
 
   return (
     <nav className="side-nav">
-      {navItems.map(({ to, label }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-        >
-          {label}
-        </NavLink>
-      ))}
-      <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
-        Cerrar sesión
-      </button>
+      <div className="side-nav-links">
+        {navItems.map(({ to, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+          >
+            {label}
+          </NavLink>
+        ))}
+      </div>
+      <div className="side-nav-actions">
+        <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
+          Cerrar sesión
+        </button>
+      </div>
     </nav>
   )
 }
@@ -107,6 +112,38 @@ function HomeMenu() {
       </ul>
     </section>
   )
+}
+
+/* Bloquea rutas publicas si no hay eleccion activa */
+function ActiveElectionGuard({ children }) {
+  const [isCheckingElection, setIsCheckingElection] = useState(true)
+  const [hasActiveElection, setHasActiveElection] = useState(false)
+
+  useEffect(() => {
+    const checkElection = async () => {
+      try {
+        const activeElection = await getActiveElection()
+        setHasActiveElection(Boolean(activeElection))
+      } catch {
+        setHasActiveElection(false)
+      } finally {
+        setIsCheckingElection(false)
+      }
+    }
+
+    checkElection()
+  }, [])
+
+  if (isCheckingElection) {
+    return <main className="app-shell">Cargando...</main>
+  }
+
+  if (!hasActiveElection) {
+    window.alert('No hay elecciones activas en este momento.')
+    return <Navigate to="/" replace />
+  }
+
+  return children
 }
 
 /* Raiz layout y rutas */
@@ -176,9 +213,20 @@ function App() {
             {/* Votacion solo con sesion de votante */}
             <Route
               path="/votacion"
-              element={isVoterSessionReady() ? <Voting /> : <Navigate to="/login" replace />}
+              element={
+                <ActiveElectionGuard>
+                  {isVoterSessionReady() ? <Voting /> : <Navigate to="/login" replace />}
+                </ActiveElectionGuard>
+              }
             />
-            <Route path="/login" element={<Login />} />
+            <Route
+              path="/login"
+              element={
+                <ActiveElectionGuard>
+                  <Login />
+                </ActiveElectionGuard>
+              }
+            />
             {/* Si admin ya entro manda al panel */}
             <Route
               path="/admin-login"
