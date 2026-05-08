@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import './Estadisticas.css'
 import { getActiveElection } from '../lib/electionsStore'
 import { getVotersCountFromExcel } from '../lib/voterExcel'
+import { formatElectionPeriod } from '../lib/electionPeriod'
 
 /* Estadísticas electorales */
 function Estadisticas() {
@@ -69,7 +70,7 @@ function Estadisticas() {
         <h1>Estadísticas Administrativas</h1>
         {!isLoading && <p>
           {activeElection
-            ? `Elección activa del año ${activeElection.year}.`
+            ? `Elección activa del periodo ${formatElectionPeriod(activeElection.year)}.`
             : 'No hay elección activa.'}
         </p>}
       </header>

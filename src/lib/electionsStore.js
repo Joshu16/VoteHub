@@ -252,6 +252,18 @@ export async function deleteElectionByYear(year) {
   if (e.error) throw e.error
 }
 
+/* Limpia votos y deja partidos en cero del año */
+export async function clearElectionData(year) {
+  const row = await buscarEleccionPorAño(year)
+  if (!row) return
+
+  const v = await supabase.from('votes').delete().eq('election_id', row.id)
+  if (v.error) throw v.error
+
+  const p = await supabase.from('parties').update({ votes: 0 }).eq('election_id', row.id)
+  if (p.error) throw p.error
+}
+
 /* Un voto por cedula y sube contador del partido */
 export async function voteParty(year, partyId, voterCedula) {
   const election = await buscarEleccionPorAño(year)

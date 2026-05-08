@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './Registros.css'
 import { deleteElectionByYear, getAllElections } from '../lib/electionsStore'
+import { formatElectionPeriod } from '../lib/electionPeriod'
 
 /* Etiqueta del ganador */
 function getWinnerLabel(election) {
@@ -71,7 +72,7 @@ function Registros() {
 
   /* Borra elección por año */
   const handleDeleteElection = (year) => {
-    const shouldDelete = window.confirm(`Eliminar la elección del año ${year}?`)
+    const shouldDelete = window.confirm(`Eliminar la elección del periodo ${formatElectionPeriod(year)}?`)
     if (!shouldDelete) {
       return
     }
@@ -107,7 +108,7 @@ function Registros() {
             {!isLoading &&
               elections.map((item) => (
               <tr key={item.year}>
-                <td>{item.year}</td>
+                <td>{formatElectionPeriod(item.year)}</td>
                 <td>{item.isActive ? 'Activa' : 'Detenida'}</td>
                 <td>{item.parties.map((party) => party.name).join(', ') || 'Sin partidos'}</td>
                 <td>{getWinnerLabel(item)}</td>

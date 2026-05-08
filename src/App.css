@@ -48,6 +48,12 @@
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+button.nav-btn {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
 .nav-btn:hover,
 .nav-btn:focus-visible {
   background: var(--accent);
@@ -57,6 +63,18 @@
 
 .nav-btn.active {
   background: var(--accent);
+  color: #fff;
+}
+
+.nav-btn-logout {
+  margin-top: auto;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.nav-btn-logout:hover,
+.nav-btn-logout:focus-visible {
+  background: #dc2626;
   color: #fff;
 }
 

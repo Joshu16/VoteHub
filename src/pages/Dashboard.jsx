@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
-import { signOutAdmin } from '../lib/adminAuth'
 import {
   addParty,
+  clearElectionData,
   editParty,
   ensureElection,
+  getAllElections,
+  getActiveElection,
   removeParty,
   startElection,
   stopElection,
 } from '../lib/electionsStore'
+import { formatElectionPeriod } from '../lib/electionPeriod'
 
 /* Panel de control electoral */
 function Dashboard() {
-  const navigate = useNavigate()
   const currentYear = new Date().getFullYear()
   /* election + datos del modal de partidos */
   const [election, setElection] = useState(null)
@@ -28,14 +29,31 @@ function Dashboard() {
   const [isStopping, setIsStopping] = useState(false)
   const [isSavingParty, setIsSavingParty] = useState(false)
   const [isDeletingParty, setIsDeletingParty] = useState(false)
+  const [isCleaningData, setIsCleaningData] = useState(false)
+  const [usedYears, setUsedYears] = useState([])
+  const [stopFlowElection, setStopFlowElection] = useState(null)
   /* Estado modal vacio agregar editar o borrar */
+  const electionYear = Number(election?.year ?? currentYear)
+  const maxUsedYear = usedYears.length ? Math.max(...usedYears) : null
+  const nextSeasonStartYear = maxUsedYear === null ? currentYear : maxUsedYear + 1
+
+  const refreshUsedYears = async () => {
+    const all = await getAllElections()
+    setUsedYears(all.map((item) => Number(item.year)).filter((item) => Number.isInteger(item)))
+  }
 
   /* Refresca eleccion desde servidor */
   const loadData = async () => {
     setIsLoading(true)
     try {
-      const existingElection = await ensureElection(currentYear)
-      setElection(existingElection)
+      const activeElection = await getActiveElection()
+      if (activeElection) {
+        setElection(activeElection)
+      } else {
+        const existingElection = await ensureElection(currentYear)
+        setElection(existingElection)
+      }
+      await refreshUsedYears()
     } catch (error) {
       setFeedback(`No se pudo cargar la elección: ${error?.message || 'Error desconocido'}`)
     } finally {
@@ -45,27 +63,27 @@ function Dashboard() {
 
   /* Carga inicial */
   useEffect(() => {
-    setIsLoading(true)
-    ensureElection(currentYear)
-      .then((existingElection) => setElection(existingElection))
-      .catch((error) =>
-        setFeedback(`No se pudo cargar la elección: ${error?.message || 'Error desconocido'}`),
-      )
-      .finally(() => setIsLoading(false))
+    loadData()
   }, [currentYear])
 
-  /* Cierra sesion del administrador */
-  const handleLogout = async () => {
-    await signOutAdmin()
-    navigate('/admin-login')
-  }
+  useEffect(() => {
+    if (!modalMode) {
+      document.body.classList.remove('modal-open')
+      return
+    }
+    document.body.classList.add('modal-open')
+    return () => {
+      document.body.classList.remove('modal-open')
+    }
+  }, [modalMode])
 
   /* Activa elección */
-  const handleStartElection = () => {
+  const handleStartElection = (startYear) => {
     setIsStarting(true)
-    startElection(currentYear)
+    startElection(startYear)
       .then(() => {
-        setFeedback('Elección iniciada.')
+        setFeedback(`Elección iniciada: ${formatElectionPeriod(startYear)}.`)
+        closeModal()
         return loadData()
       })
       .catch((error) =>
@@ -76,10 +94,16 @@ function Dashboard() {
 
   /* Detiene elección */
   const handleStopElection = () => {
+    const targetElection = election
+    if (!targetElection) {
+      return
+    }
     setIsStopping(true)
-    stopElection(currentYear)
+    stopElection(targetElection.year)
       .then(() => {
-        setFeedback('Elección detenida.')
+        setFeedback(`Elección finalizada: ${formatElectionPeriod(targetElection.year)}.`)
+        setStopFlowElection(targetElection)
+        setModalMode('stop-export')
         return loadData()
       })
       .catch((error) =>
@@ -94,10 +118,10 @@ function Dashboard() {
   /* Alterna iniciar o terminar eleccion */
   const handleToggleElection = () => {
     if (isElectionActive) {
-      handleStopElection()
+      setModalMode('stop-election')
       return
     }
-    handleStartElection()
+    setModalMode('start-election')
   }
 
   /* Cierra modal */
@@ -106,6 +130,7 @@ function Dashboard() {
     setPartyName('')
     setPartyImage('')
     setSelectedParty(null)
+    setStopFlowElection(null)
     setModalError('')
   }
 
@@ -165,8 +190,8 @@ function Dashboard() {
     /* Alta o edicion segun el modal abierto */
     const action =
       modalMode === 'add'
-        ? addParty(currentYear, partyName, partyImage)
-        : editParty(currentYear, selectedParty.id, partyName, partyImage)
+        ? addParty(electionYear, partyName, partyImage)
+        : editParty(electionYear, selectedParty.id, partyName, partyImage)
     action
       .then((ok) => {
         if (!ok) {
@@ -184,17 +209,22 @@ function Dashboard() {
   }
 
   /* Exporta archivo de resultados */
-  const handleExportData = () => {
-    const parties = election?.parties || []
+  const handleExportData = (targetElection = election) => {
+    const parties = targetElection?.parties || []
     /* Solo con elección cerrada y con datos */
-    if (election?.isActive || !parties.length) {
+    if (!targetElection || targetElection.isActive || !parties.length) {
       return
     }
 
     /* Lineas del archivo exportado */
-    const rows = [['Año', 'Partido', 'Votos', 'Imagen']]
+    const rows = [['Periodo', 'Partido', 'Votos', 'Imagen']]
     for (const party of parties) {
-      rows.push([String(currentYear), party.name, String(party.votes || 0), party.image_url || ''])
+      rows.push([
+        formatElectionPeriod(targetElection.year),
+        party.name,
+        String(party.votes || 0),
+        party.image_url || '',
+      ])
     }
     const csv = rows
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
@@ -205,16 +235,30 @@ function Dashboard() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `eleccion_${currentYear}.csv`
+    link.download = `eleccion_${formatElectionPeriod(targetElection.year)}.csv`
     link.click()
     URL.revokeObjectURL(url)
     setFeedback('Datos exportados.')
   }
 
+  const handleCleanData = (year) => {
+    setIsCleaningData(true)
+    clearElectionData(year)
+      .then(() => {
+        setFeedback(`Datos limpiados para ${formatElectionPeriod(year)}.`)
+        closeModal()
+        return loadData()
+      })
+      .catch((error) =>
+        setFeedback(`No se pudieron limpiar los datos: ${error?.message || 'Error desconocido'}`),
+      )
+      .finally(() => setIsCleaningData(false))
+  }
+
   /* Borra partido en servidor */
   const handleDeleteParty = () => {
     setIsDeletingParty(true)
-    removeParty(currentYear, selectedParty.id)
+    removeParty(electionYear, selectedParty.id)
       .then(() => {
         setFeedback('Partido eliminado.')
         closeModal()
@@ -232,7 +276,7 @@ function Dashboard() {
       <header className="dashboard-header">
         {/* Título y año */}
         <h1>Centro de Control</h1>
-        <p>Elecciones del año {currentYear}</p>
+        <p>Elecciones del periodo {formatElectionPeriod(electionYear)}</p>
       </header>
 
       <div className="action-row">
@@ -258,7 +302,7 @@ function Dashboard() {
       {feedback && <p className="dashboard-feedback">{feedback}</p>}
 
       <p className={`election-state ${isElectionActive ? 'active' : 'inactive'}`}>
-        Estado {currentYear}: {isElectionActive ? 'Activa' : 'Detenida'}
+        Estado {formatElectionPeriod(electionYear)}: {isElectionActive ? 'Activa' : 'Detenida'}
       </p>
 
       <div className="table-wrap">
@@ -314,8 +358,12 @@ function Dashboard() {
         >
           Exportar Datos
         </button>
-        <button type="button" className="logout-btn" onClick={handleLogout}>
-          Cerrar sesión
+        <button
+          type="button"
+          onClick={() => setModalMode('manual-clean-confirm')}
+          disabled={Boolean(election?.isActive) || (election?.parties || []).length === 0 || isCleaningData}
+        >
+          Limpiar Datos
         </button>
       </div>
 
@@ -327,6 +375,12 @@ function Dashboard() {
             {modalMode === 'add' && <h3>Añadir partido</h3>}
             {modalMode === 'edit' && <h3>Editar partido</h3>}
             {modalMode === 'delete' && <h3>Eliminar partido</h3>}
+            {modalMode === 'start-election' && <h3>Iniciar elecciones</h3>}
+            {modalMode === 'stop-election' && <h3>Finalizar elecciones</h3>}
+            {modalMode === 'stop-export' && <h3>Exportar datos</h3>}
+            {modalMode === 'stop-clean' && <h3>Limpiar datos</h3>}
+            {modalMode === 'stop-clean-confirm' && <h3>Confirmar limpieza</h3>}
+            {modalMode === 'manual-clean-confirm' && <h3>Confirmar limpieza</h3>}
 
             {(modalMode === 'add' || modalMode === 'edit') && (
               <>
@@ -366,6 +420,119 @@ function Dashboard() {
                   </button>
                   <button type="button" className="icon-btn danger" onClick={handleDeleteParty} disabled={isDeletingParty}>
                     {isDeletingParty ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalMode === 'start-election' && (
+              <>
+                <p>Seleccione el periodo a iniciar.</p>
+                <p className="season-pill">{formatElectionPeriod(nextSeasonStartYear)}</p>
+                <div className="modal-actions">
+                  <button type="button" className="icon-btn" onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => handleStartElection(nextSeasonStartYear)}
+                    disabled={isStarting}
+                  >
+                    {isStarting ? 'Iniciando...' : 'Iniciar'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalMode === 'stop-election' && (
+              <>
+                <p>¿Finalizar elecciones del periodo {formatElectionPeriod(electionYear)}?</p>
+                <div className="modal-actions">
+                  <button type="button" className="icon-btn" onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button type="button" className="icon-btn danger" onClick={handleStopElection} disabled={isStopping}>
+                    {isStopping ? 'Finalizando...' : 'Finalizar'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalMode === 'stop-export' && (
+              <>
+                <p>¿Desea exportar los datos?</p>
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => {
+                      setModalMode('stop-clean')
+                    }}
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => {
+                      handleExportData(stopFlowElection)
+                      setModalMode('stop-clean')
+                    }}
+                  >
+                    Sí
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalMode === 'stop-clean' && (
+              <>
+                <p>¿Desea limpiar los datos?</p>
+                <div className="modal-actions">
+                  <button type="button" className="icon-btn" onClick={closeModal}>
+                    No
+                  </button>
+                  <button type="button" className="icon-btn danger" onClick={() => setModalMode('stop-clean-confirm')}>
+                    Sí
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalMode === 'stop-clean-confirm' && (
+              <>
+                <p>¿Seguro que desea limpiar los datos de {formatElectionPeriod(stopFlowElection?.year)}?</p>
+                <div className="modal-actions">
+                  <button type="button" className="icon-btn" onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn danger"
+                    onClick={() => handleCleanData(stopFlowElection?.year)}
+                    disabled={isCleaningData}
+                  >
+                    {isCleaningData ? 'Limpiando...' : 'Limpiar'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {modalMode === 'manual-clean-confirm' && (
+              <>
+                <p>¿Seguro que desea limpiar los datos de {formatElectionPeriod(electionYear)}?</p>
+                <div className="modal-actions">
+                  <button type="button" className="icon-btn" onClick={closeModal}>
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn danger"
+                    onClick={() => handleCleanData(electionYear)}
+                    disabled={isCleaningData}
+                  >
+                    {isCleaningData ? 'Limpiando...' : 'Limpiar'}
                   </button>
                 </div>
               </>

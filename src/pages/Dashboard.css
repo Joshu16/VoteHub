@@ -122,15 +122,6 @@
   cursor: not-allowed;
 }
 
-.bottom-actions .logout-btn {
-  border-color: #dc2626;
-  background: #dc2626;
-}
-
-.bottom-actions .logout-btn:hover {
-  background: #b91c1c;
-}
-
 table {
   width: 100%;
   border-collapse: collapse;
@@ -209,11 +200,13 @@ tbody td:last-child {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.38);
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
   padding: 16px;
   z-index: 1000;
+  overscroll-behavior: contain;
 }
 
 .party-modal {
@@ -236,6 +229,24 @@ tbody td:last-child {
   border-radius: 10px;
   height: 42px;
   padding: 0 12px;
+}
+
+.modal-select {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  height: 42px;
+  padding: 0 12px;
+  background: #fff;
+}
+
+.season-pill {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: #eefbfd;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: center;
+  padding: 10px 12px;
 }
 
 .file-label {
@@ -294,4 +305,8 @@ tbody td:last-child {
   .bottom-actions {
     flex-direction: column;
   }
+}
+
+body.modal-open {
+  overflow: hidden;
 }

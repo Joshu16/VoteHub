@@ -7,7 +7,7 @@ import Registros from './pages/Registros'
 import Voting from './pages/Voting'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
-import { isAdminSessionActive } from './lib/adminAuth'
+import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
 
 /* Ítems menú lateral admin */
@@ -56,6 +56,11 @@ function setPageMetadata(pathname) {
 
 /* Barra lateral admin */
 function Navigation() {
+  const handleLogout = async () => {
+    await signOutAdmin()
+    window.location.assign('/admin-login')
+  }
+
   return (
     <nav className="side-nav">
       {navItems.map(({ to, label }) => (
@@ -67,6 +72,9 @@ function Navigation() {
           {label}
         </NavLink>
       ))}
+      <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
+        Cerrar sesión
+      </button>
     </nav>
   )
 }
