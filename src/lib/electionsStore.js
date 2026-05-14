@@ -2,10 +2,26 @@ import { supabase } from './supabaseClient'
 
 /* Operaciones en servidor elecciones partidos votos */
 
-/* Error si falta columna imagen en partidos */
+/* Error si falta columna en partidos (mensaje de Postgres/Supabase) */
+function noHayColumna(err, columnName) {
+  const texto = `${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`.toLowerCase()
+  return texto.includes(String(columnName).toLowerCase())
+}
+
 function noHayColumnaImagen(err) {
-  const texto = (err?.message || '') + ' ' + (err?.details || '')
-  return texto.toLowerCase().includes('image_url')
+  return noHayColumna(err, 'image_url')
+}
+
+function noHayColumnaOficiales(err) {
+  if (noHayColumna(err, 'officers_json')) {
+    return true
+  }
+  const code = String(err?.code || '')
+  const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
+  if (code === 'PGRST204' && texto.includes('officers_json')) {
+    return true
+  }
+  return false
 }
 
 /* Busca eleccion por año */
@@ -15,26 +31,31 @@ async function buscarEleccionPorAño(year) {
   return res.data
 }
 
-/* Lista partidos ordenada reintento sin imagen si falla */
+function normalizarFilaPartido(p) {
+  return {
+    ...p,
+    image_url: p.image_url ?? null,
+    officers_json: p.officers_json ?? null,
+  }
+}
+
+/* Lista partidos: prueba combinaciones de columnas opcionales por si el esquema es antiguo */
 async function listarPartidosDeEleccion(electionId) {
-  let res = await supabase
-    .from('parties')
-    .select('id, name, votes, image_url, election_id')
-    .eq('election_id', electionId)
-    .order('name', { ascending: true })
-  if (!res.error) {
-    return res.data || []
+  const selects = [
+    'id, name, votes, image_url, officers_json, election_id',
+    'id, name, votes, image_url, election_id',
+    'id, name, votes, officers_json, election_id',
+    'id, name, votes, election_id',
+  ]
+  let lastErr = null
+  for (const sel of selects) {
+    const res = await supabase.from('parties').select(sel).eq('election_id', electionId).order('name', { ascending: true })
+    if (!res.error) {
+      return (res.data || []).map(normalizarFilaPartido)
+    }
+    lastErr = res.error
   }
-  if (!noHayColumnaImagen(res.error)) {
-    throw res.error
-  }
-  res = await supabase
-    .from('parties')
-    .select('id, name, votes, election_id')
-    .eq('election_id', electionId)
-    .order('name', { ascending: true })
-  if (res.error) throw res.error
-  return (res.data || []).map((p) => ({ ...p, image_url: null }))
+  throw lastErr
 }
 
 /* Igual para varias elecciones a la vez */
@@ -42,63 +63,86 @@ async function listarPartidosVariasElecciones(ids) {
   if (ids.length === 0) {
     return []
   }
-  let res = await supabase
-    .from('parties')
-    .select('id, election_id, name, votes, image_url')
-    .in('election_id', ids)
-    .order('name', { ascending: true })
-  if (!res.error) {
-    return res.data || []
+  const selects = [
+    'id, election_id, name, votes, image_url, officers_json',
+    'id, election_id, name, votes, image_url',
+    'id, election_id, name, votes, officers_json',
+    'id, election_id, name, votes',
+  ]
+  let lastErr = null
+  for (const sel of selects) {
+    const res = await supabase.from('parties').select(sel).in('election_id', ids).order('name', { ascending: true })
+    if (!res.error) {
+      return (res.data || []).map(normalizarFilaPartido)
+    }
+    lastErr = res.error
   }
-  if (!noHayColumnaImagen(res.error)) {
-    throw res.error
-  }
-  res = await supabase
-    .from('parties')
-    .select('id, election_id, name, votes')
-    .in('election_id', ids)
-    .order('name', { ascending: true })
-  if (res.error) throw res.error
-  return (res.data || []).map((p) => ({ ...p, image_url: null }))
+  throw lastErr
 }
 
-/* Insertar partido segundo intento sin columna imagen */
-async function agregarFilaPartido(electionId, nombre, votos, urlImagen) {
-  let res = await supabase.from('parties').insert({
-    election_id: electionId,
-    name: nombre,
-    votes: votos,
-    image_url: urlImagen,
-  })
-  if (!res.error) {
-    return
-  }
-  if (!noHayColumnaImagen(res.error)) {
+/* Insertar partido reintentando sin columnas opcionales si no existen */
+async function agregarFilaPartido(electionId, nombre, votos, urlImagen, officersJson) {
+  const base = { election_id: electionId, name: nombre, votes: votos }
+  let useImage = true
+  let useOfficers = true
+  const wantedOfficers = officersJson != null && officersJson !== ''
+
+  for (let i = 0; i < 8; i += 1) {
+    const row = { ...base }
+    if (useImage) row.image_url = urlImagen ?? null
+    if (useOfficers) row.officers_json = officersJson ?? null
+
+    const res = await supabase.from('parties').insert(row)
+    if (!res.error) {
+      const escribioCargos = useOfficers && Object.prototype.hasOwnProperty.call(row, 'officers_json')
+      return { officersNotSaved: wantedOfficers && !escribioCargos }
+    }
+    if (noHayColumnaOficiales(res.error)) {
+      useOfficers = false
+      continue
+    }
+    if (noHayColumnaImagen(res.error)) {
+      useImage = false
+      continue
+    }
     throw res.error
   }
-  res = await supabase.from('parties').insert({
-    election_id: electionId,
-    name: nombre,
-    votes: votos,
-  })
-  if (res.error) throw res.error
+
+  const last = await supabase.from('parties').insert(base)
+  if (last.error) throw last.error
+  return { officersNotSaved: wantedOfficers }
 }
 
-/* Actualizar partido mismo segundo intento */
-async function actualizarFilaPartido(electionId, partyId, nombre, urlImagen) {
-  let res = await supabase
-    .from('parties')
-    .update({ name: nombre, image_url: urlImagen })
-    .eq('id', partyId)
-    .eq('election_id', electionId)
-  if (!res.error) {
-    return
-  }
-  if (!noHayColumnaImagen(res.error)) {
+/* Actualizar partido reintentando sin columnas opcionales */
+async function actualizarFilaPartido(electionId, partyId, nombre, urlImagen, officersJson) {
+  let useImage = true
+  let useOfficers = true
+  const wantedOfficers = officersJson != null && officersJson !== ''
+
+  for (let i = 0; i < 8; i += 1) {
+    const patch = { name: nombre }
+    if (useImage) patch.image_url = urlImagen ?? null
+    if (useOfficers) patch.officers_json = officersJson ?? null
+
+    const res = await supabase.from('parties').update(patch).eq('id', partyId).eq('election_id', electionId)
+    if (!res.error) {
+      const escribioCargos = useOfficers && Object.prototype.hasOwnProperty.call(patch, 'officers_json')
+      return { officersNotSaved: wantedOfficers && !escribioCargos }
+    }
+    if (noHayColumnaOficiales(res.error)) {
+      useOfficers = false
+      continue
+    }
+    if (noHayColumnaImagen(res.error)) {
+      useImage = false
+      continue
+    }
     throw res.error
   }
-  res = await supabase.from('parties').update({ name: nombre }).eq('id', partyId).eq('election_id', electionId)
-  if (res.error) throw res.error
+
+  const last = await supabase.from('parties').update({ name: nombre }).eq('id', partyId).eq('election_id', electionId)
+  if (last.error) throw last.error
+  return { officersNotSaved: wantedOfficers }
 }
 
 /* Partido interno voto nulo en pantalla */
@@ -108,7 +152,7 @@ async function asegurarVotoNulo(electionId) {
   if (yaEsta) {
     return
   }
-  await agregarFilaPartido(electionId, 'Voto nulo', 0, null)
+  await agregarFilaPartido(electionId, 'Voto nulo', 0, null, null)
 }
 
 /* Asegura año en tabla y partido voto nulo */
@@ -158,34 +202,34 @@ export async function stopElection(year) {
   if (res.error) throw res.error
 }
 
-/* Alta partido sin nombre repetido */
-export async function addParty(year, name, imageUrl) {
+/* Alta partido sin nombre repetido — devuelve { ok, officersNotSaved? } */
+export async function addParty(year, name, imageUrl, officersJson) {
   const election = await ensureElection(year)
   const nombre = name.trim()
-  if (!nombre) return false
+  if (!nombre) return { ok: false }
 
   const parties = await listarPartidosDeEleccion(election.id)
   const repetido = parties.some((p) => p.name.toLowerCase() === nombre.toLowerCase())
-  if (repetido) return false
+  if (repetido) return { ok: false }
 
-  await agregarFilaPartido(election.id, nombre, 0, imageUrl || null)
-  return true
+  const r = await agregarFilaPartido(election.id, nombre, 0, imageUrl || null, officersJson ?? null)
+  return { ok: true, officersNotSaved: r.officersNotSaved }
 }
 
-/* Edicion nombre e imagen */
-export async function editParty(year, partyId, nextName, imageUrl) {
+/* Edicion nombre, imagen y cargos — devuelve { ok, officersNotSaved? } */
+export async function editParty(year, partyId, nextName, imageUrl, officersJson) {
   const election = await ensureElection(year)
   const nombre = nextName.trim()
-  if (!nombre) return false
+  if (!nombre) return { ok: false }
 
   const parties = await listarPartidosDeEleccion(election.id)
   const repetido = parties.some(
     (p) => p.id !== partyId && p.name.toLowerCase() === nombre.toLowerCase(),
   )
-  if (repetido) return false
+  if (repetido) return { ok: false }
 
-  await actualizarFilaPartido(election.id, partyId, nombre, imageUrl || null)
-  return true
+  const r = await actualizarFilaPartido(election.id, partyId, nombre, imageUrl || null, officersJson ?? null)
+  return { ok: true, officersNotSaved: r.officersNotSaved }
 }
 
 /* Borra votos del partido y la fila party */

@@ -207,16 +207,68 @@ tbody td:last-child {
   padding: 16px;
   z-index: 1000;
   overscroll-behavior: contain;
+  overflow-y: auto;
 }
 
 .party-modal {
   width: min(100%, 460px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   background: #fff;
   border-radius: 14px;
   border: 1px solid var(--accent);
   padding: 18px;
   display: grid;
   gap: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.party-modal--wide {
+  width: min(96vw, 920px);
+  max-width: 920px;
+}
+
+.party-form-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(260px, 1.15fr);
+  gap: 16px 22px;
+  align-items: start;
+}
+
+.party-form-column--identity {
+  display: grid;
+  gap: 12px;
+}
+
+.party-form-column--identity > .party-image-preview {
+  max-height: 200px;
+}
+
+.party-officers-two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+}
+
+.party-form-column--officers .modal-text-field {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .party-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .party-officers-two-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .party-modal--wide {
+    width: min(100%, 460px);
+  }
 }
 
 .party-modal h3,
@@ -265,6 +317,19 @@ tbody td:last-child {
   padding: 10px 12px;
 }
 
+.modal-text-field {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #51607c;
+}
+
+.modal-text-field input {
+  font-weight: 500;
+}
+
 .file-label {
   display: grid;
   gap: 8px;
@@ -292,7 +357,7 @@ tbody td:last-child {
 
 .party-image-preview {
   width: 100%;
-  max-height: 220px;
+  max-height: 160px;
   object-fit: contain;
   border: 1px solid #dce5f2;
   border-radius: 10px;

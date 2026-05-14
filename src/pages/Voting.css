@@ -101,6 +101,11 @@
   color: #1e2a44;
 }
 
+.null-vote-label--nulo {
+  font-size: 34px !important;
+  letter-spacing: 0.02em;
+}
+
 .party-image-box img {
   width: 100% !important;
   height: 100% !important;
@@ -119,6 +124,21 @@
 .party-info p {
   font-size: 1.1rem;
   margin-bottom: 16px !important;
+}
+
+.party-info .party-name-line {
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin: 0 0 8px !important;
+}
+
+.party-info .party-presidente-line {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: #c7d2fe !important;
+  margin: 0 0 14px !important;
+  line-height: 1.35 !important;
 }
 
 .party-info button {
@@ -168,10 +188,43 @@
   justify-items: center;
 }
 
-.vote-success-gif {
-  width: 116px;
-  height: 116px;
-  object-fit: contain;
+.vote-uncheck-wrap {
+  width: 120px !important;
+  height: 120px !important;
+  margin: 0 auto 10px !important;
+  padding: 0 !important;
+}
+
+.vote-uncheck-svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.vote-uncheck-box {
+  fill: #fef2f2;
+  stroke: #fca5a5;
+  stroke-width: 3;
+}
+
+.vote-uncheck-leg {
+  fill: none;
+  stroke: #dc2626;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 64;
+  stroke-dashoffset: 64;
+  animation: vote-uncheck-draw 0.5s ease-out forwards;
+}
+
+.vote-uncheck-leg-b {
+  animation-delay: 0.14s;
+}
+
+@keyframes vote-uncheck-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .vote-modal p {

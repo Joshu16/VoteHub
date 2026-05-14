@@ -13,6 +13,12 @@ import {
   stopElection,
 } from '../lib/electionsStore'
 import { formatElectionPeriod } from '../lib/electionPeriod'
+import {
+  EMPTY_PARTY_OFFICERS,
+  PARTY_OFFICER_FIELDS,
+  parsePartyOfficers,
+  serializePartyOfficers,
+} from '../lib/partyOfficers'
 
 /* Panel de control electoral */
 function Dashboard() {
@@ -22,6 +28,7 @@ function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [modalMode, setModalMode] = useState('')
   const [partyName, setPartyName] = useState('')
+  const [partyOfficers, setPartyOfficers] = useState(() => ({ ...EMPTY_PARTY_OFFICERS }))
   const [partyImage, setPartyImage] = useState('')
   const [selectedParty, setSelectedParty] = useState(null)
   const [modalError, setModalError] = useState('')
@@ -139,6 +146,7 @@ function Dashboard() {
   const closeModal = () => {
     setModalMode('')
     setPartyName('')
+    setPartyOfficers({ ...EMPTY_PARTY_OFFICERS })
     setPartyImage('')
     setSelectedParty(null)
     setStopFlowElection(null)
@@ -150,6 +158,7 @@ function Dashboard() {
   const openAddModal = () => {
     setModalMode('add')
     setPartyName('')
+    setPartyOfficers({ ...EMPTY_PARTY_OFFICERS })
     setPartyImage('')
     setSelectedParty(null)
     setModalError('')
@@ -159,6 +168,7 @@ function Dashboard() {
   const openEditModal = (party) => {
     setModalMode('edit')
     setPartyName(party.name)
+    setPartyOfficers(parsePartyOfficers(party.officers_json))
     setPartyImage(party.image_url || '')
     setSelectedParty(party)
     setModalError('')
@@ -168,6 +178,7 @@ function Dashboard() {
   const openDeleteModal = (party) => {
     setModalMode('delete')
     setPartyName(party.name)
+    setPartyOfficers({ ...EMPTY_PARTY_OFFICERS })
     setPartyImage(party.image_url || '')
     setSelectedParty(party)
     setModalError('')
@@ -200,17 +211,25 @@ function Dashboard() {
   const handleSaveParty = () => {
     setIsSavingParty(true)
     /* Alta o edicion segun el modal abierto */
+    const officersJson = serializePartyOfficers(partyOfficers)
     const action =
       modalMode === 'add'
-        ? addParty(electionYear, partyName, partyImage)
-        : editParty(electionYear, selectedParty.id, partyName, partyImage)
+        ? addParty(electionYear, partyName, partyImage, officersJson)
+        : editParty(electionYear, selectedParty.id, partyName, partyImage, officersJson)
     action
-      .then((ok) => {
-        if (!ok) {
+      .then((result) => {
+        if (!result?.ok) {
           setModalError('Nombre vacío o duplicado.')
           return
         }
-        setFeedback(modalMode === 'add' ? 'Partido agregado.' : 'Partido editado.')
+        const baseMsg = modalMode === 'add' ? 'Partido agregado.' : 'Partido editado.'
+        if (result.officersNotSaved) {
+          setFeedback(
+            `${baseMsg} Los cargos no se guardaron: en Supabase falta la columna officers_json en la tabla parties. SQL: ALTER TABLE public.parties ADD COLUMN IF NOT EXISTS officers_json text;`,
+          )
+        } else {
+          setFeedback(baseMsg)
+        }
         closeModal()
         return loadData()
       })
@@ -383,7 +402,9 @@ function Dashboard() {
           <>
             {/* Modal crear editar borrar partidos */}
           <div className="modal-backdrop">
-            <div className="party-modal">
+            <div
+              className={`party-modal${modalMode === 'add' || modalMode === 'edit' ? ' party-modal--wide' : ''}`}
+            >
             {modalMode === 'add' && <h3>Añadir partido</h3>}
             {modalMode === 'edit' && <h3>Editar partido</h3>}
             {modalMode === 'delete' && <h3>Eliminar partido</h3>}
@@ -396,20 +417,40 @@ function Dashboard() {
 
             {(modalMode === 'add' || modalMode === 'edit') && (
               <>
-                {/* Nombre y selector de imagen */}
-                <input
-                  type="text"
-                  value={partyName}
-                  onChange={(event) => setPartyName(event.target.value)}
-                  placeholder="Nombre del partido"
-                />
-                <label className="file-label">
-                  Imagen (PNG/JPG)
-                  <input type="file" accept=".png,.jpg,.jpeg" onChange={handleImageFileChange} />
-                </label>
-                {partyImage && (
-                  <img src={partyImage} alt="Vista previa" className="party-image-preview" />
-                )}
+                <div className="party-form-grid">
+                  <div className="party-form-column party-form-column--identity">
+                    <input
+                      type="text"
+                      value={partyName}
+                      onChange={(event) => setPartyName(event.target.value)}
+                      placeholder="Nombre del partido"
+                    />
+                    <label className="file-label">
+                      Imagen (PNG/JPG)
+                      <input type="file" accept=".png,.jpg,.jpeg" onChange={handleImageFileChange} />
+                    </label>
+                    {partyImage && (
+                      <img src={partyImage} alt="Vista previa" className="party-image-preview" />
+                    )}
+                  </div>
+                  <div className="party-form-column party-form-column--officers">
+                    <div className="party-officers-two-cols">
+                      {PARTY_OFFICER_FIELDS.map(({ key, label, placeholder }) => (
+                        <label key={key} className="modal-text-field">
+                          {label}
+                          <input
+                            type="text"
+                            value={partyOfficers[key]}
+                            onChange={(event) =>
+                              setPartyOfficers((prev) => ({ ...prev, [key]: event.target.value }))
+                            }
+                            placeholder={placeholder}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 {modalError && <p className="modal-error">{modalError}</p>}
                 <div className="modal-actions">
                   <button type="button" className="icon-btn" onClick={closeModal}>

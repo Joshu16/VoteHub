@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Voting.css'
 import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
+import { getPresidenteNombre } from '../lib/partyOfficers'
+
+function etiquetaSinImagenPartido(nombrePartido) {
+  const n = (nombrePartido || '').trim().toLowerCase()
+  if (n === 'voto nulo') {
+    return 'NUlo'
+  }
+  return (nombrePartido || '').slice(0, 3).toUpperCase()
+}
 
 /* Flujo de voto del estudiante */
 function Voting() {
@@ -71,7 +80,7 @@ function Voting() {
       setActiveElection(election)
       window.setTimeout(() => {
         navigate('/login', { replace: true })
-      }, 900)
+      }, 1300)
     } catch {
       setModalType('error')
       setModalMessage('No se pudo registrar el voto.')
@@ -118,24 +127,32 @@ function Voting() {
         <div className="cards-container">
           {/* Una tarjeta por partido */}
           {!isLoading &&
-            (activeElection?.parties ?? []).map((party) => (
+            (activeElection?.parties ?? []).map((party) => {
+              const presidente = getPresidenteNombre(party.officers_json)
+              return (
             <div className="party-card" key={party.id}>
               <div className="party-image-box" style={{ backgroundColor: '#e9e9e9' }}>
                 {party.image_url ? (
                   <img src={party.image_url} alt={party.name} />
                 ) : (
-                  <p className="null-vote-label">{party.name.slice(0, 3).toUpperCase()}</p>
+                  <p
+                    className={`null-vote-label${party.name.trim().toLowerCase() === 'voto nulo' ? ' null-vote-label--nulo' : ''}`}
+                  >
+                    {etiquetaSinImagenPartido(party.name)}
+                  </p>
                 )}
               </div>
 
               <div className="party-info">
-                <p>{party.name}</p>
+                <p className="party-name-line">{party.name}</p>
+                {presidente && <p className="party-presidente-line">Presidente: {presidente}</p>}
                 <button onClick={() => handleVote(party)} disabled={isVoting}>
                   {isVoting ? 'Registrando...' : 'Votar'}
                 </button>
               </div>
             </div>
-            ))}
+              )
+            })}
         </div>
       </main>
 
@@ -154,11 +171,13 @@ function Voting() {
           {/* Modal exito con icono animado */}
           <div className={`vote-modal ${modalType === 'success' ? 'vote-modal-success' : ''}`}>
             {modalType === 'success' && (
-              <img
-                className="vote-success-gif"
-                src="https://media.tenor.com/6eVfQ0P6sGAAAAAC/check.gif"
-                alt="Voto confirmado"
-              />
+              <div className="vote-uncheck-wrap" role="img" aria-label="Proceso finalizado">
+                <svg className="vote-uncheck-svg" viewBox="0 0 120 120" aria-hidden>
+                  <rect x="22" y="22" width="76" height="76" rx="12" className="vote-uncheck-box" />
+                  <path d="M40 40 L80 80" className="vote-uncheck-leg vote-uncheck-leg-a" />
+                  <path d="M80 40 L40 80" className="vote-uncheck-leg vote-uncheck-leg-b" />
+                </svg>
+              </div>
             )}
             <p>{modalMessage}</p>
             {modalType !== 'success' && (
@@ -178,7 +197,6 @@ function Voting() {
 
       {confirmParty && (
         <div className="vote-modal-backdrop">
-          {/* Confirmar o cancelar antes de guardar */}
           <div className="vote-modal">
             <p>Vas a votar por {confirmParty.name}. ¿Deseas continuar?</p>
             <div className="vote-modal-actions">
