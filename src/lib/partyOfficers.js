@@ -11,7 +11,7 @@ export const EMPTY_PARTY_OFFICERS = {
 }
 
 export const PARTY_OFFICER_FIELDS = [
-  { key: 'presidente', label: 'Presidente', placeholder: 'Nombre del presidente' },
+  { key: 'presidente', label: 'Presidente', placeholder: 'Nombre del presidente', required: true },
   { key: 'vicepresidente', label: 'Vicepresidente', placeholder: 'Nombre del vicepresidente' },
   { key: 'tesorero', label: 'Tesorero', placeholder: 'Nombre del tesorero' },
   { key: 'fiscal', label: 'Fiscal', placeholder: 'Nombre del fiscal' },

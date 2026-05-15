@@ -44,6 +44,17 @@
   background: #dc2626;
 }
 
+.action-row .refresh-data-btn {
+  background: #ffffff;
+  color: var(--soft-ink);
+  border-color: #c8d7ea;
+}
+
+.action-row .refresh-data-btn:hover {
+  background: #eefbfd;
+  color: var(--soft-ink);
+}
+
 .action-row button:hover {
   background: var(--soft-red);
   transform: translateY(-1px);
@@ -328,6 +339,17 @@ tbody td:last-child {
 
 .modal-text-field input {
   font-weight: 500;
+}
+
+.field-required {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.field-optional {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .file-label {

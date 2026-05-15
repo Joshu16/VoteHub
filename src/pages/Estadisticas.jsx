@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './Estadisticas.css'
 import { getActiveElection } from '../lib/electionsStore'
+import { VOTEHUB_REFRESH_EVENT } from '../lib/dataRefresh'
 import { getVotersCountFromExcel } from '../lib/voterExcel'
 import { formatElectionPeriod } from '../lib/electionPeriod'
 
@@ -11,13 +12,15 @@ function Estadisticas() {
   const [totalVoters, setTotalVoters] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
-  /* Refresco periodico cada cinco segundos */
+  /* Refresco periodico y al pulsar Actualizar datos en el panel */
   useEffect(() => {
     let isMounted = true
 
-    const loadStats = async () => {
+    const loadStats = async ({ quiet = false } = {}) => {
+      if (!quiet) {
+        setIsLoading(true)
+      }
       try {
-        /* Carga a la vez eleccion activa y padron */
         const [election, votersCount] = await Promise.all([
           getActiveElection(),
           getVotersCountFromExcel(),
@@ -34,18 +37,24 @@ function Estadisticas() {
         setActiveElection(null)
         setTotalVoters(0)
       } finally {
-        if (isMounted) {
+        if (isMounted && !quiet) {
           setIsLoading(false)
         }
       }
     }
 
+    const onRefresh = () => {
+      loadStats({ quiet: true })
+    }
+
     loadStats()
-    const intervalId = setInterval(loadStats, 5000)
+    const intervalId = setInterval(() => loadStats({ quiet: true }), 5000)
+    window.addEventListener(VOTEHUB_REFRESH_EVENT, onRefresh)
 
     return () => {
       isMounted = false
       clearInterval(intervalId)
+      window.removeEventListener(VOTEHUB_REFRESH_EVENT, onRefresh)
     }
   }, [])
 

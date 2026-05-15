@@ -188,40 +188,50 @@
   justify-items: center;
 }
 
-.vote-uncheck-wrap {
+.vote-check-wrap {
   width: 120px !important;
   height: 120px !important;
   margin: 0 auto 10px !important;
   padding: 0 !important;
 }
 
-.vote-uncheck-svg {
+.vote-check-svg {
   width: 100% !important;
   height: 100% !important;
   display: block !important;
 }
 
-.vote-uncheck-box {
-  fill: #fef2f2;
-  stroke: #fca5a5;
+.vote-check-circle {
+  fill: #eefbfd;
+  stroke: var(--accent);
   stroke-width: 3;
+  transform-origin: 60px 60px;
+  animation: vote-check-pop 0.35s ease-out both;
 }
 
-.vote-uncheck-leg {
+.vote-check-mark {
   fill: none;
-  stroke: #dc2626;
+  stroke: var(--accent);
   stroke-width: 9;
   stroke-linecap: round;
-  stroke-dasharray: 64;
-  stroke-dashoffset: 64;
-  animation: vote-uncheck-draw 0.5s ease-out forwards;
+  stroke-linejoin: round;
+  stroke-dasharray: 72;
+  stroke-dashoffset: 72;
+  animation: vote-check-draw 0.55s ease-out 0.2s forwards;
 }
 
-.vote-uncheck-leg-b {
-  animation-delay: 0.14s;
+@keyframes vote-check-pop {
+  from {
+    transform: scale(0.75);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-@keyframes vote-uncheck-draw {
+@keyframes vote-check-draw {
   to {
     stroke-dashoffset: 0;
   }

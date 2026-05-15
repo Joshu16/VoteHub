@@ -7,7 +7,7 @@ import { getPresidenteNombre } from '../lib/partyOfficers'
 function etiquetaSinImagenPartido(nombrePartido) {
   const n = (nombrePartido || '').trim().toLowerCase()
   if (n === 'voto nulo') {
-    return 'NUlo'
+    return 'Nulo'
   }
   return (nombrePartido || '').slice(0, 3).toUpperCase()
 }
@@ -171,11 +171,10 @@ function Voting() {
           {/* Modal exito con icono animado */}
           <div className={`vote-modal ${modalType === 'success' ? 'vote-modal-success' : ''}`}>
             {modalType === 'success' && (
-              <div className="vote-uncheck-wrap" role="img" aria-label="Proceso finalizado">
-                <svg className="vote-uncheck-svg" viewBox="0 0 120 120" aria-hidden>
-                  <rect x="22" y="22" width="76" height="76" rx="12" className="vote-uncheck-box" />
-                  <path d="M40 40 L80 80" className="vote-uncheck-leg vote-uncheck-leg-a" />
-                  <path d="M80 40 L40 80" className="vote-uncheck-leg vote-uncheck-leg-b" />
+              <div className="vote-check-wrap" role="img" aria-label="Voto registrado">
+                <svg className="vote-check-svg" viewBox="0 0 120 120" aria-hidden>
+                  <circle cx="60" cy="60" r="44" className="vote-check-circle" />
+                  <path d="M38 62 L54 78 L84 44" className="vote-check-mark" />
                 </svg>
               </div>
             )}

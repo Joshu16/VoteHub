@@ -6,13 +6,13 @@ import {
   clearElectionData,
   editParty,
   ensureElection,
-  getAllElections,
   getActiveElection,
   removeParty,
   startElection,
   stopElection,
 } from '../lib/electionsStore'
 import { formatElectionPeriod } from '../lib/electionPeriod'
+import { notifyDataRefresh } from '../lib/dataRefresh'
 import {
   EMPTY_PARTY_OFFICERS,
   PARTY_OFFICER_FIELDS,
@@ -38,30 +38,15 @@ function Dashboard() {
   const [isSavingParty, setIsSavingParty] = useState(false)
   const [isDeletingParty, setIsDeletingParty] = useState(false)
   const [isCleaningData, setIsCleaningData] = useState(false)
-  const [usedYears, setUsedYears] = useState([])
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [stopFlowElection, setStopFlowElection] = useState(null)
-  const [selectedStartYear, setSelectedStartYear] = useState(currentYear)
   const electionYear = Number(election?.year ?? currentYear)
-  const maxUsedYear = usedYears.length ? Math.max(...usedYears) : null
-  const nextSeasonStartYear = maxUsedYear === null ? currentYear : maxUsedYear + 1
-  const minOptionYear = currentYear
-  const maxOptionYear = Math.max(nextSeasonStartYear + 10, currentYear + 10)
-  const generatedYears = []
-  for (let year = maxOptionYear; year >= minOptionYear; year -= 1) {
-    generatedYears.push(year)
-  }
-  const startYearOptions = Array.from(
-    new Set([...generatedYears, ...usedYears.filter((year) => year >= currentYear)]),
-  ).sort((a, b) => b - a)
-
-  const refreshUsedYears = async () => {
-    const all = await getAllElections()
-    setUsedYears(all.map((item) => Number(item.year)).filter((item) => Number.isInteger(item)))
-  }
 
   /* Refresca eleccion desde servidor */
-  const loadData = async () => {
-    setIsLoading(true)
+  const loadData = async ({ quiet = false } = {}) => {
+    if (!quiet) {
+      setIsLoading(true)
+    }
     try {
       const activeElection = await getActiveElection()
       if (activeElection) {
@@ -70,11 +55,12 @@ function Dashboard() {
         const existingElection = await ensureElection(currentYear)
         setElection(existingElection)
       }
-      await refreshUsedYears()
     } catch (error) {
       setFeedback(`No se pudo cargar la elección: ${error?.message || 'Error desconocido'}`)
     } finally {
-      setIsLoading(false)
+      if (!quiet) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -94,12 +80,25 @@ function Dashboard() {
     }
   }, [modalMode])
 
-  /* Activa elección */
-  const handleStartElection = (startYear) => {
+  const handleRefreshData = async () => {
+    setIsRefreshing(true)
+    try {
+      await loadData({ quiet: true })
+      notifyDataRefresh()
+      setFeedback('Datos actualizados (panel y estadísticas).')
+    } catch (error) {
+      setFeedback(`No se pudieron actualizar los datos: ${error?.message || 'Error desconocido'}`)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  /* Activa elección del año actual únicamente */
+  const handleStartElection = () => {
     setIsStarting(true)
-    startElection(startYear)
+    startElection(currentYear)
       .then(() => {
-        setFeedback(`Elección iniciada: ${formatElectionPeriod(startYear)}.`)
+        setFeedback(`Elección iniciada: ${formatElectionPeriod(currentYear)}.`)
         closeModal()
         return loadData()
       })
@@ -138,7 +137,6 @@ function Dashboard() {
       setModalMode('stop-election')
       return
     }
-    setSelectedStartYear(nextSeasonStartYear)
     setModalMode('start-election')
   }
 
@@ -150,7 +148,6 @@ function Dashboard() {
     setPartyImage('')
     setSelectedParty(null)
     setStopFlowElection(null)
-    setSelectedStartYear(nextSeasonStartYear)
     setModalError('')
   }
 
@@ -209,6 +206,21 @@ function Dashboard() {
 
   /* Guarda partido nuevo o editado */
   const handleSaveParty = () => {
+    const nombre = partyName.trim()
+    const presidente = (partyOfficers.presidente || '').trim()
+    if (!nombre) {
+      setModalError('El nombre del partido es obligatorio.')
+      return
+    }
+    if (!partyImage) {
+      setModalError('La imagen del partido es obligatoria.')
+      return
+    }
+    if (!presidente) {
+      setModalError('El nombre del presidente es obligatorio.')
+      return
+    }
+    setModalError('')
     setIsSavingParty(true)
     /* Alta o edicion segun el modal abierto */
     const officersJson = serializePartyOfficers(partyOfficers)
@@ -328,6 +340,14 @@ function Dashboard() {
         <button type="button" onClick={openAddModal} disabled={isTogglingElection}>
           Añadir Partido
         </button>
+        <button
+          type="button"
+          className="refresh-data-btn"
+          onClick={handleRefreshData}
+          disabled={isRefreshing || isLoading}
+        >
+          {isRefreshing ? 'Actualizando...' : 'Actualizar datos'}
+        </button>
       </div>
       {feedback && <p className="dashboard-feedback">{feedback}</p>}
 
@@ -419,14 +439,18 @@ function Dashboard() {
               <>
                 <div className="party-form-grid">
                   <div className="party-form-column party-form-column--identity">
-                    <input
-                      type="text"
-                      value={partyName}
-                      onChange={(event) => setPartyName(event.target.value)}
-                      placeholder="Nombre del partido"
-                    />
+                    <label className="modal-text-field">
+                      Nombre del partido <span className="field-required">*</span>
+                      <input
+                        type="text"
+                        value={partyName}
+                        onChange={(event) => setPartyName(event.target.value)}
+                        placeholder="Nombre del partido"
+                        required
+                      />
+                    </label>
                     <label className="file-label">
-                      Imagen (PNG/JPG)
+                      Imagen (PNG/JPG) <span className="field-required">*</span>
                       <input type="file" accept=".png,.jpg,.jpeg" onChange={handleImageFileChange} />
                     </label>
                     {partyImage && (
@@ -435,9 +459,14 @@ function Dashboard() {
                   </div>
                   <div className="party-form-column party-form-column--officers">
                     <div className="party-officers-two-cols">
-                      {PARTY_OFFICER_FIELDS.map(({ key, label, placeholder }) => (
+                      {PARTY_OFFICER_FIELDS.map(({ key, label, placeholder, required }) => (
                         <label key={key} className="modal-text-field">
                           {label}
+                          {required ? (
+                            <span className="field-required"> *</span>
+                          ) : (
+                            <span className="field-optional"> (opcional)</span>
+                          )}
                           <input
                             type="text"
                             value={partyOfficers[key]}
@@ -445,6 +474,7 @@ function Dashboard() {
                               setPartyOfficers((prev) => ({ ...prev, [key]: event.target.value }))
                             }
                             placeholder={placeholder}
+                            required={Boolean(required)}
                           />
                         </label>
                       ))}
@@ -480,29 +510,16 @@ function Dashboard() {
 
             {modalMode === 'start-election' && (
               <>
-                <p>Seleccione el periodo a iniciar.</p>
-                <select
-                  className="modal-select"
-                  value={selectedStartYear}
-                  onChange={(event) => setSelectedStartYear(Number(event.target.value))}
-                >
-                  {startYearOptions.map((year) => (
-                    <option key={year} value={year}>
-                      {formatElectionPeriod(year)}
-                    </option>
-                  ))}
-                </select>
-                <p className="season-pill">{formatElectionPeriod(selectedStartYear)}</p>
+                <p>
+                  Solo se pueden iniciar elecciones del año actual ({currentYear}). El periodo será{' '}
+                  {formatElectionPeriod(currentYear)}.
+                </p>
+                <p className="season-pill">{formatElectionPeriod(currentYear)}</p>
                 <div className="modal-actions">
                   <button type="button" className="icon-btn" onClick={closeModal}>
                     Cancelar
                   </button>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={() => handleStartElection(selectedStartYear)}
-                    disabled={isStarting}
-                  >
+                  <button type="button" className="icon-btn" onClick={handleStartElection} disabled={isStarting}>
                     {isStarting ? 'Iniciando...' : 'Iniciar'}
                   </button>
                 </div>
