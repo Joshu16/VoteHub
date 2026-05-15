@@ -23,9 +23,14 @@
 }
 
 .action-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+  align-items: center;
+}
+
+.action-row button:not(.refresh-data-btn) {
+  flex: 1 1 180px;
 }
 
 .action-row button {
@@ -45,17 +50,40 @@
 }
 
 .action-row .refresh-data-btn {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #ffffff;
   color: var(--soft-ink);
   border-color: #c8d7ea;
 }
 
+.action-row .refresh-data-icon {
+  width: 22px;
+  height: 22px;
+}
+
 .action-row .refresh-data-btn:hover {
   background: #eefbfd;
   color: var(--soft-ink);
+  transform: translateY(-1px);
 }
 
-.action-row button:hover {
+.action-row .refresh-data-btn--spinning .refresh-data-icon {
+  animation: refresh-spin 0.8s linear infinite;
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.action-row button:not(.refresh-data-btn):hover {
   background: var(--soft-red);
   transform: translateY(-1px);
 }
@@ -131,6 +159,15 @@
 .bottom-actions button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.bottom-actions .clean-data-btn {
+  border-color: #dc2626;
+  background: #dc2626;
+}
+
+.bottom-actions .clean-data-btn:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
 table {

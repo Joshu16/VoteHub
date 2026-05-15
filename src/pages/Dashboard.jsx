@@ -342,11 +342,18 @@ function Dashboard() {
         </button>
         <button
           type="button"
-          className="refresh-data-btn"
+          className={`refresh-data-btn${isRefreshing ? ' refresh-data-btn--spinning' : ''}`}
           onClick={handleRefreshData}
           disabled={isRefreshing || isLoading}
+          aria-label="Actualizar datos"
+          title="Actualizar datos"
         >
-          {isRefreshing ? 'Actualizando...' : 'Actualizar datos'}
+          <svg className="refresh-data-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+            />
+          </svg>
         </button>
       </div>
       {feedback && <p className="dashboard-feedback">{feedback}</p>}
@@ -410,6 +417,7 @@ function Dashboard() {
         </button>
         <button
           type="button"
+          className="clean-data-btn"
           onClick={() => setModalMode('manual-clean-confirm')}
           disabled={Boolean(election?.isActive) || (election?.parties || []).length === 0 || isCleaningData}
         >
