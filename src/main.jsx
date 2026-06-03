@@ -3,8 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import { applyBrandFavicon } from './lib/brandLogo.js'
 
-/* Quita datos viejos de votante del almacenamiento local */
+applyBrandFavicon()
+
+/* Quita datos viejos de votante del  local */
 localStorage.removeItem('voterCedula')
 localStorage.removeItem('voterName')
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
+import { setVoterElectionSnapshot, setVoterEligible } from '../lib/voterSession'
 
 /* Titulo tipo nombre propio */
 function toTitleCase(value) {
@@ -112,6 +113,8 @@ function Login() {
 
       sessionStorage.setItem('voterCedula', pendingCedula)
       sessionStorage.setItem('voterName', confirmVoterName)
+      setVoterElectionSnapshot(activeElection)
+      setVoterEligible(activeElection.year, pendingCedula)
       setConfirmVoterName('')
       setPendingCedula('')
       navigate('/votacion')
@@ -149,7 +152,7 @@ function Login() {
               required
             />
             <button type="submit" disabled={isLoading}>
-              {isLoading ? 'Validando...' : 'Iniciar sesión'}
+              {isLoading ? 'Validando...' : 'Ingresar'}
             </button>
           </form>
           {error && <p className="login-error">{error}</p>}

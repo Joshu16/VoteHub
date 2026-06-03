@@ -2,6 +2,16 @@ import { supabase } from './supabaseClient'
 
 /* Operaciones en servidor elecciones partidos votos */
 
+let activeElectionCache = null
+let activeElectionLoaded = false
+let activeElectionInflight = null
+
+export function invalidateActiveElectionCache() {
+  activeElectionCache = null
+  activeElectionLoaded = false
+  activeElectionInflight = null
+}
+
 /* Error si falta columna en partidos (mensaje de Postgres/Supabase) */
 function noHayColumna(err, columnName) {
   const texto = `${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`.toLowerCase()
@@ -10,6 +20,14 @@ function noHayColumna(err, columnName) {
 
 function noHayColumnaImagen(err) {
   return noHayColumna(err, 'image_url')
+}
+
+function esClaveDuplicada(err) {
+  return String(err?.code || '') === '23505'
+}
+
+function esVotoNuloNombre(nombre) {
+  return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
 function noHayColumnaOficiales(err) {
@@ -148,11 +166,18 @@ async function actualizarFilaPartido(electionId, partyId, nombre, urlImagen, off
 /* Partido interno voto nulo en pantalla */
 async function asegurarVotoNulo(electionId) {
   const lista = await listarPartidosDeEleccion(electionId)
-  const yaEsta = lista.some((p) => p.name.trim().toLowerCase() === 'voto nulo')
-  if (yaEsta) {
+  if (lista.some((p) => esVotoNuloNombre(p.name))) {
     return
   }
-  await agregarFilaPartido(electionId, 'Voto nulo', 0, null, null)
+  try {
+    await agregarFilaPartido(electionId, 'Voto nulo', 0, null, null)
+  } catch (err) {
+    /* Otra peticion pudo crearlo al mismo tiempo (React Strict Mode, doble carga) */
+    if (esClaveDuplicada(err)) {
+      return
+    }
+    throw err
+  }
 }
 
 /* Asegura año en tabla y partido voto nulo */
@@ -192,6 +217,7 @@ export async function startElection(year) {
 
   const on = await supabase.from('elections').update({ is_active: true }).eq('id', election.id)
   if (on.error) throw on.error
+  invalidateActiveElectionCache()
 }
 
 /* Desactiva la elección del año */
@@ -200,6 +226,7 @@ export async function stopElection(year) {
   if (!row) return
   const res = await supabase.from('elections').update({ is_active: false }).eq('id', row.id)
   if (res.error) throw res.error
+  invalidateActiveElectionCache()
 }
 
 /* Alta partido sin nombre repetido — devuelve { ok, officersNotSaved? } */
@@ -209,10 +236,13 @@ export async function addParty(year, name, imageUrl, officersJson) {
   if (!nombre) return { ok: false }
 
   const parties = await listarPartidosDeEleccion(election.id)
-  const repetido = parties.some((p) => p.name.toLowerCase() === nombre.toLowerCase())
+  const repetido = parties.some(
+    (p) => p.name.trim().toLowerCase() === nombre.toLowerCase(),
+  )
   if (repetido) return { ok: false }
 
   const r = await agregarFilaPartido(election.id, nombre, 0, imageUrl || null, officersJson ?? null)
+  invalidateActiveElectionCache()
   return { ok: true, officersNotSaved: r.officersNotSaved }
 }
 
@@ -224,11 +254,12 @@ export async function editParty(year, partyId, nextName, imageUrl, officersJson)
 
   const parties = await listarPartidosDeEleccion(election.id)
   const repetido = parties.some(
-    (p) => p.id !== partyId && p.name.toLowerCase() === nombre.toLowerCase(),
+    (p) => p.id !== partyId && p.name.trim().toLowerCase() === nombre.toLowerCase(),
   )
   if (repetido) return { ok: false }
 
   const r = await actualizarFilaPartido(election.id, partyId, nombre, imageUrl || null, officersJson ?? null)
+  invalidateActiveElectionCache()
   return { ok: true, officersNotSaved: r.officersNotSaved }
 }
 
@@ -245,10 +276,10 @@ export async function removeParty(year, partyId) {
 
   const delParty = await supabase.from('parties').delete().eq('id', partyId).eq('election_id', election.id)
   if (delParty.error) throw delParty.error
+  invalidateActiveElectionCache()
 }
 
-/* Eleccion activa en servidor con partidos */
-export async function getActiveElection() {
+async function fetchActiveElectionFromServer() {
   const res = await supabase
     .from('elections')
     .select('id, year, is_active')
@@ -261,6 +292,31 @@ export async function getActiveElection() {
 
   const parties = await listarPartidosDeEleccion(res.data.id)
   return { ...res.data, isActive: res.data.is_active, parties }
+}
+
+/* Eleccion activa en servidor con partidos (cache en memoria) */
+export async function getActiveElection(options = {}) {
+  const force = options?.force === true
+  if (!force && activeElectionLoaded) {
+    return activeElectionCache
+  }
+  if (!force && activeElectionInflight) {
+    return activeElectionInflight
+  }
+
+  activeElectionInflight = fetchActiveElectionFromServer()
+    .then((data) => {
+      activeElectionCache = data
+      activeElectionLoaded = true
+      activeElectionInflight = null
+      return data
+    })
+    .catch((err) => {
+      activeElectionInflight = null
+      throw err
+    })
+
+  return activeElectionInflight
 }
 
 /* Historial elecciones con partidos agrupados */
@@ -294,6 +350,7 @@ export async function deleteElectionByYear(year) {
 
   const e = await supabase.from('elections').delete().eq('id', row.id)
   if (e.error) throw e.error
+  invalidateActiveElectionCache()
 }
 
 /* Limpia votos y deja partidos en cero del año */
@@ -306,6 +363,7 @@ export async function clearElectionData(year) {
 
   const p = await supabase.from('parties').update({ votes: 0 }).eq('election_id', row.id)
   if (p.error) throw p.error
+  invalidateActiveElectionCache()
 }
 
 /* Un voto por cedula y sube contador del partido */
@@ -339,6 +397,7 @@ export async function voteParty(year, partyId, voterCedula) {
   const up = await supabase.from('parties').update({ votes: suma }).eq('id', partyId).eq('election_id', election.id)
   if (up.error) throw up.error
 
+  invalidateActiveElectionCache()
   return { ok: true }
 }
 

@@ -7,9 +7,10 @@ import Registros from './pages/Registros'
 import Voting from './pages/Voting'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
+import Home from './pages/Home'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
-import { getActiveElection } from './lib/electionsStore'
+import logoCIT, { applyBrandFavicon } from './lib/brandLogo.js'
 
 /* Ítems menú lateral admin */
 const navItems = [
@@ -29,30 +30,10 @@ const pageTitles = {
   '/admin-login': 'VoteHub | Login Admin',
 }
 
-/* Favicon por ruta */
-const pageIcons = {
-  '/': '/icons.svg',
-  '/dashboard': '/icons.svg',
-  '/estadisticas': '/icons.svg',
-  '/registros': '/icons.svg',
-  '/votacion': '/icons.svg',
-  '/login': '/icons.svg',
-  '/admin-login': '/icons.svg',
-}
-
 /* Sincroniza titulo de pestaña e icono con la ruta */
 function setPageMetadata(pathname) {
   document.title = pageTitles[pathname] || 'VoteHub'
-
-  const iconHref = pageIcons[pathname] || '/icons.svg'
-  let iconLink = document.querySelector("link[rel='icon']")
-  if (!iconLink) {
-    iconLink = document.createElement('link')
-    iconLink.setAttribute('rel', 'icon')
-    document.head.appendChild(iconLink)
-  }
-  iconLink.setAttribute('href', iconHref)
-  iconLink.setAttribute('type', 'image/svg+xml')
+  applyBrandFavicon()
 }
 
 /* Barra lateral admin */
@@ -75,6 +56,10 @@ function Navigation() {
           </NavLink>
         ))}
       </div>
+      <div className="side-nav-spacer" aria-hidden />
+      <div className="side-nav-logo-wrap">
+        <img src={logoCIT} alt="Complejo Educativo CIT" className="side-nav-logo" />
+      </div>
       <div className="side-nav-actions">
         <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
           Cerrar sesión
@@ -82,68 +67,6 @@ function Navigation() {
       </div>
     </nav>
   )
-}
-
-/* Portada con enlaces */
-function HomeMenu() {
-  return (
-    <section>
-      <h1>Menú principal</h1>
-      <p>Selecciona una sección para continuar.</p>
-      <ul>
-        <li>
-          <NavLink to="/dashboard">Dashboard</NavLink>
-        </li>
-        <li>
-          <NavLink to="/estadisticas">Estadísticas</NavLink>
-        </li>
-        <li>
-          <NavLink to="/registros">Registros</NavLink>
-        </li>
-        <li>
-          <NavLink to="/votacion">Votación</NavLink>
-        </li>
-        <li>
-          <NavLink to="/login">Login</NavLink>
-        </li>
-        <li>
-          <NavLink to="/admin-login">Login Administrativo</NavLink>
-        </li>
-      </ul>
-    </section>
-  )
-}
-
-/* Bloquea rutas publicas si no hay eleccion activa */
-function ActiveElectionGuard({ children }) {
-  const [isCheckingElection, setIsCheckingElection] = useState(true)
-  const [hasActiveElection, setHasActiveElection] = useState(false)
-
-  useEffect(() => {
-    const checkElection = async () => {
-      try {
-        const activeElection = await getActiveElection()
-        setHasActiveElection(Boolean(activeElection))
-      } catch {
-        setHasActiveElection(false)
-      } finally {
-        setIsCheckingElection(false)
-      }
-    }
-
-    checkElection()
-  }, [])
-
-  if (isCheckingElection) {
-    return <main className="app-shell">Cargando...</main>
-  }
-
-  if (!hasActiveElection) {
-    window.alert('No hay elecciones activas en este momento.')
-    return <Navigate to="/" replace />
-  }
-
-  return children
 }
 
 /* Raiz layout y rutas */
@@ -183,6 +106,22 @@ function App() {
     checkSession()
   }, [location.pathname])
 
+  /* Cierra sesion admin tras 24 h aunque no cambie la ruta */
+  useEffect(() => {
+    if (!isAdminLogged) {
+      return undefined
+    }
+
+    const id = setInterval(async () => {
+      const active = await isAdminSessionActive()
+      if (!active) {
+        setIsAdminLogged(false)
+      }
+    }, 60_000)
+
+    return () => clearInterval(id)
+  }, [isAdminLogged])
+
   /* Espera validación de sesión */
   if (isCheckingSession) {
     return <main className="app-shell">Cargando...</main>
@@ -196,7 +135,7 @@ function App() {
       <section className={`page-container ${showSidebar ? 'with-sidebar' : ''}`}>
         <div className="route-stage" key={location.pathname}>
           <Routes>
-            <Route path="/" element={<HomeMenu />} />
+            <Route path="/" element={<Home />} />
             {/* Rutas de panel con sesion admin */}
             <Route
               path="/dashboard"
@@ -214,19 +153,10 @@ function App() {
             <Route
               path="/votacion"
               element={
-                <ActiveElectionGuard>
-                  {isVoterSessionReady() ? <Voting /> : <Navigate to="/login" replace />}
-                </ActiveElectionGuard>
+                isVoterSessionReady() ? <Voting /> : <Navigate to="/login" replace />
               }
             />
-            <Route
-              path="/login"
-              element={
-                <ActiveElectionGuard>
-                  <Login />
-                </ActiveElectionGuard>
-              }
-            />
+            <Route path="/login" element={<Login />} />
             {/* Si admin ya entro manda al panel */}
             <Route
               path="/admin-login"

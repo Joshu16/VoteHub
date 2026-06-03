@@ -129,6 +129,56 @@
   color: #b91c1c;
 }
 
+.winner-modal-period {
+  margin: 0 0 12px;
+  text-align: center;
+  color: #51607c;
+  font-weight: 700;
+}
+
+.winner-modal-result {
+  border: 2px solid #0f9ea8;
+  border-radius: 14px;
+  background: #eefbfd;
+  padding: 18px 16px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.winner-modal-result--winner {
+  border-color: #16a34a;
+  background: #ecfdf3;
+}
+
+.winner-modal-result--tie {
+  border-color: #d97706;
+  background: #fff7ed;
+}
+
+.winner-modal-result__title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #51607c;
+}
+
+.winner-modal-result__name {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.winner-modal-result__votes {
+  margin: 10px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #51607c;
+}
+
 .bottom-actions {
   display: flex;
   justify-content: flex-end;

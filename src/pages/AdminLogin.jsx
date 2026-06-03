@@ -32,7 +32,7 @@ function AdminLogin() {
     <section className="admin-login-page">
       <div className="admin-login-card">
         <h1>Ingresar</h1>
-        <p>Acceso administrativo con Supabase.</p>
+        <p>Acceso administrativo.</p>
 
         <form className="admin-login-form" onSubmit={handleAdminLogin}>
           <input

@@ -2,40 +2,7 @@ import { useEffect, useState } from 'react'
 import './Registros.css'
 import { deleteElectionByYear, getAllElections } from '../lib/electionsStore'
 import { formatElectionPeriod } from '../lib/electionPeriod'
-
-/* Etiqueta del ganador */
-function getWinnerLabel(election) {
-  if (!election.parties.length) {
-    return 'Sin partidos'
-  }
-
-  /* Mayor número de votos */
-  let maxVotes = 0
-  for (const party of election.parties) {
-    const votes = Number(party.votes || 0)
-    if (votes > maxVotes) {
-      maxVotes = votes
-    }
-  }
-
-  if (maxVotes === 0) {
-    return 'Sin votos'
-  }
-
-  /* Puede haber empate */
-  const winners = []
-  for (const party of election.parties) {
-    if (Number(party.votes || 0) === maxVotes) {
-      winners.push(party.name)
-    }
-  }
-
-  if (winners.length === 1) {
-    return winners[0]
-  }
-
-  return `Empate: ${winners.join(', ')}`
-}
+import { getElectionWinner } from '../lib/electionWinner'
 
 /* Listado histórico de elecciones */
 function Registros() {
@@ -111,7 +78,7 @@ function Registros() {
                 <td>{formatElectionPeriod(item.year)}</td>
                 <td>{item.isActive ? 'Activa' : 'Detenida'}</td>
                 <td>{item.parties.map((party) => party.name).join(', ') || 'Sin partidos'}</td>
-                <td>{getWinnerLabel(item)}</td>
+                <td>{getElectionWinner(item.parties).label}</td>
                 <td>
                   <button
                     type="button"

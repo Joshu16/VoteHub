@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import './Voting.css'
 import { getActiveElection, hasVotedInElection, voteParty } from '../lib/electionsStore'
 import { getPresidenteNombre } from '../lib/partyOfficers'
+import {
+  getVoterElectionSnapshot,
+  isVoterEligibleForElection,
+  setVoterElectionSnapshot,
+} from '../lib/voterSession'
 
 function etiquetaSinImagenPartido(nombrePartido) {
   const n = (nombrePartido || '').trim().toLowerCase()
@@ -28,16 +33,38 @@ function Voting() {
   /* Partido elegido antes de confirmar */
   const [confirmParty, setConfirmParty] = useState(null)
 
-  /* Carga elección y chequeo de voto */
+  /* Usa eleccion guardada en login; solo consulta servidor si falta */
   useEffect(() => {
     const load = async () => {
+      const cached = getVoterElectionSnapshot()
+      if (cached) {
+        setActiveElection(cached)
+        setError('')
+        setIsLoading(false)
+
+        if (voterCedula && !isVoterEligibleForElection(cached.year, voterCedula)) {
+          try {
+            const voted = await hasVotedInElection(cached.year, voterCedula)
+            if (voted) {
+              sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
+              navigate('/login', { replace: true })
+            }
+          } catch {
+            setError('No se pudo verificar tu voto.')
+          }
+        }
+        return
+      }
+
       try {
         const election = await getActiveElection()
         setActiveElection(election)
         setError('')
+        if (election) {
+          setVoterElectionSnapshot(election)
+        }
 
-        /* Evita pantalla de voto si ya votó */
-        if (election && voterCedula) {
+        if (election && voterCedula && !isVoterEligibleForElection(election.year, voterCedula)) {
           const voted = await hasVotedInElection(election.year, voterCedula)
           if (voted) {
             sessionStorage.setItem('votehub_voting_modal', 'Ya has votado en estas elecciones.')
@@ -46,7 +73,6 @@ function Voting() {
           }
         }
       } catch {
-        /* Fallo de red o servidor */
         setActiveElection(null)
         setError('No se pudo cargar la elección activa.')
       } finally {
@@ -76,8 +102,6 @@ function Voting() {
       /* Exito mensaje corto y vuelta al login */
       setModalType('success')
       setModalMessage('Has terminado el proceso.')
-      const election = await getActiveElection()
-      setActiveElection(election)
       window.setTimeout(() => {
         navigate('/login', { replace: true })
       }, 1300)

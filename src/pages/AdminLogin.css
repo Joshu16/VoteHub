@@ -1,48 +1,57 @@
 .admin-login-page {
+  position: relative;
   width: 100%;
-  height: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #e7f9fb 0%, #f3f4f6 50%, #dff7f9 100%);
   padding: 24px 16px;
+  box-sizing: border-box;
   overflow: hidden;
+  background: #ffffff;
 }
 
 .admin-login-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 520px;
-  background: #ffffff;
-  border: 1px solid var(--accent);
-  border-radius: 16px;
-  padding: 30px 34px;
+  max-width: 420px;
+  padding: 36px 32px;
   display: grid;
-  gap: 16px;
+  gap: 20px;
   text-align: center;
+  background: #ffffff;
+  border: 1px solid #e5e9ef;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(30, 42, 68, 0.04),
+    0 12px 32px rgba(30, 42, 68, 0.07);
 }
 
 .admin-login-card h1 {
   margin: 0;
   color: var(--ink);
   font-size: 26px;
+  letter-spacing: -0.02em;
 }
 
 .admin-login-card p {
   margin: 0 0 8px;
-  color: #51607c;
-  line-height: 1.4;
+  color: #5a6b85;
+  line-height: 1.45;
+  font-size: 14px;
 }
 
 .admin-login-form {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .admin-login-form input,
-.admin-login-btn {
-  width: min(100%, 420px);
+.admin-login-form .admin-login-btn {
+  width: 100%;
+  box-sizing: border-box;
   height: 46px;
   border-radius: 10px;
   font-size: 14px;
@@ -50,19 +59,37 @@
 }
 
 .admin-login-form input {
-  border: 1px solid var(--accent);
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: var(--ink);
+  transition: border-color 0.2s ease;
+}
+
+.admin-login-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.admin-login-form input::placeholder {
+  color: #94a3b8;
 }
 
 .admin-login-btn {
-  border: 1px solid var(--accent);
+  border: none;
   background: var(--accent);
   color: #fff;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .admin-login-btn:hover {
-  background: #0d9ea8;
+  background: #00a8b2;
+}
+
+.admin-login-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .admin-login-btn:disabled {

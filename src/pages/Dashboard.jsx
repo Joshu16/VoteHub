@@ -19,6 +19,7 @@ import {
   parsePartyOfficers,
   serializePartyOfficers,
 } from '../lib/partyOfficers'
+import { getElectionWinner } from '../lib/electionWinner'
 
 /* Panel de control electoral */
 function Dashboard() {
@@ -116,11 +117,12 @@ function Dashboard() {
     }
     setIsStopping(true)
     stopElection(targetElection.year)
-      .then(() => {
+      .then(() => ensureElection(targetElection.year))
+      .then((freshElection) => {
+        setElection(freshElection)
+        setStopFlowElection(freshElection)
         setFeedback(`Elección finalizada: ${formatElectionPeriod(targetElection.year)}.`)
-        setStopFlowElection(targetElection)
-        setModalMode('stop-export')
-        return loadData()
+        setModalMode('stop-winner')
       })
       .catch((error) =>
         setFeedback(`No se pudo detener la elección: ${error?.message || 'Error desconocido'}`),
@@ -130,6 +132,7 @@ function Dashboard() {
 
   const isElectionActive = Boolean(election?.isActive)
   const isTogglingElection = isStarting || isStopping
+  const stopFlowWinner = getElectionWinner(stopFlowElection?.parties ?? election?.parties ?? [])
 
   /* Alterna iniciar o terminar eleccion */
   const handleToggleElection = () => {
@@ -438,6 +441,7 @@ function Dashboard() {
             {modalMode === 'delete' && <h3>Eliminar partido</h3>}
             {modalMode === 'start-election' && <h3>Iniciar elecciones</h3>}
             {modalMode === 'stop-election' && <h3>Finalizar elecciones</h3>}
+            {modalMode === 'stop-winner' && <h3>Resultado de las elecciones</h3>}
             {modalMode === 'stop-export' && <h3>Exportar datos</h3>}
             {modalMode === 'stop-clean' && <h3>Limpiar datos</h3>}
             {modalMode === 'stop-clean-confirm' && <h3>Confirmar limpieza</h3>}
@@ -548,6 +552,42 @@ function Dashboard() {
               </>
             )}
 
+            {modalMode === 'stop-winner' && (
+              <>
+                <p className="winner-modal-period">
+                  Periodo {formatElectionPeriod(stopFlowElection?.year ?? electionYear)}
+                </p>
+                <div className={`winner-modal-result winner-modal-result--${stopFlowWinner.type}`}>
+                  {stopFlowWinner.type === 'winner' || stopFlowWinner.type === 'tie' ? (
+                    <>
+                      <p className="winner-modal-result__title">
+                        {stopFlowWinner.type === 'tie' ? 'Empate' : 'Ganador'}
+                      </p>
+                      <p className="winner-modal-result__name">
+                        {stopFlowWinner.type === 'tie'
+                          ? stopFlowWinner.winners.map((w) => w.name).join(', ')
+                          : stopFlowWinner.label}
+                      </p>
+                      <p className="winner-modal-result__votes">
+                        {stopFlowWinner.maxVotes} voto{stopFlowWinner.maxVotes === 1 ? '' : 's'}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="winner-modal-result__name">{stopFlowWinner.label}</p>
+                  )}
+                </div>
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => setModalMode('stop-export')}
+                  >
+                    Continuar
+                  </button>
+                </div>
+              </>
+            )}
+
             {modalMode === 'stop-export' && (
               <>
                 <p>¿Desea exportar los datos?</p>
@@ -626,6 +666,7 @@ function Dashboard() {
                 </div>
               </>
             )}
+
             </div>
           </div>
           </>,
