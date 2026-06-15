@@ -74,14 +74,45 @@ function Landing() {
   const isElectionActive = Boolean(election?.isActive)
   const candidateParties = (election?.parties || []).filter((p) => !esVotoNulo(p.name))
   const hasCandidates = isElectionActive && candidateParties.length > 0
-  const members = content?.current_party_members || []
-  const dates = content?.important_dates || []
+  const members = (content?.current_party_members || []).filter(
+    (member) => String(member?.role || '').trim() && String(member?.name || '').trim(),
+  )
+  const dates = (content?.important_dates || []).filter(
+    (item) => String(item?.date || '').trim() && String(item?.title || '').trim(),
+  )
   const extras = content?.extra_sections || []
   const hasCurrentParty =
     content?.current_party_name ||
     content?.current_party_description ||
     content?.current_party_image ||
     members.length > 0
+
+  useEffect(() => {
+    if (isLoading) return undefined
+
+    const topbar = document.querySelector('.landing-topbar')
+    const onScroll = () => {
+      topbar?.classList.toggle('landing-topbar--scrolled', window.scrollY > 12)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+
+    const revealEls = document.querySelectorAll('[data-reveal]')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add('is-visible')
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+    )
+    revealEls.forEach((el) => observer.observe(el))
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      observer.disconnect()
+    }
+  }, [isLoading, hasCurrentParty, hasCandidates, dates.length, extras.length])
 
   const navLinks = [
     hasCurrentParty && { href: '#partido-actual', label: 'Partido actual' },
@@ -93,7 +124,14 @@ function Landing() {
   if (isLoading) {
     return (
       <div className="landing-page">
-        <div className="landing-loading">Cargando informacion electoral...</div>
+        <div className="landing-loading" aria-busy="true" aria-label="Cargando informacion electoral">
+          <div className="landing-loading-card">
+            <div className="landing-skeleton landing-skeleton--logo" />
+            <div className="landing-skeleton landing-skeleton--title" />
+            <div className="landing-skeleton landing-skeleton--line" />
+            <div className="landing-skeleton landing-skeleton--line landing-skeleton--short" />
+          </div>
+        </div>
       </div>
     )
   }
@@ -128,6 +166,7 @@ function Landing() {
         <div className="landing-hero-content">
           {isElectionActive && (
             <span className="landing-status">
+              <span className="landing-status-dot" aria-hidden />
               Periodo {formatElectionPeriod(election.year)} · Proceso en curso
             </span>
           )}
@@ -136,12 +175,25 @@ function Landing() {
           )}
           <h1>{content?.hero_title || 'Elecciones Estudiantiles CIT'}</h1>
           <p>{content?.hero_subtitle || 'Participa en la democracia de tu colegio'}</p>
+          <div className="landing-hero-actions">
+            <Link to="/menu" className="landing-hero-cta landing-hero-cta--primary">
+              Acceder al sistema
+            </Link>
+            {hasCandidates && (
+              <a href="#candidatos" className="landing-hero-cta landing-hero-cta--ghost">
+                Ver candidatos
+              </a>
+            )}
+          </div>
         </div>
+        <a href="#candidatos" className="landing-scroll-hint" aria-label="Desplazarse al contenido">
+          <span className="landing-scroll-hint-line" aria-hidden />
+        </a>
       </section>
 
       <main className="landing-main">
         {hasCurrentParty && (
-          <section className="landing-block" id="partido-actual">
+          <section className="landing-block" id="partido-actual" data-reveal>
             <header className="landing-block-head">
               <span className="landing-block-tag">{sectionIndex(true, 'partido')}</span>
               <div>
@@ -162,7 +214,7 @@ function Landing() {
               <div className="landing-current-body">
                 {content.current_party_name && <h3>{content.current_party_name}</h3>}
                 {content.current_party_description && <p>{content.current_party_description}</p>}
-                {members.length > 0 && (
+                {members.length > 0 ? (
                   <dl className="landing-roster">
                     {members.map((member, index) => (
                       <div key={`${member.role}-${index}`} className="landing-roster-item">
@@ -171,13 +223,15 @@ function Landing() {
                       </div>
                     ))}
                   </dl>
+                ) : (
+                  <p className="landing-empty landing-empty--roster">Indefinido</p>
                 )}
               </div>
             </div>
           </section>
         )}
 
-        <section className="landing-block landing-block--soft" id="candidatos">
+        <section className="landing-block landing-block--soft" id="candidatos" data-reveal>
           <header className="landing-block-head">
             <span className="landing-block-tag">{sectionIndex(hasCurrentParty, 'candidatos')}</span>
             <div>
@@ -203,7 +257,7 @@ function Landing() {
                       )}
                     </div>
                     <h3>{party.name}</h3>
-                    {participants.length > 0 && (
+                    {participants.length > 0 ? (
                       <dl className="landing-roster landing-roster--compact">
                         {participants.map((item) => (
                           <div key={`${party.id}-${item.role}`} className="landing-roster-item">
@@ -212,17 +266,19 @@ function Landing() {
                           </div>
                         ))}
                       </dl>
+                    ) : (
+                      <p className="landing-empty landing-empty--roster">Indefinido</p>
                     )}
                   </article>
                 )
               })}
             </div>
           ) : (
-            <p className="landing-empty">(No definido)</p>
+            <p className="landing-empty">Indefinido</p>
           )}
         </section>
 
-        <section className="landing-block" id="fechas">
+        <section className="landing-block" id="fechas" data-reveal>
           <header className="landing-block-head">
             <span className="landing-block-tag">{sectionIndex(hasCurrentParty, 'fechas')}</span>
             <div>
@@ -244,12 +300,12 @@ function Landing() {
               ))}
             </ol>
           ) : (
-            <p className="landing-empty">(No definido)</p>
+            <p className="landing-empty">Indefinido</p>
           )}
         </section>
 
         {extras.length > 0 && (
-          <section className="landing-block landing-block--soft" id="info">
+          <section className="landing-block landing-block--soft" id="info" data-reveal>
             <header className="landing-block-head">
               <span className="landing-block-tag">{sectionIndex(hasCurrentParty, 'info')}</span>
               <div>
@@ -272,6 +328,9 @@ function Landing() {
       <footer className="landing-footer">
         <img src={logoCIT} alt="Complejo Educativo CIT" />
         <p>Complejo Educativo CIT · Proceso electoral estudiantil</p>
+        <Link to="/menu" className="landing-footer-link">
+          Ir al menú de acceso
+        </Link>
       </footer>
     </div>
   )

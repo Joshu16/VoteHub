@@ -9,35 +9,8 @@ export const DEFAULT_LANDING = {
   current_party_description:
     'Luma lidera la mesa directiva del estudiantado en el periodo actual. Su enfoque combina representacion estudiantil, actividades formativas y espacios de participacion para todos los niveles del colegio.',
   current_party_image: null,
-  current_party_members: [
-    { role: 'Presidente', name: 'Maria Fernanda Lopez' },
-    { role: 'Vicepresidente', name: 'Carlos Eduardo Ruiz' },
-    { role: 'Secretario', name: 'Valentina Morales' },
-    { role: 'Tesorero', name: 'Diego Andres Pineda' },
-    { role: 'Fiscal', name: 'Sofia Isabel Castillo' },
-  ],
-  important_dates: [
-    {
-      date: '2026-05-20',
-      title: 'Presentacion de propuestas',
-      description: 'Cada partido expone su plan de trabajo ante el estudiantado en el auditorio principal.',
-    },
-    {
-      date: '2026-06-02',
-      title: 'Inicio de campana electoral',
-      description: 'Comienzan las actividades de difusion en los diferentes niveles del colegio.',
-    },
-    {
-      date: '2026-06-15',
-      title: 'Jornada de votacion',
-      description: 'Los estudiantes habilitados podran emitir su voto a traves del sistema VoteHub.',
-    },
-    {
-      date: '2026-06-16',
-      title: 'Publicacion de resultados',
-      description: 'Se anuncian los resultados oficiales y la mesa directiva electa para el nuevo periodo.',
-    },
-  ],
+  current_party_members: [],
+  important_dates: [],
   extra_sections: [
     {
       title: 'Quien puede votar',
@@ -92,14 +65,8 @@ function normalizeRow(row) {
       DEFAULT_LANDING.current_party_description,
     ),
     current_party_image: row.current_party_image ?? DEFAULT_LANDING.current_party_image,
-    current_party_members: withDefault(
-      parseJsonList(row.current_party_members),
-      DEFAULT_LANDING.current_party_members,
-    ),
-    important_dates: withDefault(
-      parseJsonList(row.important_dates),
-      DEFAULT_LANDING.important_dates,
-    ),
+    current_party_members: parseJsonList(row.current_party_members, []),
+    important_dates: parseJsonList(row.important_dates, []),
     extra_sections: withDefault(
       parseJsonList(row.extra_sections),
       DEFAULT_LANDING.extra_sections,

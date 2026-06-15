@@ -172,9 +172,16 @@ body:has(.home-page) {
 }
 
 .page-container:has(.landing-page) {
+  overflow-x: clip;
   overflow-y: auto;
   height: auto;
   min-height: 100dvh;
+}
+
+.page-container:has(.landing-page) .route-stage {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .page-container:has(.login-page) .login-page,
