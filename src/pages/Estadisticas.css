@@ -5,7 +5,7 @@
   --soft-ink: var(--ink);
   display: grid;
   gap: 16px;
-  max-width: 1200px;
+  width: 100%;
 }
 
 .stats-layout {

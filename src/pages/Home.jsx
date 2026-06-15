@@ -1,33 +1,27 @@
 import { Link } from 'react-router-dom'
-import './Home.css'
 import logoCIT from '../lib/brandLogo.js'
+import './Home.css'
 
 function Home() {
   return (
-    <section className="home-page">
-      <div className="home-inner">
-        <header className="home-header">
-          <img
-            src={logoCIT}
-            alt="Complejo Educativo CIT"
-            className="home-logo"
-            width={120}
-            height={120}
-          />
-          <p className="home-brand">VoteHub</p>
-          <h1 className="home-title">Elecciones estudiantiles</h1>
-        </header>
-
-        <nav className="home-nav" aria-label="Acceso">
-          <Link to="/login" className="home-link home-link--student">
-            Ingreso estudiantil
+    <div className="home-page">
+      <div className="home-card">
+        <img src={logoCIT} alt="Complejo Educativo CIT" className="home-logo" />
+        <h1>VoteHub</h1>
+        <p>Sistema de elecciones estudiantiles del Complejo Educativo CIT</p>
+        <nav className="home-nav">
+          <Link to="/login" className="home-link home-link--primary">
+            Log In votación
           </Link>
-          <Link to="/admin-login" className="home-link home-link--admin">
-            Ingreso administrativo
+          <Link to="/admin-login" className="home-link home-link--muted">
+            Log In Administrativo
+          </Link>
+          <Link to="/" className="home-link">
+            Página Principal
           </Link>
         </nav>
       </div>
-    </section>
+    </div>
   )
 }
 

@@ -8,6 +8,8 @@ import Voting from './pages/Voting'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
 import Home from './pages/Home'
+import Landing from './pages/Landing'
+import LandingAdmin from './pages/LandingAdmin'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
 import logoCIT, { applyBrandFavicon } from './lib/brandLogo.js'
@@ -15,14 +17,17 @@ import logoCIT, { applyBrandFavicon } from './lib/brandLogo.js'
 /* Ítems menú lateral admin */
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/informacion-publica', label: 'Información pública' },
   { to: '/estadisticas', label: 'Estadísticas' },
   { to: '/registros', label: 'Registros' },
 ]
 
 /* Títulos de pestaña por ruta */
 const pageTitles = {
-  '/': 'VoteHub | Inicio',
+  '/': 'VoteHub | Página Principal',
+  '/menu': 'VoteHub | Menú',
   '/dashboard': 'VoteHub | Dashboard',
+  '/informacion-publica': 'VoteHub | Información pública',
   '/estadisticas': 'VoteHub | Estadísticas',
   '/registros': 'VoteHub | Registros',
   '/votacion': 'VoteHub | Votación',
@@ -61,6 +66,9 @@ function Navigation() {
         <img src={logoCIT} alt="Complejo Educativo CIT" className="side-nav-logo" />
       </div>
       <div className="side-nav-actions">
+        <NavLink to="/menu" className="nav-btn">
+          Volver al menú
+        </NavLink>
         <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
           Cerrar sesión
         </button>
@@ -78,6 +86,7 @@ function App() {
   /* Sidebar solo en rutas admin */
   const showSidebar =
     location.pathname === '/dashboard' ||
+    location.pathname === '/informacion-publica' ||
     location.pathname === '/estadisticas' ||
     location.pathname === '/registros'
 
@@ -135,11 +144,17 @@ function App() {
       <section className={`page-container ${showSidebar ? 'with-sidebar' : ''}`}>
         <div className="route-stage" key={location.pathname}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Landing />} />
+            <Route path="/menu" element={<Home />} />
+            <Route path="/informacion" element={<Navigate to="/" replace />} />
             {/* Rutas de panel con sesion admin */}
             <Route
               path="/dashboard"
               element={isAdminLogged ? <Dashboard /> : <Navigate to="/admin-login" replace />}
+            />
+            <Route
+              path="/informacion-publica"
+              element={isAdminLogged ? <LandingAdmin /> : <Navigate to="/admin-login" replace />}
             />
             <Route
               path="/estadisticas"

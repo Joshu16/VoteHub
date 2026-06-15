@@ -3,12 +3,13 @@ import logoCIT from '../assets/LogoCIT.webp'
 export default logoCIT
 
 export function applyBrandFavicon() {
-  let iconLink = document.querySelector("link[rel='icon']")
-  if (!iconLink) {
-    iconLink = document.createElement('link')
-    iconLink.setAttribute('rel', 'icon')
-    document.head.appendChild(iconLink)
+  const href = '/LogoCIT.webp'
+  let link = document.querySelector('link[rel="icon"]')
+  if (!link) {
+    link = document.createElement('link')
+    link.rel = 'icon'
+    document.head.appendChild(link)
   }
-  iconLink.setAttribute('href', logoCIT)
-  iconLink.setAttribute('type', 'image/webp')
+  link.type = 'image/webp'
+  link.href = href
 }

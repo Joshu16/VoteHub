@@ -52,6 +52,9 @@
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .side-nav-logo-wrap {
@@ -111,7 +114,8 @@ button.nav-btn {
 .page-container:has(.login-page),
 .page-container:has(.voting-page),
 .page-container:has(.admin-login-page),
-.page-container:has(.home-page) {
+.page-container:has(.home-page),
+.page-container:has(.landing-page) {
   padding: 0;
 }
 
@@ -162,8 +166,15 @@ body:has(.home-page) {
 .page-container > .login-page,
 .page-container > .voting-page,
 .page-container > .admin-login-page,
-.page-container > .home-page {
+.page-container > .home-page,
+.page-container > .landing-page {
   padding: 0;
+}
+
+.page-container:has(.landing-page) {
+  overflow-y: auto;
+  height: auto;
+  min-height: 100dvh;
 }
 
 .page-container:has(.login-page) .login-page,

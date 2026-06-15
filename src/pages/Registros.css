@@ -1,7 +1,7 @@
 .registros-page {
   display: grid;
   gap: 18px;
-  max-width: 1200px;
+  width: 100%;
 }
 
 .registros-header h1 {
