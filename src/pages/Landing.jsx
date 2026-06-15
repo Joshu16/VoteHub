@@ -49,6 +49,7 @@ function Landing() {
   const [content, setContent] = useState(null)
   const [election, setElection] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -114,6 +115,22 @@ function Landing() {
     }
   }, [isLoading, hasCurrentParty, hasCandidates, dates.length, extras.length])
 
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
+
+  const closeMenu = () => setMenuOpen(false)
+
   const navLinks = [
     hasCurrentParty && { href: '#partido-actual', label: 'Partido actual' },
     { href: '#candidatos', label: 'Candidatos' },
@@ -138,21 +155,40 @@ function Landing() {
 
   return (
     <div className="landing-page">
-      <header className="landing-topbar">
-        <Link to="/menu" className="landing-brand">
+      <header className={`landing-topbar${menuOpen ? ' landing-topbar--menu-open' : ''}`}>
+        <Link to="/menu" className="landing-brand" onClick={closeMenu}>
           <img src={logoCIT} alt="CIT" />
           <div>
             <span className="landing-brand-name">VoteHub</span>
             <span className="landing-brand-sub">Elecciones estudiantiles</span>
           </div>
         </Link>
-        <nav className="landing-nav" aria-label="Secciones">
+        <button
+          type="button"
+          className={`landing-menu-toggle${menuOpen ? ' is-open' : ''}`}
+          aria-expanded={menuOpen}
+          aria-controls="landing-nav"
+          aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="landing-menu-toggle-bar" aria-hidden />
+          <span className="landing-menu-toggle-bar" aria-hidden />
+          <span className="landing-menu-toggle-bar" aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="landing-nav-backdrop"
+          aria-label="Cerrar menu"
+          onClick={closeMenu}
+          tabIndex={menuOpen ? 0 : -1}
+        />
+        <nav id="landing-nav" className="landing-nav" aria-label="Secciones">
           {navLinks.map((item) => (
-            <a key={item.href} href={item.href}>
+            <a key={item.href} href={item.href} onClick={closeMenu}>
               {item.label}
             </a>
           ))}
-          <Link to="/menu" className="landing-nav-menu">
+          <Link to="/menu" className="landing-nav-menu" onClick={closeMenu}>
             Menú
           </Link>
         </nav>

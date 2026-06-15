@@ -288,8 +288,13 @@
 }
 
 @media (max-width: 768px) {
+  .login-page {
+    min-height: 100dvh;
+  }
+
   .login-left {
     padding: 110px 24px 40px 24px;
+    min-height: auto;
   }
 
   .login-header {
@@ -337,6 +342,11 @@
   .login-right img {
     object-position: center 22%;
     transform: scale(1.03);
+  }
+
+  .login-form input,
+  .login-form button {
+    min-height: 44px;
   }
 }
 

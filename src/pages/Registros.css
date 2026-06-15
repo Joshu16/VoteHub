@@ -6,7 +6,7 @@
 
 .registros-header h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(1.45rem, 4vw, 1.875rem);
   color: var(--ink);
 }
 
@@ -20,7 +20,8 @@
   background: #ffffff;
   border: 1px solid var(--accent);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .registros-page table {
@@ -62,4 +63,36 @@
 .registros-page .icon-btn.danger:hover {
   background: #dc2626;
   color: #fff;
+}
+
+@media (max-width: 780px) {
+  .registros-page {
+    gap: 14px;
+  }
+
+  .registros-page table {
+    min-width: 680px;
+  }
+
+  .registros-page th,
+  .registros-page td {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .registros-page .icon-btn {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .registros-page table {
+    min-width: 620px;
+  }
+
+  .registros-page th,
+  .registros-page td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
 }

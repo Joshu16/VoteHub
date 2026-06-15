@@ -21,7 +21,7 @@
 
 .stats-header h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(1.45rem, 4vw, 1.875rem);
   color: var(--soft-ink);
 }
 
@@ -185,5 +185,79 @@
 @media (max-width: 1080px) {
   .stats-layout {
     grid-template-columns: 1fr;
+  }
+
+  .abstention-card {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+
+  .donut-wrap {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 780px) {
+  .stats-page {
+    gap: 14px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi-card strong {
+    font-size: 22px;
+  }
+
+  .abstention-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .abstention-card h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  .abstention-list li {
+    font-size: 18px;
+  }
+
+  .chart-card {
+    padding: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bar-chart {
+    min-width: 320px;
+    gap: 10px;
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-chart {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .bar {
+    max-width: 100%;
+  }
+
+  .donut-chart {
+    width: 108px;
+    height: 108px;
+  }
+
+  .donut-inner {
+    width: 72px;
+    height: 72px;
+    font-size: 24px;
   }
 }

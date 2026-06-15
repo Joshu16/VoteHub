@@ -12,7 +12,7 @@
 
 .dashboard-header h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(1.45rem, 4vw, 1.875rem);
   color: var(--soft-ink);
 }
 
@@ -107,7 +107,8 @@
   background: #ffffff;
   border: 1px solid var(--accent);
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .election-state {
@@ -490,10 +491,71 @@ tbody td:last-child {
 @media (max-width: 780px) {
   .dashboard-page {
     min-height: auto;
+    gap: 14px;
+  }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .action-row button:not(.refresh-data-btn) {
+    flex: none;
+    width: 100%;
+  }
+
+  .action-row .refresh-data-btn {
+    justify-self: end;
+  }
+
+  .dashboard-page table {
+    min-width: 560px;
+  }
+
+  th,
+  td {
+    padding: 12px 14px;
+    font-size: 14px;
   }
 
   .bottom-actions {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bottom-actions button {
+    width: 100%;
+  }
+
+  .modal-backdrop {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .party-modal,
+  .party-modal--wide {
+    width: 100%;
+    max-height: min(92dvh, 720px);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-page table {
+    min-width: 520px;
+  }
+
+  th,
+  td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .icon-btn {
+    padding: 8px 10px;
+    font-size: 13px;
   }
 }
 

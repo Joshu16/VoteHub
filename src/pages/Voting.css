@@ -348,19 +348,33 @@
 }
 
 @media (max-width: 480px) {
+  .voting-header {
+    padding: 14px 12px !important;
+    gap: 12px;
+  }
+
   .voting-header h1 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+    line-height: 1.2;
   }
 
-  .party-image-box {
-    height: 170px !important;
+  .voting-content {
+    padding: 14px 12px 20px !important;
   }
 
-  .party-info p {
-    font-size: 1rem;
+  .party-card {
+    min-height: 320px;
   }
 
-  .party-info button {
-    max-width: 100%;
+  .party-card:hover {
+    transform: none;
+  }
+
+  .null-vote-label {
+    font-size: 30px;
+  }
+
+  .null-vote-label--nulo {
+    font-size: 26px !important;
   }
 }

@@ -29,7 +29,7 @@
 .home-card h1 {
   margin: 0;
   color: var(--ink);
-  font-size: 2rem;
+  font-size: clamp(1.6rem, 5vw, 2rem);
 }
 
 .home-card p {
@@ -81,4 +81,32 @@
 .home-link--muted:focus-visible {
   background: #eefbfd;
   color: var(--ink);
+}
+
+@media (max-width: 480px) {
+  .home-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: max(16px, env(safe-area-inset-top));
+  }
+
+  .home-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+
+  .home-logo {
+    width: 72px;
+  }
+
+  .home-card p {
+    font-size: 0.95rem;
+  }
+
+  .home-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }

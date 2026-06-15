@@ -43,37 +43,87 @@ function setPageMetadata(pathname) {
 
 /* Barra lateral admin */
 function Navigation() {
+  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
+
+  const closeMenu = () => setMenuOpen(false)
+
   const handleLogout = async () => {
+    closeMenu()
     await signOutAdmin()
     window.location.assign('/admin-login')
   }
 
   return (
-    <nav className="side-nav">
-      <div className="side-nav-links">
-        {navItems.map(({ to, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
-          >
-            {label}
-          </NavLink>
-        ))}
-      </div>
-      <div className="side-nav-spacer" aria-hidden />
-      <div className="side-nav-logo-wrap">
-        <img src={logoCIT} alt="Complejo Educativo CIT" className="side-nav-logo" />
-      </div>
-      <div className="side-nav-actions">
-        <NavLink to="/menu" className="nav-btn">
-          Volver al menú
-        </NavLink>
-        <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
-          Cerrar sesión
+    <>
+      <header className="admin-mobile-header">
+        <img src={logoCIT} alt="Complejo Educativo CIT" className="admin-mobile-header-logo" />
+        <span className="admin-mobile-header-title">VoteHub Admin</span>
+        <button
+          type="button"
+          className={`admin-menu-toggle${menuOpen ? ' is-open' : ''}`}
+          aria-expanded={menuOpen}
+          aria-controls="admin-side-nav"
+          aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span className="admin-menu-toggle-bar" aria-hidden />
+          <span className="admin-menu-toggle-bar" aria-hidden />
+          <span className="admin-menu-toggle-bar" aria-hidden />
         </button>
-      </div>
-    </nav>
+      </header>
+      <button
+        type="button"
+        className={`admin-nav-backdrop${menuOpen ? ' is-open' : ''}`}
+        aria-label="Cerrar menu"
+        onClick={closeMenu}
+        tabIndex={menuOpen ? 0 : -1}
+      />
+      <nav id="admin-side-nav" className={`side-nav${menuOpen ? ' is-open' : ''}`}>
+        <div className="side-nav-links">
+          {navItems.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}
+              onClick={closeMenu}
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+        <div className="side-nav-spacer" aria-hidden />
+        <div className="side-nav-logo-wrap">
+          <img src={logoCIT} alt="Complejo Educativo CIT" className="side-nav-logo" />
+        </div>
+        <div className="side-nav-actions">
+          <NavLink to="/menu" className="nav-btn" onClick={closeMenu}>
+            Volver al menú
+          </NavLink>
+          <button type="button" className="nav-btn nav-btn-logout" onClick={handleLogout}>
+            Cerrar sesión
+          </button>
+        </div>
+      </nav>
+    </>
   )
 }
 

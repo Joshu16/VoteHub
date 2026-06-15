@@ -102,3 +102,20 @@
   color: #c53030;
   font-size: 14px;
 }
+
+@media (max-width: 480px) {
+  .admin-login-page {
+    padding: 16px 12px;
+    align-items: flex-start;
+    padding-top: max(20px, env(safe-area-inset-top));
+  }
+
+  .admin-login-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+
+  .admin-login-card h1 {
+    font-size: clamp(1.35rem, 5vw, 1.625rem);
+  }
+}

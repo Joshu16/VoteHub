@@ -262,11 +262,66 @@
 }
 
 @media (max-width: 780px) {
+  .landing-admin-page {
+    gap: 14px;
+  }
+
+  .landing-admin-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .landing-admin-header-actions {
+    width: 100%;
+  }
+
+  .landing-admin-header-actions button,
+  .landing-admin-preview {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .landing-admin-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .landing-admin-tabs button {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .landing-admin-panel {
+    padding: 16px;
+  }
+
   .landing-admin-split {
     grid-template-columns: 1fr;
   }
 
   .landing-admin-list-row {
     grid-template-columns: 1fr;
+  }
+
+  .landing-admin-list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-admin-header-actions {
+    flex-direction: column;
+  }
+
+  .landing-admin-header-actions button,
+  .landing-admin-preview {
+    width: 100%;
+  }
+
+  .landing-admin-card {
+    padding: 14px;
   }
 }
