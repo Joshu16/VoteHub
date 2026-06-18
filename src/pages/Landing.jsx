@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import './Landing.css'
 import logoCIT from '../lib/brandLogo.js'
 import heroInformacion from '../assets/hero-informacion.webp'
@@ -156,13 +155,13 @@ function Landing() {
   return (
     <div className="landing-page">
       <header className={`landing-topbar${menuOpen ? ' landing-topbar--menu-open' : ''}`}>
-        <Link to="/menu" className="landing-brand" onClick={closeMenu}>
+        <div className="landing-brand">
           <img src={logoCIT} alt="CIT" />
           <div>
             <span className="landing-brand-name">VoteHub</span>
             <span className="landing-brand-sub">Elecciones estudiantiles</span>
           </div>
-        </Link>
+        </div>
         <button
           type="button"
           className={`landing-menu-toggle${menuOpen ? ' is-open' : ''}`}
@@ -188,9 +187,6 @@ function Landing() {
               {item.label}
             </a>
           ))}
-          <Link to="/menu" className="landing-nav-menu" onClick={closeMenu}>
-            Menú
-          </Link>
         </nav>
       </header>
 
@@ -212,14 +208,12 @@ function Landing() {
           <h1>{content?.hero_title || 'Elecciones Estudiantiles CIT'}</h1>
           <p>{content?.hero_subtitle || 'Participa en la democracia de tu colegio'}</p>
           <div className="landing-hero-actions">
-            <Link to="/menu" className="landing-hero-cta landing-hero-cta--primary">
-              Acceder al sistema
-            </Link>
-            {hasCandidates && (
-              <a href="#candidatos" className="landing-hero-cta landing-hero-cta--ghost">
-                Ver candidatos
-              </a>
-            )}
+            <a href="#candidatos" className="landing-hero-cta landing-hero-cta--primary">
+              Ver candidatos
+            </a>
+            <a href="#fechas" className="landing-hero-cta landing-hero-cta--ghost">
+              Ver próximas fechas
+            </a>
           </div>
         </div>
         <a href="#candidatos" className="landing-scroll-hint" aria-label="Desplazarse al contenido">
@@ -364,9 +358,6 @@ function Landing() {
       <footer className="landing-footer">
         <img src={logoCIT} alt="Complejo Educativo CIT" />
         <p>Complejo Educativo CIT · Proceso electoral estudiantil</p>
-        <Link to="/menu" className="landing-footer-link">
-          Ir al menú de acceso
-        </Link>
       </footer>
     </div>
   )

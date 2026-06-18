@@ -180,15 +180,17 @@ function LandingAdmin() {
                     Imagen (PNG/JPG)
                     <input type="file" accept=".png,.jpg,.jpeg" onChange={handleImageChange} />
                   </label>
-                  {content.current_party_image ? (
-                    <img
-                      src={content.current_party_image}
-                      alt="Vista previa"
-                      className="landing-admin-image-preview"
-                    />
-                  ) : (
-                    <div className="landing-admin-image-empty">Sin imagen</div>
-                  )}
+                  <div className="landing-admin-image-frame">
+                    {content.current_party_image ? (
+                      <img
+                        src={content.current_party_image}
+                        alt="Vista previa"
+                        className="landing-admin-image-preview"
+                      />
+                    ) : (
+                      <div className="landing-admin-image-empty">Sin imagen</div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="landing-admin-list-toolbar">

@@ -17,6 +17,93 @@ function etiquetaSinImagenPartido(nombrePartido) {
   return (nombrePartido || '').slice(0, 3).toUpperCase()
 }
 
+function esVotoNulo(nombrePartido) {
+  return String(nombrePartido || '').trim().toLowerCase() === 'voto nulo'
+}
+
+function ordenarPartidosParaVoto(parties) {
+  return [...(parties || [])].sort((a, b) => {
+    const aNulo = esVotoNulo(a.name)
+    const bNulo = esVotoNulo(b.name)
+    if (aNulo && !bNulo) return 1
+    if (!aNulo && bNulo) return -1
+    return 0
+  })
+}
+
+const FONDO_IMAGEN_CARD = '#ffffff'
+
+async function cargarImagen(src) {
+  if (src.startsWith('data:') || src.startsWith('blob:')) {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = src
+    })
+  }
+
+  const res = await fetch(src)
+  if (!res.ok) throw new Error('No se pudo cargar la imagen')
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  try {
+    return await new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = url
+    })
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+function colorEsquinaSuperiorIzquierda(img) {
+  const ancho = img.naturalWidth
+  const alto = img.naturalHeight
+  if (!ancho || !alto) return FONDO_IMAGEN_CARD
+
+  const canvas = document.createElement('canvas')
+  canvas.width = ancho
+  canvas.height = alto
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return FONDO_IMAGEN_CARD
+
+  ctx.drawImage(img, 0, 0)
+  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+async function obtenerFondoDesdeImagen(src) {
+  try {
+    const img = await cargarImagen(src)
+    return colorEsquinaSuperiorIzquierda(img)
+  } catch {
+    return FONDO_IMAGEN_CARD
+  }
+}
+
+function PartyImageBox({ src, alt }) {
+  const [fondo, setFondo] = useState(FONDO_IMAGEN_CARD)
+
+  useEffect(() => {
+    let activo = true
+    obtenerFondoDesdeImagen(src).then((color) => {
+      if (activo) setFondo(color)
+    })
+    return () => {
+      activo = false
+    }
+  }, [src])
+
+  return (
+    <div className="party-image-box" style={{ backgroundColor: fondo }}>
+      <img src={src} alt={alt} className="party-image-fg" />
+    </div>
+  )
+}
+
 /* Flujo de voto del estudiante */
 function Voting() {
   const navigate = useNavigate()
@@ -151,21 +238,21 @@ function Voting() {
         <div className="cards-container">
           {/* Una tarjeta por partido */}
           {!isLoading &&
-            (activeElection?.parties ?? []).map((party) => {
+            ordenarPartidosParaVoto(activeElection?.parties).map((party) => {
               const presidente = getPresidenteNombre(party.officers_json)
               return (
             <div className="party-card" key={party.id}>
-              <div className="party-image-box" style={{ backgroundColor: '#e9e9e9' }}>
-                {party.image_url ? (
-                  <img src={party.image_url} alt={party.name} />
-                ) : (
+              {party.image_url ? (
+                <PartyImageBox src={party.image_url} alt={party.name} />
+              ) : (
+                <div className="party-image-box party-image-box--empty">
                   <p
                     className={`null-vote-label${party.name.trim().toLowerCase() === 'voto nulo' ? ' null-vote-label--nulo' : ''}`}
                   >
                     {etiquetaSinImagenPartido(party.name)}
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="party-info">
                 <p className="party-name-line">{party.name}</p>
@@ -182,7 +269,7 @@ function Voting() {
 
       <footer className="voting-footer">
         {/* Pie institucional */}
-        <p>Estudiantes de Apps 2026</p>
+        <p>Complejo Educativo CIT</p>
         <img
           src="https://complejoeducativocit.ed.cr/wp-content/uploads/2025/08/Complejo-Educativo-CIT.png"
           alt="CTP"

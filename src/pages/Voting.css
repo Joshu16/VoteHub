@@ -69,6 +69,7 @@
 .party-card {
   width: 100% !important;
   max-width: 100% !important;
+  height: 100%;
   border: 1px solid #d6deea;
   border-radius: 20px;
   overflow: hidden;
@@ -87,12 +88,31 @@
 }
 
 .party-image-box {
+  position: relative;
+  flex: 0 0 220px;
   height: 220px !important;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f8fafc;
+  background: #ffffff;
   overflow: hidden;
+  padding: 0 !important;
+}
+
+.party-image-box--empty {
+  background: #ffffff;
+}
+
+.party-image-fg {
+  position: relative;
+  z-index: 1;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
 }
 
 .null-vote-label {
@@ -104,13 +124,6 @@
 .null-vote-label--nulo {
   font-size: 34px !important;
   letter-spacing: 0.02em;
-}
-
-.party-image-box img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover;
-  display: block;
 }
 
 .party-info {
@@ -339,6 +352,7 @@
   }
 
   .party-image-box {
+    flex-basis: 190px;
     height: 190px !important;
   }
 
