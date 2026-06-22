@@ -22,6 +22,18 @@ function noHayColumnaImagen(err) {
   return noHayColumna(err, 'image_url')
 }
 
+function noHayColumnaMascota(err) {
+  return noHayColumna(err, 'mascot_url')
+}
+
+function noHayColumnaFecha(err, col) {
+  return noHayColumna(err, col)
+}
+
+function noHayColumnaVisibilidad(err) {
+  return noHayColumna(err, 'is_visible')
+}
+
 function esClaveDuplicada(err) {
   return String(err?.code || '') === '23505'
 }
@@ -42,25 +54,63 @@ function noHayColumnaOficiales(err) {
   return false
 }
 
+const ELECTION_SELECTS = [
+  'id, year, is_active, start_date, end_date, is_visible',
+  'id, year, is_active, start_date, end_date',
+  'id, year, is_active, is_visible',
+  'id, year, is_active',
+]
+
+async function seleccionarEleccion(queryFn) {
+  let lastErr = null
+  for (const sel of ELECTION_SELECTS) {
+    const res = await queryFn(sel)
+    if (!res.error) {
+      if (!res.data) return null
+      return {
+        ...res.data,
+        start_date: res.data.start_date ?? null,
+        end_date: res.data.end_date ?? null,
+        is_visible: res.data.is_visible ?? true,
+      }
+    }
+    lastErr = res.error
+  }
+  throw lastErr
+}
+
 /* Busca eleccion por año */
 async function buscarEleccionPorAño(year) {
-  const res = await supabase.from('elections').select('id, year, is_active').eq('year', year).maybeSingle()
-  if (res.error) throw res.error
-  return res.data
+  return seleccionarEleccion((sel) =>
+    supabase.from('elections').select(sel).eq('year', year).maybeSingle(),
+  )
 }
 
 function normalizarFilaPartido(p) {
   return {
     ...p,
     image_url: p.image_url ?? null,
+    mascot_url: p.mascot_url ?? null,
     officers_json: p.officers_json ?? null,
+  }
+}
+
+function normalizarEleccion(row) {
+  if (!row) return null
+  return {
+    ...row,
+    start_date: row.start_date ?? null,
+    end_date: row.end_date ?? null,
+    is_visible: row.is_visible ?? true,
   }
 }
 
 /* Lista partidos: prueba combinaciones de columnas opcionales por si el esquema es antiguo */
 async function listarPartidosDeEleccion(electionId) {
   const selects = [
+    'id, name, votes, image_url, mascot_url, officers_json, election_id',
     'id, name, votes, image_url, officers_json, election_id',
+    'id, name, votes, image_url, mascot_url, election_id',
     'id, name, votes, image_url, election_id',
     'id, name, votes, officers_json, election_id',
     'id, name, votes, election_id',
@@ -82,7 +132,9 @@ async function listarPartidosVariasElecciones(ids) {
     return []
   }
   const selects = [
+    'id, election_id, name, votes, image_url, mascot_url, officers_json',
     'id, election_id, name, votes, image_url, officers_json',
+    'id, election_id, name, votes, image_url, mascot_url',
     'id, election_id, name, votes, image_url',
     'id, election_id, name, votes, officers_json',
     'id, election_id, name, votes',
@@ -99,15 +151,17 @@ async function listarPartidosVariasElecciones(ids) {
 }
 
 /* Insertar partido reintentando sin columnas opcionales si no existen */
-async function agregarFilaPartido(electionId, nombre, votos, urlImagen, officersJson) {
+async function agregarFilaPartido(electionId, nombre, votos, urlImagen, mascotUrl, officersJson) {
   const base = { election_id: electionId, name: nombre, votes: votos }
   let useImage = true
+  let useMascot = true
   let useOfficers = true
   const wantedOfficers = officersJson != null && officersJson !== ''
 
-  for (let i = 0; i < 8; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     const row = { ...base }
     if (useImage) row.image_url = urlImagen ?? null
+    if (useMascot) row.mascot_url = mascotUrl ?? null
     if (useOfficers) row.officers_json = officersJson ?? null
 
     const res = await supabase.from('parties').insert(row)
@@ -117,6 +171,10 @@ async function agregarFilaPartido(electionId, nombre, votos, urlImagen, officers
     }
     if (noHayColumnaOficiales(res.error)) {
       useOfficers = false
+      continue
+    }
+    if (noHayColumnaMascota(res.error)) {
+      useMascot = false
       continue
     }
     if (noHayColumnaImagen(res.error)) {
@@ -132,14 +190,16 @@ async function agregarFilaPartido(electionId, nombre, votos, urlImagen, officers
 }
 
 /* Actualizar partido reintentando sin columnas opcionales */
-async function actualizarFilaPartido(electionId, partyId, nombre, urlImagen, officersJson) {
+async function actualizarFilaPartido(electionId, partyId, nombre, urlImagen, mascotUrl, officersJson) {
   let useImage = true
+  let useMascot = true
   let useOfficers = true
   const wantedOfficers = officersJson != null && officersJson !== ''
 
-  for (let i = 0; i < 8; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     const patch = { name: nombre }
     if (useImage) patch.image_url = urlImagen ?? null
+    if (useMascot) patch.mascot_url = mascotUrl ?? null
     if (useOfficers) patch.officers_json = officersJson ?? null
 
     const res = await supabase.from('parties').update(patch).eq('id', partyId).eq('election_id', electionId)
@@ -149,6 +209,10 @@ async function actualizarFilaPartido(electionId, partyId, nombre, urlImagen, off
     }
     if (noHayColumnaOficiales(res.error)) {
       useOfficers = false
+      continue
+    }
+    if (noHayColumnaMascota(res.error)) {
+      useMascot = false
       continue
     }
     if (noHayColumnaImagen(res.error)) {
@@ -170,7 +234,7 @@ async function asegurarVotoNulo(electionId) {
     return
   }
   try {
-    await agregarFilaPartido(electionId, 'Voto nulo', 0, null, null)
+    await agregarFilaPartido(electionId, 'Voto nulo', 0, null, null, null)
   } catch (err) {
     /* Otra peticion pudo crearlo al mismo tiempo (React Strict Mode, doble carga) */
     if (esClaveDuplicada(err)) {
@@ -186,7 +250,7 @@ export async function ensureElection(year) {
   if (ya) {
     await asegurarVotoNulo(ya.id)
     const parties = await listarPartidosDeEleccion(ya.id)
-    return { ...ya, isActive: ya.is_active, parties }
+    return { ...normalizarEleccion(ya), isActive: ya.is_active, parties }
   }
 
   let res = await supabase.from('elections').insert({ year, is_active: false }).select('id, year, is_active').single()
@@ -196,7 +260,7 @@ export async function ensureElection(year) {
       if (otra) {
         await asegurarVotoNulo(otra.id)
         const parties = await listarPartidosDeEleccion(otra.id)
-        return { ...otra, isActive: otra.is_active, parties }
+        return { ...normalizarEleccion(otra), isActive: otra.is_active, parties }
       }
     }
     throw res.error
@@ -204,7 +268,7 @@ export async function ensureElection(year) {
 
   await asegurarVotoNulo(res.data.id)
   const parties = await listarPartidosDeEleccion(res.data.id)
-  return { ...res.data, isActive: res.data.is_active, parties }
+  return { ...normalizarEleccion(res.data), isActive: res.data.is_active, parties }
 }
 
 /* Activa un año y apaga el resto */
@@ -230,7 +294,7 @@ export async function stopElection(year) {
 }
 
 /* Alta partido sin nombre repetido — devuelve { ok, officersNotSaved? } */
-export async function addParty(year, name, imageUrl, officersJson) {
+export async function addParty(year, name, imageUrl, mascotUrl, officersJson) {
   const election = await ensureElection(year)
   const nombre = name.trim()
   if (!nombre) return { ok: false }
@@ -241,13 +305,13 @@ export async function addParty(year, name, imageUrl, officersJson) {
   )
   if (repetido) return { ok: false }
 
-  const r = await agregarFilaPartido(election.id, nombre, 0, imageUrl || null, officersJson ?? null)
+  const r = await agregarFilaPartido(election.id, nombre, 0, imageUrl || null, mascotUrl || null, officersJson ?? null)
   invalidateActiveElectionCache()
   return { ok: true, officersNotSaved: r.officersNotSaved }
 }
 
-/* Edicion nombre, imagen y cargos — devuelve { ok, officersNotSaved? } */
-export async function editParty(year, partyId, nextName, imageUrl, officersJson) {
+/* Edicion nombre, imagen, mascota y cargos — devuelve { ok, officersNotSaved? } */
+export async function editParty(year, partyId, nextName, imageUrl, mascotUrl, officersJson) {
   const election = await ensureElection(year)
   const nombre = nextName.trim()
   if (!nombre) return { ok: false }
@@ -258,7 +322,7 @@ export async function editParty(year, partyId, nextName, imageUrl, officersJson)
   )
   if (repetido) return { ok: false }
 
-  const r = await actualizarFilaPartido(election.id, partyId, nombre, imageUrl || null, officersJson ?? null)
+  const r = await actualizarFilaPartido(election.id, partyId, nombre, imageUrl || null, mascotUrl || null, officersJson ?? null)
   invalidateActiveElectionCache()
   return { ok: true, officersNotSaved: r.officersNotSaved }
 }
@@ -280,18 +344,24 @@ export async function removeParty(year, partyId) {
 }
 
 async function fetchActiveElectionFromServer() {
-  const res = await supabase
-    .from('elections')
-    .select('id, year, is_active')
-    .eq('is_active', true)
-    .order('year', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (res.error) throw res.error
-  if (!res.data) return null
-
-  const parties = await listarPartidosDeEleccion(res.data.id)
-  return { ...res.data, isActive: res.data.is_active, parties }
+  let lastErr = null
+  for (const sel of ELECTION_SELECTS) {
+    const res = await supabase
+      .from('elections')
+      .select(sel)
+      .eq('is_active', true)
+      .order('year', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!res.error) {
+      if (!res.data) return null
+      const row = normalizarEleccion(res.data)
+      const parties = await listarPartidosDeEleccion(row.id)
+      return { ...row, isActive: row.is_active, parties }
+    }
+    lastErr = res.error
+  }
+  throw lastErr
 }
 
 /* Eleccion activa en servidor con partidos (cache en memoria) */
@@ -321,20 +391,76 @@ export async function getActiveElection(options = {}) {
 
 /* Historial elecciones con partidos agrupados */
 export async function getAllElections() {
-  const res = await supabase.from('elections').select('id, year, is_active').order('year', { ascending: false })
-  if (res.error) throw res.error
+  let lastErr = null
+  let filas = null
+  for (const sel of ELECTION_SELECTS) {
+    const res = await supabase.from('elections').select(sel).order('year', { ascending: false })
+    if (!res.error) {
+      filas = res.data || []
+      break
+    }
+    lastErr = res.error
+  }
+  if (!filas) throw lastErr
 
-  const filas = res.data || []
   if (filas.length === 0) return []
 
   const ids = filas.map((e) => e.id)
   const todosPartidos = await listarPartidosVariasElecciones(ids)
 
-  return filas.map((election) => ({
-    ...election,
-    isActive: election.is_active,
-    parties: todosPartidos.filter((p) => p.election_id === election.id),
-  }))
+  return filas.map((election) => {
+    const row = normalizarEleccion(election)
+    return {
+      ...row,
+      isActive: row.is_active,
+      parties: todosPartidos.filter((p) => p.election_id === row.id),
+    }
+  })
+}
+
+/* Actualiza fechas y visibilidad de una eleccion */
+export async function updateElectionSettings(year, { startDate, endDate, isVisible }) {
+  const row = await buscarEleccionPorAño(year)
+  if (!row) return { ok: false }
+
+  const patch = {}
+  if (startDate !== undefined) patch.start_date = startDate || null
+  if (endDate !== undefined) patch.end_date = endDate || null
+  if (isVisible !== undefined) patch.is_visible = Boolean(isVisible)
+
+  let useStart = Object.prototype.hasOwnProperty.call(patch, 'start_date')
+  let useEnd = Object.prototype.hasOwnProperty.call(patch, 'end_date')
+  let useVisible = Object.prototype.hasOwnProperty.call(patch, 'is_visible')
+
+  for (let i = 0; i < 8; i += 1) {
+    const attempt = {}
+    if (useStart) attempt.start_date = patch.start_date
+    if (useEnd) attempt.end_date = patch.end_date
+    if (useVisible) attempt.is_visible = patch.is_visible
+
+    if (Object.keys(attempt).length === 0) return { ok: true }
+
+    const res = await supabase.from('elections').update(attempt).eq('id', row.id)
+    if (!res.error) {
+      invalidateActiveElectionCache()
+      return { ok: true }
+    }
+    if (noHayColumnaFecha(res.error, 'start_date')) {
+      useStart = false
+      continue
+    }
+    if (noHayColumnaFecha(res.error, 'end_date')) {
+      useEnd = false
+      continue
+    }
+    if (noHayColumnaVisibilidad(res.error)) {
+      useVisible = false
+      continue
+    }
+    throw res.error
+  }
+
+  return { ok: true }
 }
 
 /* Borrado votos luego partidos luego eleccion */

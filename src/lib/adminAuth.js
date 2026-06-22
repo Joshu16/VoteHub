@@ -1,75 +1,84 @@
-import { supabase } from './supabaseClient'
+import {
+  clearPendingOtp,
+  getPendingOtp,
+  normalizeEmail,
+  sendLoginCode,
+  setPendingOtp,
+  verifyLoginCode,
+} from './emailOtpAuth'
+import { isAdminEmail } from './adminUsers'
 
-/* Correo permitido para panel admin */
-export const ADMIN_EMAIL = 'ctpcit@gmail.com'
-
-const PASS_LOCAL = '1234'
-/* Marca local si falla login remoto y la clave coincide */
-const KEY_LOCAL = 'votehub_admin_session'
-const KEY_LOGIN_AT = 'votehub_admin_login_at'
+const KEY_ADMIN_EMAIL = 'votehub_admin_email'
+const KEY_ADMIN_LOGIN_AT = 'votehub_admin_login_at'
 const SESSION_MAX_MS = 24 * 60 * 60 * 1000
 
-function setLoginTimestamp() {
-  localStorage.setItem(KEY_LOGIN_AT, String(Date.now()))
-}
+export { PRINCIPAL_ADMIN_EMAIL } from './adminUsers'
 
 function isLoginExpired() {
-  const raw = localStorage.getItem(KEY_LOGIN_AT)
-  if (!raw) {
-    return true
-  }
-  const loginAt = Number(raw)
-  if (!Number.isFinite(loginAt)) {
-    return true
-  }
+  const loginAt = Number(localStorage.getItem(KEY_ADMIN_LOGIN_AT))
+  if (!Number.isFinite(loginAt)) return true
   return Date.now() - loginAt >= SESSION_MAX_MS
 }
 
-export async function signInAdmin(email, password) {
-  const em = email.trim().toLowerCase()
-  if (em !== ADMIN_EMAIL) {
-    throw new Error('Solo el correo administrador puede ingresar.')
-  }
-
-  const sesion = await supabase.auth.signInWithPassword({ email: em, password })
-  if (!sesion.error) {
-    localStorage.setItem(KEY_LOCAL, '0')
-    setLoginTimestamp()
-    return sesion.data
-  }
-
-  if (password === PASS_LOCAL) {
-    localStorage.setItem(KEY_LOCAL, '1')
-    setLoginTimestamp()
-    return { user: { email: em } }
-  }
-
-  throw sesion.error
+export function getAdminSessionEmail() {
+  return localStorage.getItem(KEY_ADMIN_EMAIL) || ''
 }
 
-/* Sesion remota valida o respaldo local (max 24 h) */
+export async function requestAdminLoginCode(email) {
+  const em = normalizeEmail(email)
+  if (!(await isAdminEmail(em))) {
+    throw new Error('Este correo no tiene acceso administrativo.')
+  }
+  await sendLoginCode(em)
+  setPendingOtp(em, 'admin')
+  return em
+}
+
+export async function completeAdminLogin(email, code) {
+  const pending = getPendingOtp()
+  const em = normalizeEmail(email)
+  if (!pending || pending.role !== 'admin' || pending.email !== em) {
+    throw new Error('Verificación expirada. Vuelve a ingresar tu correo.')
+  }
+  if (!(await isAdminEmail(em))) {
+    throw new Error('Este correo ya no tiene acceso administrativo.')
+  }
+  await verifyLoginCode(em, code)
+  localStorage.setItem(KEY_ADMIN_EMAIL, em)
+  localStorage.setItem(KEY_ADMIN_LOGIN_AT, String(Date.now()))
+  clearPendingOtp()
+}
+
+export function getPendingAdminEmail() {
+  const pending = getPendingOtp()
+  if (pending?.role === 'admin') return pending.email
+  return ''
+}
+
+export function isAdminOtpPending() {
+  const pending = getPendingOtp()
+  return pending?.role === 'admin'
+}
+
+export function cancelAdminLogin() {
+  clearPendingOtp()
+}
+
 export async function isAdminSessionActive() {
-  if (isLoginExpired()) {
+  const email = getAdminSessionEmail()
+  if (!email || isLoginExpired()) {
     await signOutAdmin()
     return false
   }
-
-  if (localStorage.getItem(KEY_LOCAL) === '1') {
-    return true
-  }
-
-  const sesion = await supabase.auth.getSession()
-  if (sesion.error) {
+  try {
+    return await isAdminEmail(email)
+  } catch {
     return false
   }
-
-  const em = sesion.data.session?.user?.email?.toLowerCase()
-  return em === ADMIN_EMAIL
 }
 
-/* Quita marca local y cierra sesion remota */
 export async function signOutAdmin() {
-  localStorage.removeItem(KEY_LOCAL)
-  localStorage.removeItem(KEY_LOGIN_AT)
-  await supabase.auth.signOut()
+  localStorage.removeItem(KEY_ADMIN_EMAIL)
+  localStorage.removeItem(KEY_ADMIN_LOGIN_AT)
+  clearPendingOtp()
 }

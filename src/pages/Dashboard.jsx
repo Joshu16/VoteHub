@@ -10,29 +10,29 @@ import {
   removeParty,
   startElection,
   stopElection,
+  updateElectionSettings,
 } from '../lib/electionsStore'
-import { formatElectionPeriod } from '../lib/electionPeriod'
+import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 import { notifyDataRefresh } from '../lib/dataRefresh'
-import {
-  EMPTY_PARTY_OFFICERS,
-  PARTY_OFFICER_FIELDS,
-  parsePartyOfficers,
-  serializePartyOfficers,
-} from '../lib/partyOfficers'
+import { parsePartyOfficers, serializePartyOfficers } from '../lib/partyOfficers'
 import { getElectionWinner } from '../lib/electionWinner'
+import { PartyFormPanel, emptyPartyFormState } from '../components/PartyFormPanel'
+import { AccordionChevron, AdminField, AdminInput, AdminSwitch } from '../components/AdminUI'
+import '../styles/admin-forms.css'
 
-/* Panel de control electoral */
+function esVotoNulo(nombre) {
+  return String(nombre || '').trim().toLowerCase() === 'voto nulo'
+}
+
 function Dashboard() {
   const currentYear = new Date().getFullYear()
-  /* election + datos del modal de partidos */
   const [election, setElection] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [modalMode, setModalMode] = useState('')
-  const [partyName, setPartyName] = useState('')
-  const [partyOfficers, setPartyOfficers] = useState(() => ({ ...EMPTY_PARTY_OFFICERS }))
-  const [partyImage, setPartyImage] = useState('')
+  const [expandedId, setExpandedId] = useState(null)
+  const [formState, setFormState] = useState(emptyPartyFormState)
   const [selectedParty, setSelectedParty] = useState(null)
-  const [modalError, setModalError] = useState('')
+  const [formError, setFormError] = useState('')
   const [feedback, setFeedback] = useState('')
   const [isStarting, setIsStarting] = useState(false)
   const [isStopping, setIsStopping] = useState(false)
@@ -40,32 +40,39 @@ function Dashboard() {
   const [isDeletingParty, setIsDeletingParty] = useState(false)
   const [isCleaningData, setIsCleaningData] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [quickPartyName, setQuickPartyName] = useState('')
+  const [isQuickAdding, setIsQuickAdding] = useState(false)
+  const [quickFormError, setQuickFormError] = useState('')
   const [stopFlowElection, setStopFlowElection] = useState(null)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [isVisible, setIsVisible] = useState(true)
   const electionYear = Number(election?.year ?? currentYear)
 
-  /* Refresca eleccion desde servidor */
   const loadData = async ({ quiet = false } = {}) => {
-    if (!quiet) {
-      setIsLoading(true)
-    }
+    if (!quiet) setIsLoading(true)
     try {
       const activeElection = await getActiveElection()
       if (activeElection) {
         setElection(activeElection)
+        setStartDate(activeElection.start_date || '')
+        setEndDate(activeElection.end_date || '')
+        setIsVisible(activeElection.is_visible !== false)
       } else {
         const existingElection = await ensureElection(currentYear)
         setElection(existingElection)
+        setStartDate(existingElection.start_date || '')
+        setEndDate(existingElection.end_date || '')
+        setIsVisible(existingElection.is_visible !== false)
       }
     } catch (error) {
       setFeedback(`No se pudo cargar la elección: ${error?.message || 'Error desconocido'}`)
     } finally {
-      if (!quiet) {
-        setIsLoading(false)
-      }
+      if (!quiet) setIsLoading(false)
     }
   }
 
-  /* Carga inicial */
   useEffect(() => {
     loadData()
   }, [currentYear])
@@ -76,9 +83,7 @@ function Dashboard() {
       return
     }
     document.body.classList.add('modal-open')
-    return () => {
-      document.body.classList.remove('modal-open')
-    }
+    return () => document.body.classList.remove('modal-open')
   }, [modalMode])
 
   const handleRefreshData = async () => {
@@ -94,7 +99,6 @@ function Dashboard() {
     }
   }
 
-  /* Activa elección del año actual únicamente */
   const handleStartElection = () => {
     setIsStarting(true)
     startElection(currentYear)
@@ -109,12 +113,9 @@ function Dashboard() {
       .finally(() => setIsStarting(false))
   }
 
-  /* Detiene elección */
   const handleStopElection = () => {
     const targetElection = election
-    if (!targetElection) {
-      return
-    }
+    if (!targetElection) return
     setIsStopping(true)
     stopElection(targetElection.year)
       .then(() => ensureElection(targetElection.year))
@@ -134,7 +135,6 @@ function Dashboard() {
   const isTogglingElection = isStarting || isStopping
   const stopFlowWinner = getElectionWinner(stopFlowElection?.parties ?? election?.parties ?? [])
 
-  /* Alterna iniciar o terminar eleccion */
   const handleToggleElection = () => {
     if (isElectionActive) {
       setModalMode('stop-election')
@@ -143,139 +143,133 @@ function Dashboard() {
     setModalMode('start-election')
   }
 
-  /* Cierra modal */
   const closeModal = () => {
     setModalMode('')
-    setPartyName('')
-    setPartyOfficers({ ...EMPTY_PARTY_OFFICERS })
-    setPartyImage('')
-    setSelectedParty(null)
     setStopFlowElection(null)
-    setModalError('')
   }
 
-  /* Modal nuevo partido */
-  const openAddModal = () => {
-    setModalMode('add')
-    setPartyName('')
-    setPartyOfficers({ ...EMPTY_PARTY_OFFICERS })
-    setPartyImage('')
+  const closeForm = () => {
+    setExpandedId(null)
+    setFormState(emptyPartyFormState())
     setSelectedParty(null)
-    setModalError('')
+    setFormError('')
   }
 
-  /* Modal editar partido */
-  const openEditModal = (party) => {
-    setModalMode('edit')
-    setPartyName(party.name)
-    setPartyOfficers(parsePartyOfficers(party.officers_json))
-    setPartyImage(party.image_url || '')
-    setSelectedParty(party)
-    setModalError('')
-  }
-
-  /* Modal eliminar partido */
-  const openDeleteModal = (party) => {
-    setModalMode('delete')
-    setPartyName(party.name)
-    setPartyOfficers({ ...EMPTY_PARTY_OFFICERS })
-    setPartyImage(party.image_url || '')
-    setSelectedParty(party)
-    setModalError('')
-  }
-
-  /* Imagen del partido (archivo) */
-  const handleImageFileChange = (event) => {
-    const file = event.target.files?.[0]
-    if (!file) {
-      return
-    }
-
-    /* Tipos permitidos */
-    const isValidType = file.type === 'image/png' || file.type === 'image/jpeg'
-    if (!isValidType) {
-      setModalError('Solo se permite PNG o JPG.')
-      return
-    }
-
-    /* Imagen en texto para vista previa y guardado */
-    const reader = new FileReader()
-    reader.onload = () => {
-      setPartyImage(typeof reader.result === 'string' ? reader.result : '')
-      setModalError('')
-    }
-    reader.readAsDataURL(file)
-  }
-
-  /* Guarda partido nuevo o editado */
-  const handleSaveParty = () => {
-    const nombre = partyName.trim()
-    const presidente = (partyOfficers.presidente || '').trim()
+  const handleQuickAddParty = () => {
+    const nombre = quickPartyName.trim()
     if (!nombre) {
-      setModalError('El nombre del partido es obligatorio.')
+      setQuickFormError('Escribe el nombre del partido.')
       return
     }
-    if (!partyImage) {
-      setModalError('La imagen del partido es obligatoria.')
-      return
-    }
-    if (!presidente) {
-      setModalError('El nombre del presidente es obligatorio.')
-      return
-    }
-    setModalError('')
-    setIsSavingParty(true)
-    /* Alta o edicion segun el modal abierto */
-    const officersJson = serializePartyOfficers(partyOfficers)
-    const action =
-      modalMode === 'add'
-        ? addParty(electionYear, partyName, partyImage, officersJson)
-        : editParty(electionYear, selectedParty.id, partyName, partyImage, officersJson)
-    action
+    setQuickFormError('')
+    setIsQuickAdding(true)
+    addParty(electionYear, nombre, null, null, null)
       .then((result) => {
         if (!result?.ok) {
-          setModalError('Nombre vacío o duplicado.')
+          setQuickFormError('Nombre vacío o duplicado.')
           return
         }
-        const baseMsg = modalMode === 'add' ? 'Partido agregado.' : 'Partido editado.'
-        if (result.officersNotSaved) {
-          setFeedback(
-            `${baseMsg} Los cargos no se guardaron: en Supabase falta la columna officers_json en la tabla parties. SQL: ALTER TABLE public.parties ADD COLUMN IF NOT EXISTS officers_json text;`,
-          )
-        } else {
-          setFeedback(baseMsg)
-        }
-        closeModal()
+        setQuickPartyName('')
+        setFeedback('Partido creado. Expándelo para añadir logo y datos.')
         return loadData()
       })
       .catch((error) =>
-        setModalError(`No se pudo guardar el partido: ${error?.message || 'Error desconocido'}`),
+        setQuickFormError(`No se pudo crear: ${error?.message || 'Error desconocido'}`),
+      )
+      .finally(() => setIsQuickAdding(false))
+  }
+
+  const toggleParty = (party) => {
+    if (expandedId === party.id) {
+      closeForm()
+      return
+    }
+    setExpandedId(party.id)
+    setSelectedParty(party)
+    setFormState({
+      partyName: party.name,
+      partyImage: party.image_url || '',
+      partyMascot: party.mascot_url || '',
+      partyOfficers: parsePartyOfficers(party.officers_json),
+    })
+    setFormError('')
+  }
+
+  const handleSaveParty = () => {
+    const nombre = formState.partyName.trim()
+    if (!nombre) {
+      setFormError('El nombre del partido es obligatorio.')
+      return
+    }
+    setFormError('')
+    setIsSavingParty(true)
+    const officersJson = serializePartyOfficers(formState.partyOfficers)
+    editParty(
+      electionYear,
+      selectedParty.id,
+      nombre,
+      formState.partyImage || null,
+      formState.partyMascot || null,
+      officersJson,
+    )
+      .then((result) => {
+        if (!result?.ok) {
+          setFormError('Nombre vacío o duplicado.')
+          return
+        }
+        const baseMsg = 'Partido editado.'
+        setFeedback(baseMsg)
+        closeForm()
+        return loadData()
+      })
+      .catch((error) =>
+        setFormError(`No se pudo guardar el partido: ${error?.message || 'Error desconocido'}`),
       )
       .finally(() => setIsSavingParty(false))
   }
 
-  /* Exporta archivo de resultados */
+  const handleDeleteParty = () => {
+    if (!selectedParty) return
+    const shouldDelete = window.confirm(`¿Eliminar ${selectedParty.name}?`)
+    if (!shouldDelete) return
+    setIsDeletingParty(true)
+    removeParty(electionYear, selectedParty.id)
+      .then(() => {
+        setFeedback('Partido eliminado.')
+        closeForm()
+        return loadData()
+      })
+      .catch((error) => setFormError(`No se pudo eliminar: ${error?.message || 'Error desconocido'}`))
+      .finally(() => setIsDeletingParty(false))
+  }
+
+  const handleSaveSettings = () => {
+    setIsSavingSettings(true)
+    updateElectionSettings(electionYear, {
+      startDate: startDate || null,
+      endDate: endDate || null,
+      isVisible,
+    })
+      .then(() => {
+        setFeedback('Configuración del periodo guardada.')
+        return loadData({ quiet: true })
+      })
+      .catch((error) =>
+        setFeedback(`No se pudo guardar: ${error?.message || 'Error desconocido'}`),
+      )
+      .finally(() => setIsSavingSettings(false))
+  }
+
   const handleExportData = (targetElection = election) => {
     const parties = targetElection?.parties || []
-    /* Solo con elección cerrada y con datos */
-    if (!targetElection || targetElection.isActive || !parties.length) {
-      return
-    }
-
-    /* Lineas del archivo exportado */
+    if (!targetElection || targetElection.isActive || !parties.length) return
     const rows = [['Periodo', 'Partido', 'Votos']]
     for (const party of parties) {
-      rows.push([
-        formatElectionPeriod(targetElection.year),
-        party.name,
-        String(party.votes || 0),
-      ])
+      rows.push([formatElectionPeriod(targetElection.year), party.name, String(party.votes || 0)])
     }
     const csv = rows
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n')
-
-    /* Descarga con enlace temporal oculto */
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -300,117 +294,191 @@ function Dashboard() {
       .finally(() => setIsCleaningData(false))
   }
 
-  /* Borra partido en servidor */
-  const handleDeleteParty = () => {
-    setIsDeletingParty(true)
-    removeParty(electionYear, selectedParty.id)
-      .then(() => {
-        setFeedback('Partido eliminado.')
-        closeModal()
-        return loadData()
-      })
-      .catch((error) =>
-        setModalError(`No se pudo eliminar el partido: ${error?.message || 'Error desconocido'}`),
-      )
-      .finally(() => setIsDeletingParty(false))
-  }
+  const editableParties = (election?.parties ?? []).filter((p) => !esVotoNulo(p.name))
 
-  /* Vista del panel */
   return (
     <section className="dashboard-page">
       <header className="dashboard-header">
-        {/* Título y año */}
         <h1>Centro de Control</h1>
         <p>Elecciones del periodo {formatElectionPeriod(electionYear)}</p>
       </header>
 
-      <div className="action-row">
-        {/* Boton de estado de eleccion y nuevo partido */}
-        <button
-          type="button"
-          onClick={handleToggleElection}
-          disabled={isTogglingElection}
-          className={isElectionActive ? 'toggle-election-btn stop' : 'toggle-election-btn start'}
-        >
-          {isStarting
-            ? 'Iniciando...'
-            : isStopping
-              ? 'Terminando...'
-              : isElectionActive
-                ? 'Terminar Elecciones'
-                : 'Iniciar Elecciones'}
-        </button>
-        <button type="button" onClick={openAddModal} disabled={isTogglingElection}>
-          Añadir Partido
-        </button>
-        <button
-          type="button"
-          className={`refresh-data-btn${isRefreshing ? ' refresh-data-btn--spinning' : ''}`}
-          onClick={handleRefreshData}
-          disabled={isRefreshing || isLoading}
-          aria-label="Actualizar datos"
-          title="Actualizar datos"
-        >
-          <svg className="refresh-data-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-            />
-          </svg>
-        </button>
-      </div>
+      <section className="election-settings-card">
+        <div className="election-settings-head">
+          <div>
+            <h2>Periodo electoral</h2>
+            <p className="election-settings-sub">
+              {startDate || endDate
+                ? formatDateRange(startDate, endDate)
+                : `Año lectivo ${formatElectionPeriod(electionYear)}`}
+            </p>
+          </div>
+          <div className="election-settings-head-actions">
+            <button
+              type="button"
+              className={`refresh-data-btn${isRefreshing ? ' refresh-data-btn--spinning' : ''}`}
+              onClick={handleRefreshData}
+              disabled={isRefreshing || isLoading}
+              aria-label="Actualizar datos"
+              title="Actualizar datos"
+            >
+              <svg className="refresh-data-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="icon-btn election-settings-save"
+              onClick={handleSaveSettings}
+              disabled={isSavingSettings}
+            >
+              {isSavingSettings ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+        <div className="election-settings-body">
+          <div className="election-settings-dates">
+            <AdminField label="Inicio">
+              <AdminInput
+                type="date"
+                className="admin-input--date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </AdminField>
+            <AdminField label="Fin">
+              <AdminInput
+                type="date"
+                className="admin-input--date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </AdminField>
+          </div>
+          <AdminSwitch
+            label="Visible al público"
+            description="Mostrar candidatos y fechas en la página principal"
+            checked={isVisible}
+            onChange={(e) => setIsVisible(e.target.checked)}
+          />
+        </div>
+        <div className="election-settings-footer">
+          <p className={`election-state-pill ${isElectionActive ? 'active' : 'inactive'}`}>
+            {isElectionActive ? 'Elección activa' : 'Elección detenida'}
+            {!isVisible && ' · Oculta'}
+          </p>
+          <button
+            type="button"
+            onClick={handleToggleElection}
+            disabled={isTogglingElection}
+            className={`election-toggle-btn${isElectionActive ? ' election-toggle-btn--stop' : ''}`}
+          >
+            {isStarting
+              ? 'Iniciando...'
+              : isStopping
+                ? 'Terminando...'
+                : isElectionActive
+                  ? 'Terminar elecciones'
+                  : 'Iniciar elecciones'}
+          </button>
+        </div>
+      </section>
+
       {feedback && <p className="dashboard-feedback">{feedback}</p>}
 
-      <p className={`election-state ${isElectionActive ? 'active' : 'inactive'}`}>
-        Estado {formatElectionPeriod(electionYear)}: {isElectionActive ? 'Activa' : 'Detenida'}
-      </p>
+      <div className="party-accordion-list">
+        {isLoading && <p className="party-accordion-loading">Cargando partidos...</p>}
 
-      <div className="table-wrap">
-        {/* Partidos del año con acciones */}
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Votos</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!isLoading &&
-              (election?.parties ?? []).map((partido) => (
-              <tr key={partido.id}>
-                <td>{partido.name}</td>
-                <td>{partido.votes}</td>
-                <td>
-                  <button type="button" className="icon-btn" onClick={() => openEditModal(partido)}>
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn danger"
-                    onClick={() => openDeleteModal(partido)}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-              ))}
-            {isLoading && (
-              <tr>
-                <td colSpan={3}>Cargando...</td>
-              </tr>
-            )}
-            {!isLoading && (election?.parties ?? []).length === 0 && (
-              <tr>
-                <td colSpan={3}>No hay partidos para este año.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {!isLoading &&
+          editableParties.map((partido) => (
+            <article
+              key={partido.id}
+              className={`party-accordion-item${expandedId === partido.id ? ' is-open' : ''}`}
+            >
+              <button
+                type="button"
+                className="party-accordion-header"
+                onClick={() => toggleParty(partido)}
+                aria-expanded={expandedId === partido.id}
+              >
+                <div className="party-accordion-header-left">
+                  {partido.image_url && (
+                    <img src={partido.image_url} alt="" className="party-accordion-thumb" />
+                  )}
+                  <span className="party-accordion-title">{partido.name}</span>
+                </div>
+                <div className="party-accordion-header-right">
+                  <span className="party-accordion-votes">{partido.votes} votos</span>
+                  <AccordionChevron isOpen={expandedId === partido.id} />
+                </div>
+              </button>
+              {expandedId === partido.id && (
+                <PartyFormPanel
+                  partyName={formState.partyName}
+                  setPartyName={(v) => setFormState((s) => ({ ...s, partyName: v }))}
+                  partyImage={formState.partyImage}
+                  setPartyImage={(v) => setFormState((s) => ({ ...s, partyImage: v }))}
+                  partyMascot={formState.partyMascot}
+                  setPartyMascot={(v) => setFormState((s) => ({ ...s, partyMascot: v }))}
+                  partyOfficers={formState.partyOfficers}
+                  setPartyOfficers={(fn) =>
+                    setFormState((s) => ({
+                      ...s,
+                      partyOfficers: typeof fn === 'function' ? fn(s.partyOfficers) : fn,
+                    }))
+                  }
+                  formError={formError}
+                  isSaving={isSavingParty || isDeletingParty}
+                  onSave={handleSaveParty}
+                  onCancel={closeForm}
+                  onDelete={handleDeleteParty}
+                  showDelete
+                />
+              )}
+            </article>
+          ))}
+
+        {!isLoading && editableParties.length === 0 && (
+          <p className="party-accordion-empty">No hay partidos para este año.</p>
+        )}
+
+        {!isLoading && (
+          <article className="party-add-card">
+            <div className="party-add-card__icon" aria-hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div className="party-add-card__content">
+              <p className="party-add-card__title">Añadir partido</p>
+              <p className="party-add-card__hint">Solo el nombre; después podrás completar logo y datos.</p>
+              <div className="party-add-card__row">
+                <AdminInput
+                  type="text"
+                  value={quickPartyName}
+                  onChange={(e) => setQuickPartyName(e.target.value)}
+                  placeholder="Nombre del partido"
+                  onKeyDown={(e) => e.key === 'Enter' && handleQuickAddParty()}
+                />
+                <button
+                  type="button"
+                  className="party-add-card__btn"
+                  onClick={handleQuickAddParty}
+                  disabled={isQuickAdding || isTogglingElection}
+                >
+                  {isQuickAdding ? 'Añadiendo...' : 'Añadir'}
+                </button>
+              </div>
+              {quickFormError && <p className="modal-error">{quickFormError}</p>}
+            </div>
+          </article>
+        )}
       </div>
 
       <div className="bottom-actions">
-        {/* Exportar solo si eleccion cerrada */}
         <button
           type="button"
           onClick={handleExportData}
@@ -422,7 +490,9 @@ function Dashboard() {
           type="button"
           className="clean-data-btn"
           onClick={() => setModalMode('manual-clean-confirm')}
-          disabled={Boolean(election?.isActive) || (election?.parties || []).length === 0 || isCleaningData}
+          disabled={
+            Boolean(election?.isActive) || (election?.parties || []).length === 0 || isCleaningData
+          }
         >
           Limpiar Datos
         </button>
@@ -430,246 +500,171 @@ function Dashboard() {
 
       {modalMode &&
         createPortal(
-          <>
-            {/* Modal crear editar borrar partidos */}
           <div className="modal-backdrop">
-            <div
-              className={`party-modal${modalMode === 'add' || modalMode === 'edit' ? ' party-modal--wide' : ''}`}
-            >
-            {modalMode === 'add' && <h3>Añadir partido</h3>}
-            {modalMode === 'edit' && <h3>Editar partido</h3>}
-            {modalMode === 'delete' && <h3>Eliminar partido</h3>}
-            {modalMode === 'start-election' && <h3>Iniciar elecciones</h3>}
-            {modalMode === 'stop-election' && <h3>Finalizar elecciones</h3>}
-            {modalMode === 'stop-winner' && <h3>Resultado de las elecciones</h3>}
-            {modalMode === 'stop-export' && <h3>Exportar datos</h3>}
-            {modalMode === 'stop-clean' && <h3>Limpiar datos</h3>}
-            {modalMode === 'stop-clean-confirm' && <h3>Confirmar limpieza</h3>}
-            {modalMode === 'manual-clean-confirm' && <h3>Confirmar limpieza</h3>}
+            <div className="party-modal">
+              {modalMode === 'start-election' && <h3>Iniciar elecciones</h3>}
+              {modalMode === 'stop-election' && <h3>Finalizar elecciones</h3>}
+              {modalMode === 'stop-winner' && <h3>Resultado de las elecciones</h3>}
+              {modalMode === 'stop-export' && <h3>Exportar datos</h3>}
+              {modalMode === 'stop-clean' && <h3>Limpiar datos</h3>}
+              {modalMode === 'stop-clean-confirm' && <h3>Confirmar limpieza</h3>}
+              {modalMode === 'manual-clean-confirm' && <h3>Confirmar limpieza</h3>}
 
-            {(modalMode === 'add' || modalMode === 'edit') && (
-              <>
-                <div className="party-form-grid">
-                  <div className="party-form-column party-form-column--identity">
-                    <label className="modal-text-field">
-                      Nombre del partido <span className="field-required">*</span>
-                      <input
-                        type="text"
-                        value={partyName}
-                        onChange={(event) => setPartyName(event.target.value)}
-                        placeholder="Nombre del partido"
-                        required
-                      />
-                    </label>
-                    <label className="file-label">
-                      Imagen (PNG/JPG) <span className="field-required">*</span>
-                      <input type="file" accept=".png,.jpg,.jpeg" onChange={handleImageFileChange} />
-                    </label>
-                    {partyImage && (
-                      <img src={partyImage} alt="Vista previa" className="party-image-preview" />
+              {modalMode === 'start-election' && (
+                <>
+                  <p>
+                    Solo se pueden iniciar elecciones del año actual ({currentYear}). El periodo será{' '}
+                    {formatElectionPeriod(currentYear)}.
+                  </p>
+                  <p className="season-pill">{formatElectionPeriod(currentYear)}</p>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={closeModal}>
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={handleStartElection}
+                      disabled={isStarting}
+                    >
+                      {isStarting ? 'Iniciando...' : 'Iniciar'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {modalMode === 'stop-election' && (
+                <>
+                  <p>¿Finalizar elecciones del periodo {formatElectionPeriod(electionYear)}?</p>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={closeModal}>
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      onClick={handleStopElection}
+                      disabled={isStopping}
+                    >
+                      {isStopping ? 'Finalizando...' : 'Finalizar'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {modalMode === 'stop-winner' && (
+                <>
+                  <p className="winner-modal-period">
+                    Periodo {formatElectionPeriod(stopFlowElection?.year ?? electionYear)}
+                  </p>
+                  <div className={`winner-modal-result winner-modal-result--${stopFlowWinner.type}`}>
+                    {stopFlowWinner.type === 'winner' || stopFlowWinner.type === 'tie' ? (
+                      <>
+                        <p className="winner-modal-result__title">
+                          {stopFlowWinner.type === 'tie' ? 'Empate' : 'Ganador'}
+                        </p>
+                        <p className="winner-modal-result__name">
+                          {stopFlowWinner.type === 'tie'
+                            ? stopFlowWinner.winners.map((w) => w.name).join(', ')
+                            : stopFlowWinner.label}
+                        </p>
+                        <p className="winner-modal-result__votes">
+                          {stopFlowWinner.maxVotes} voto{stopFlowWinner.maxVotes === 1 ? '' : 's'}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="winner-modal-result__name">{stopFlowWinner.label}</p>
                     )}
                   </div>
-                  <div className="party-form-column party-form-column--officers">
-                    <div className="party-officers-two-cols">
-                      {PARTY_OFFICER_FIELDS.map(({ key, label, placeholder, required }) => (
-                        <label key={key} className="modal-text-field">
-                          {label}
-                          {required ? (
-                            <span className="field-required"> *</span>
-                          ) : (
-                            <span className="field-optional"> (opcional)</span>
-                          )}
-                          <input
-                            type="text"
-                            value={partyOfficers[key]}
-                            onChange={(event) =>
-                              setPartyOfficers((prev) => ({ ...prev, [key]: event.target.value }))
-                            }
-                            placeholder={placeholder}
-                            required={Boolean(required)}
-                          />
-                        </label>
-                      ))}
-                    </div>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={() => setModalMode('stop-export')}>
+                      Continuar
+                    </button>
                   </div>
-                </div>
-                {modalError && <p className="modal-error">{modalError}</p>}
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button type="button" className="icon-btn" onClick={handleSaveParty} disabled={isSavingParty}>
-                    {isSavingParty ? 'Guardando...' : 'Guardar'}
-                  </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
-            {modalMode === 'delete' && (
-              <>
-                <p>¿Eliminar {selectedParty?.name}?</p>
-                {modalError && <p className="modal-error">{modalError}</p>}
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button type="button" className="icon-btn danger" onClick={handleDeleteParty} disabled={isDeletingParty}>
-                    {isDeletingParty ? 'Eliminando...' : 'Eliminar'}
-                  </button>
-                </div>
-              </>
-            )}
+              {modalMode === 'stop-export' && (
+                <>
+                  <p>¿Desea exportar los datos?</p>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={() => setModalMode('stop-clean')}>
+                      No
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => {
+                        handleExportData(stopFlowElection)
+                        setModalMode('stop-clean')
+                      }}
+                    >
+                      Sí
+                    </button>
+                  </div>
+                </>
+              )}
 
-            {modalMode === 'start-election' && (
-              <>
-                <p>
-                  Solo se pueden iniciar elecciones del año actual ({currentYear}). El periodo será{' '}
-                  {formatElectionPeriod(currentYear)}.
-                </p>
-                <p className="season-pill">{formatElectionPeriod(currentYear)}</p>
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button type="button" className="icon-btn" onClick={handleStartElection} disabled={isStarting}>
-                    {isStarting ? 'Iniciando...' : 'Iniciar'}
-                  </button>
-                </div>
-              </>
-            )}
+              {modalMode === 'stop-clean' && (
+                <>
+                  <p>¿Desea limpiar los datos?</p>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={closeModal}>
+                      No
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      onClick={() => setModalMode('stop-clean-confirm')}
+                    >
+                      Sí
+                    </button>
+                  </div>
+                </>
+              )}
 
-            {modalMode === 'stop-election' && (
-              <>
-                <p>¿Finalizar elecciones del periodo {formatElectionPeriod(electionYear)}?</p>
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button type="button" className="icon-btn danger" onClick={handleStopElection} disabled={isStopping}>
-                    {isStopping ? 'Finalizando...' : 'Finalizar'}
-                  </button>
-                </div>
-              </>
-            )}
+              {modalMode === 'stop-clean-confirm' && (
+                <>
+                  <p>
+                    ¿Seguro que desea limpiar los datos de{' '}
+                    {formatElectionPeriod(stopFlowElection?.year)}?
+                  </p>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={closeModal}>
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      onClick={() => handleCleanData(stopFlowElection?.year)}
+                      disabled={isCleaningData}
+                    >
+                      {isCleaningData ? 'Limpiando...' : 'Limpiar'}
+                    </button>
+                  </div>
+                </>
+              )}
 
-            {modalMode === 'stop-winner' && (
-              <>
-                <p className="winner-modal-period">
-                  Periodo {formatElectionPeriod(stopFlowElection?.year ?? electionYear)}
-                </p>
-                <div className={`winner-modal-result winner-modal-result--${stopFlowWinner.type}`}>
-                  {stopFlowWinner.type === 'winner' || stopFlowWinner.type === 'tie' ? (
-                    <>
-                      <p className="winner-modal-result__title">
-                        {stopFlowWinner.type === 'tie' ? 'Empate' : 'Ganador'}
-                      </p>
-                      <p className="winner-modal-result__name">
-                        {stopFlowWinner.type === 'tie'
-                          ? stopFlowWinner.winners.map((w) => w.name).join(', ')
-                          : stopFlowWinner.label}
-                      </p>
-                      <p className="winner-modal-result__votes">
-                        {stopFlowWinner.maxVotes} voto{stopFlowWinner.maxVotes === 1 ? '' : 's'}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="winner-modal-result__name">{stopFlowWinner.label}</p>
-                  )}
-                </div>
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={() => setModalMode('stop-export')}
-                  >
-                    Continuar
-                  </button>
-                </div>
-              </>
-            )}
-
-            {modalMode === 'stop-export' && (
-              <>
-                <p>¿Desea exportar los datos?</p>
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={() => {
-                      setModalMode('stop-clean')
-                    }}
-                  >
-                    No
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    onClick={() => {
-                      handleExportData(stopFlowElection)
-                      setModalMode('stop-clean')
-                    }}
-                  >
-                    Sí
-                  </button>
-                </div>
-              </>
-            )}
-
-            {modalMode === 'stop-clean' && (
-              <>
-                <p>¿Desea limpiar los datos?</p>
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    No
-                  </button>
-                  <button type="button" className="icon-btn danger" onClick={() => setModalMode('stop-clean-confirm')}>
-                    Sí
-                  </button>
-                </div>
-              </>
-            )}
-
-            {modalMode === 'stop-clean-confirm' && (
-              <>
-                <p>¿Seguro que desea limpiar los datos de {formatElectionPeriod(stopFlowElection?.year)}?</p>
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn danger"
-                    onClick={() => handleCleanData(stopFlowElection?.year)}
-                    disabled={isCleaningData}
-                  >
-                    {isCleaningData ? 'Limpiando...' : 'Limpiar'}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {modalMode === 'manual-clean-confirm' && (
-              <>
-                <p>¿Seguro que desea limpiar los datos de {formatElectionPeriod(electionYear)}?</p>
-                <div className="modal-actions">
-                  <button type="button" className="icon-btn" onClick={closeModal}>
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn danger"
-                    onClick={() => handleCleanData(electionYear)}
-                    disabled={isCleaningData}
-                  >
-                    {isCleaningData ? 'Limpiando...' : 'Limpiar'}
-                  </button>
-                </div>
-              </>
-            )}
-
+              {modalMode === 'manual-clean-confirm' && (
+                <>
+                  <p>¿Seguro que desea limpiar los datos de {formatElectionPeriod(electionYear)}?</p>
+                  <div className="modal-actions">
+                    <button type="button" className="icon-btn" onClick={closeModal}>
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn danger"
+                      onClick={() => handleCleanData(electionYear)}
+                      disabled={isCleaningData}
+                    >
+                      {isCleaningData ? 'Limpiando...' : 'Limpiar'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-          </>,
+          </div>,
           document.body,
         )}
     </section>

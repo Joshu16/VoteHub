@@ -146,6 +146,15 @@
   margin: 0 0 8px !important;
 }
 
+.party-mascot-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+  display: block;
+  border-radius: 10px;
+}
+
 .party-info .party-presidente-line {
   font-size: 0.95rem !important;
   font-weight: 600 !important;

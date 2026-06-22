@@ -1,0 +1,163 @@
+.security-page {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.security-header h1 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4vw, 1.875rem);
+  color: var(--ink);
+}
+
+.security-header p {
+  margin: 4px 0 0;
+  color: #51607c;
+  font-size: 15px;
+}
+
+.security-feedback {
+  margin: 0;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.security-card {
+  background: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.security-card h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.security-desc {
+  margin: 0;
+  color: #51607c;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.security-2fa-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.security-2fa-status--on {
+  background: #ecfdf3;
+  border: 1px solid #16a34a;
+  color: #166534;
+}
+
+.security-2fa-setup {
+  display: grid;
+  gap: 12px;
+}
+
+.security-secret {
+  display: block;
+  padding: 10px 12px;
+  background: #f8fcff;
+  border: 1px dashed var(--accent);
+  border-radius: 10px;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.security-qr {
+  justify-self: start;
+  border: 1px solid #dce5f2;
+  border-radius: 10px;
+  padding: 8px;
+  background: #fff;
+}
+
+.security-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.editor-add-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.editor-add-btn {
+  height: 44px;
+  align-self: end;
+}
+
+.editor-add-form--admins {
+  grid-template-columns: 1fr auto;
+  margin-top: 14px;
+}
+
+.admin-login-2fa-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.editors-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.editor-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fcff;
+}
+
+.editor-item div {
+  display: grid;
+  gap: 2px;
+}
+
+.editor-item strong {
+  color: var(--ink);
+}
+
+.editor-item span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.editors-empty {
+  color: #64748b;
+  font-style: italic;
+}
+
+@media (max-width: 900px) {
+  .editor-add-form {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .editor-add-form {
+    grid-template-columns: 1fr;
+  }
+}

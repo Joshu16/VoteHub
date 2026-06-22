@@ -103,6 +103,17 @@
   font-size: 14px;
 }
 
+.admin-login-back {
+  border: none;
+  background: transparent;
+  color: #51607c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
 @media (max-width: 480px) {
   .admin-login-page {
     padding: 16px 12px;

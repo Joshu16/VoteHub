@@ -7,11 +7,15 @@ import Registros from './pages/Registros'
 import Voting from './pages/Voting'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
+import AdminSecurity from './pages/AdminSecurity'
+import EditorLogin from './pages/EditorLogin'
+import PartyEditor from './pages/PartyEditor'
 import Home from './pages/Home'
 import Landing from './pages/Landing'
 import LandingAdmin from './pages/LandingAdmin'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
+import { isEditorSessionActiveAsync } from './lib/editorSession'
 import logoCIT, { applyBrandFavicon } from './lib/brandLogo.js'
 
 /* Ítems menú lateral admin */
@@ -20,6 +24,7 @@ const navItems = [
   { to: '/informacion-publica', label: 'Información pública' },
   { to: '/estadisticas', label: 'Estadísticas' },
   { to: '/registros', label: 'Registros' },
+  { to: '/seguridad', label: 'Seguridad' },
 ]
 
 /* Títulos de pestaña por ruta */
@@ -30,6 +35,9 @@ const pageTitles = {
   '/informacion-publica': 'VoteHub | Información pública',
   '/estadisticas': 'VoteHub | Estadísticas',
   '/registros': 'VoteHub | Registros',
+  '/seguridad': 'VoteHub | Seguridad',
+  '/editor-login': 'VoteHub | Editor de partidos',
+  '/editor-partidos': 'VoteHub | Editor de partidos',
   '/votacion': 'VoteHub | Votación',
   '/login': 'VoteHub | Login',
   '/admin-login': 'VoteHub | Login Admin',
@@ -132,13 +140,14 @@ function App() {
   const location = useLocation()
   const prevPath = useRef('')
   const [isAdminLogged, setIsAdminLogged] = useState(false)
+  const [isEditorLogged, setIsEditorLogged] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
-  /* Sidebar solo en rutas admin */
   const showSidebar =
     location.pathname === '/dashboard' ||
     location.pathname === '/informacion-publica' ||
     location.pathname === '/estadisticas' ||
-    location.pathname === '/registros'
+    location.pathname === '/registros' ||
+    location.pathname === '/seguridad'
 
   /* Metadatos al cambiar ruta */
   useEffect(() => {
@@ -157,8 +166,12 @@ function App() {
   /* Comprueba sesión admin */
   useEffect(() => {
     const checkSession = async () => {
-      const active = await isAdminSessionActive()
-      setIsAdminLogged(active)
+      const [adminActive, editorActive] = await Promise.all([
+        isAdminSessionActive(),
+        isEditorSessionActiveAsync(),
+      ])
+      setIsAdminLogged(adminActive)
+      setIsEditorLogged(editorActive)
       setIsCheckingSession(false)
     }
 
@@ -180,6 +193,21 @@ function App() {
 
     return () => clearInterval(id)
   }, [isAdminLogged])
+
+  useEffect(() => {
+    if (!isEditorLogged) {
+      return undefined
+    }
+
+    const id = setInterval(async () => {
+      const active = await isEditorSessionActiveAsync()
+      if (!active) {
+        setIsEditorLogged(false)
+      }
+    }, 60_000)
+
+    return () => clearInterval(id)
+  }, [isEditorLogged])
 
   /* Espera validación de sesión */
   if (isCheckingSession) {
@@ -213,6 +241,18 @@ function App() {
             <Route
               path="/registros"
               element={isAdminLogged ? <Registros /> : <Navigate to="/admin-login" replace />}
+            />
+            <Route
+              path="/seguridad"
+              element={isAdminLogged ? <AdminSecurity /> : <Navigate to="/admin-login" replace />}
+            />
+            <Route
+              path="/editor-login"
+              element={isEditorLogged ? <Navigate to="/editor-partidos" replace /> : <EditorLogin />}
+            />
+            <Route
+              path="/editor-partidos"
+              element={isEditorLogged ? <PartyEditor /> : <Navigate to="/editor-login" replace />}
             />
             {/* Votacion solo con sesion de votante */}
             <Route

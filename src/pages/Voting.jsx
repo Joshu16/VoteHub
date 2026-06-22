@@ -257,6 +257,13 @@ function Voting() {
               <div className="party-info">
                 <p className="party-name-line">{party.name}</p>
                 {presidente && <p className="party-presidente-line">Presidente: {presidente}</p>}
+                {party.mascot_url && (
+                  <img
+                    src={party.mascot_url}
+                    alt={`Mascota ${party.name}`}
+                    className="party-mascot-img"
+                  />
+                )}
                 <button onClick={() => handleVote(party)} disabled={isVoting}>
                   {isVoting ? 'Registrando...' : 'Votar'}
                 </button>

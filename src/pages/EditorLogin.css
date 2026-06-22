@@ -1,0 +1,62 @@
+.editor-login-page {
+  min-height: 70vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.editor-login-card {
+  width: min(100%, 400px);
+  background: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 28px;
+  display: grid;
+  gap: 14px;
+}
+
+.editor-login-card h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.editor-login-card p {
+  margin: 0;
+  color: #51607c;
+  font-size: 14px;
+}
+
+.editor-login-form {
+  display: grid;
+  gap: 10px;
+}
+
+.editor-login-form input {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  height: 44px;
+  padding: 0 12px;
+}
+
+.editor-login-form button {
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editor-login-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editor-login-error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 600;
+}

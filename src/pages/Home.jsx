@@ -11,12 +11,15 @@ function Home() {
         <p>Sistema de elecciones estudiantiles del Complejo Educativo CIT</p>
         <nav className="home-nav">
           <Link to="/login" className="home-link home-link--primary">
-            Log In votación
+            Ingreso Votación
           </Link>
           <Link to="/admin-login" className="home-link home-link--muted">
-            Log In Administrativo
+            Ingreso Administrativo
           </Link>
-          <Link to="/" className="home-link">
+          <Link to="/editor-login" className="home-link home-link--muted">
+            Ingreso Editores de Partidos
+          </Link>
+          <Link to="/" className="home-link home-link--muted">
             Página Principal
           </Link>
         </nav>

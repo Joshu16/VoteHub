@@ -3,7 +3,7 @@ import './Landing.css'
 import logoCIT from '../lib/brandLogo.js'
 import heroInformacion from '../assets/hero-informacion.webp'
 import { getActiveElection } from '../lib/electionsStore'
-import { formatElectionPeriod } from '../lib/electionPeriod'
+import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 import { getLandingContent } from '../lib/landingStore'
 import { parsePartyOfficers, PARTY_OFFICER_FIELDS } from '../lib/partyOfficers'
 
@@ -72,8 +72,10 @@ function Landing() {
   }, [])
 
   const isElectionActive = Boolean(election?.isActive)
+  const isElectionVisible = election?.is_visible !== false
   const candidateParties = (election?.parties || []).filter((p) => !esVotoNulo(p.name))
-  const hasCandidates = isElectionActive && candidateParties.length > 0
+  const hasCandidates = isElectionActive && isElectionVisible && candidateParties.length > 0
+  const showElectionInfo = isElectionVisible && election
   const members = (content?.current_party_members || []).filter(
     (member) => String(member?.role || '').trim() && String(member?.name || '').trim(),
   )
@@ -134,7 +136,7 @@ function Landing() {
     hasCurrentParty && { href: '#partido-actual', label: 'Partido actual' },
     { href: '#candidatos', label: 'Candidatos' },
     { href: '#fechas', label: 'Fechas' },
-    extras.length > 0 && { href: '#info', label: 'Informacion' },
+    extras.length > 0 && { href: '#info', label: 'Información' },
   ].filter(Boolean)
 
   if (isLoading) {
@@ -196,13 +198,16 @@ function Landing() {
       >
         <div className="landing-hero-overlay" aria-hidden />
         <div className="landing-hero-content">
-          {isElectionActive && (
+          {isElectionActive && isElectionVisible && (
             <span className="landing-status">
               <span className="landing-status-dot" aria-hidden />
-              Periodo {formatElectionPeriod(election.year)} · Proceso en curso
+              Periodo {formatElectionPeriod(election.year)}
+              {(election.start_date || election.end_date) &&
+                ` · ${formatDateRange(election.start_date, election.end_date)}`}
+              {' · Proceso en curso'}
             </span>
           )}
-          {!isElectionActive && (
+          {(!isElectionActive || !isElectionVisible) && (
             <span className="landing-status landing-status--muted">Información general</span>
           )}
           <h1>{content?.hero_title || 'Elecciones Estudiantiles CIT'}</h1>
@@ -267,9 +272,11 @@ function Landing() {
             <div>
               <h2>Partidos candidatos</h2>
               <p>
-                {isElectionActive
+                {hasCandidates
                   ? `Mesas directivas registradas para ${formatElectionPeriod(election.year)}`
-                  : 'Partidos que participaran cuando haya elecciones activas'}
+                  : showElectionInfo
+                    ? 'Partidos que participaran cuando haya elecciones activas'
+                    : 'Informacion de candidatos no disponible'}
               </p>
             </div>
           </header>
@@ -287,6 +294,13 @@ function Landing() {
                       )}
                     </div>
                     <h3>{party.name}</h3>
+                    {party.mascot_url && (
+                      <img
+                        src={party.mascot_url}
+                        alt={`Mascota ${party.name}`}
+                        className="landing-candidate-mascot"
+                      />
+                    )}
                     {participants.length > 0 ? (
                       <dl className="landing-roster landing-roster--compact">
                         {participants.map((item) => (
