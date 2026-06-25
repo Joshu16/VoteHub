@@ -17,7 +17,7 @@ export async function sendLoginCode(email) {
   return em
 }
 
-export async function verifyLoginCode(email, token) {
+export async function verifyLoginCode(email, token, { keepSession = false } = {}) {
   const em = normalizeEmail(email)
   const res = await supabase.auth.verifyOtp({
     email: em,
@@ -25,7 +25,7 @@ export async function verifyLoginCode(email, token) {
     type: 'email',
   })
   if (res.error) throw res.error
-  await supabase.auth.signOut()
+  if (!keepSession) await supabase.auth.signOut()
   return em
 }
 

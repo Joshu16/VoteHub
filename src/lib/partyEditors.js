@@ -131,7 +131,7 @@ export async function completeEditorLogin(email, code) {
   if (!assignment?.partyId) {
     throw new Error('Este correo ya no tiene un partido asignado.')
   }
-  await verifyLoginCode(em, code)
+  await verifyLoginCode(em, code, { keepSession: true })
   setEditorSession(em, assignment.name, assignment.partyId)
   clearPendingOtp()
 }
@@ -158,10 +158,11 @@ export function setEditorSession(email, name, partyId) {
   sessionStorage.setItem(KEY_EDITOR_LOGIN_AT, String(Date.now()))
 }
 
-export function clearEditorSession() {
+export async function clearEditorSession() {
   sessionStorage.removeItem(KEY_EDITOR_SESSION)
   sessionStorage.removeItem(KEY_EDITOR_LOGIN_AT)
   clearPendingOtp()
+  await supabase.auth.signOut()
 }
 
 export function getEditorSession() {

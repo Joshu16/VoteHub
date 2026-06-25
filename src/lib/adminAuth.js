@@ -1,3 +1,4 @@
+import { supabase } from './supabaseClient'
 import {
   clearPendingOtp,
   getPendingOtp,
@@ -43,7 +44,7 @@ export async function completeAdminLogin(email, code) {
   if (!(await isAdminEmail(em))) {
     throw new Error('Este correo ya no tiene acceso administrativo.')
   }
-  await verifyLoginCode(em, code)
+  await verifyLoginCode(em, code, { keepSession: true })
   localStorage.setItem(KEY_ADMIN_EMAIL, em)
   localStorage.setItem(KEY_ADMIN_LOGIN_AT, String(Date.now()))
   clearPendingOtp()
@@ -81,4 +82,5 @@ export async function signOutAdmin() {
   localStorage.removeItem(KEY_ADMIN_EMAIL)
   localStorage.removeItem(KEY_ADMIN_LOGIN_AT)
   clearPendingOtp()
+  await supabase.auth.signOut()
 }
