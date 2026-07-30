@@ -13,6 +13,7 @@ import PartyEditor from './pages/PartyEditor'
 import Home from './pages/Home'
 import Landing from './pages/Landing'
 import LandingAdmin from './pages/LandingAdmin'
+import PadronImport from './pages/PadronImport'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
 import { isEditorSessionActiveAsync } from './lib/editorSession'
@@ -24,6 +25,7 @@ const navItems = [
   { to: '/informacion-publica', label: 'Información pública' },
   { to: '/estadisticas', label: 'Estadísticas' },
   { to: '/registros', label: 'Registros' },
+  { to: '/padron', label: 'Padrón electoral' },
   { to: '/seguridad', label: 'Seguridad' },
 ]
 
@@ -35,6 +37,7 @@ const pageTitles = {
   '/informacion-publica': 'VoteHub | Información pública',
   '/estadisticas': 'VoteHub | Estadísticas',
   '/registros': 'VoteHub | Registros',
+  '/padron': 'VoteHub | Padrón electoral',
   '/seguridad': 'VoteHub | Seguridad',
   '/editor-login': 'VoteHub | Editor de partidos',
   '/editor-partidos': 'VoteHub | Editor de partidos',
@@ -147,6 +150,7 @@ function App() {
     location.pathname === '/informacion-publica' ||
     location.pathname === '/estadisticas' ||
     location.pathname === '/registros' ||
+    location.pathname === '/padron' ||
     location.pathname === '/seguridad'
 
   /* Metadatos al cambiar ruta */
@@ -178,7 +182,7 @@ function App() {
     checkSession()
   }, [location.pathname])
 
-  /* Cierra sesion admin tras 24 h aunque no cambie la ruta */
+  /* Cierra sesion admin tras 48 h aunque no cambie la ruta */
   useEffect(() => {
     if (!isAdminLogged) {
       return undefined
@@ -241,6 +245,10 @@ function App() {
             <Route
               path="/registros"
               element={isAdminLogged ? <Registros /> : <Navigate to="/admin-login" replace />}
+            />
+            <Route
+              path="/padron"
+              element={isAdminLogged ? <PadronImport /> : <Navigate to="/admin-login" replace />}
             />
             <Route
               path="/seguridad"

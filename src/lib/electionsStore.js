@@ -542,3 +542,10 @@ export async function hasVotedInElection(year, voterCedula) {
   if (res.error) throw res.error
   return Boolean(res.data)
 }
+
+/* Votos por grado y partido para una edicion */
+export async function getVotesByGrado(year) {
+  const res = await supabase.rpc('get_votes_by_grado', { p_year: Number(year) })
+  if (res.error) throw res.error
+  return Array.isArray(res.data) ? res.data : []
+}

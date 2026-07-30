@@ -11,7 +11,7 @@ import { isAdminEmail } from './adminUsers'
 
 const KEY_ADMIN_EMAIL = 'votehub_admin_email'
 const KEY_ADMIN_LOGIN_AT = 'votehub_admin_login_at'
-const SESSION_MAX_MS = 24 * 60 * 60 * 1000
+const SESSION_MAX_MS = 48 * 60 * 60 * 1000
 
 export { PRINCIPAL_ADMIN_EMAIL } from './adminUsers'
 

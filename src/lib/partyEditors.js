@@ -10,7 +10,7 @@ import {
 
 const KEY_EDITOR_SESSION = 'votehub_editor_session'
 const KEY_EDITOR_LOGIN_AT = 'votehub_editor_login_at'
-const SESSION_MAX_MS = 24 * 60 * 60 * 1000
+const SESSION_MAX_MS = 48 * 60 * 60 * 1000
 
 function noHayTabla(err) {
   const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
@@ -147,7 +147,7 @@ export function isEditorOtpPending() {
 }
 
 export function setEditorSession(email, name, partyId) {
-  sessionStorage.setItem(
+  localStorage.setItem(
     KEY_EDITOR_SESSION,
     JSON.stringify({
       email: normalizeEmail(email),
@@ -155,22 +155,22 @@ export function setEditorSession(email, name, partyId) {
       partyId: partyId || null,
     }),
   )
-  sessionStorage.setItem(KEY_EDITOR_LOGIN_AT, String(Date.now()))
+  localStorage.setItem(KEY_EDITOR_LOGIN_AT, String(Date.now()))
 }
 
 export async function clearEditorSession() {
-  sessionStorage.removeItem(KEY_EDITOR_SESSION)
-  sessionStorage.removeItem(KEY_EDITOR_LOGIN_AT)
+  localStorage.removeItem(KEY_EDITOR_SESSION)
+  localStorage.removeItem(KEY_EDITOR_LOGIN_AT)
   clearPendingOtp()
   await supabase.auth.signOut()
 }
 
 export function getEditorSession() {
-  const raw = sessionStorage.getItem(KEY_EDITOR_SESSION)
+  const raw = localStorage.getItem(KEY_EDITOR_SESSION)
   if (!raw) return null
   try {
     const data = JSON.parse(raw)
-    const loginAt = Number(sessionStorage.getItem(KEY_EDITOR_LOGIN_AT))
+    const loginAt = Number(localStorage.getItem(KEY_EDITOR_LOGIN_AT))
     if (!Number.isFinite(loginAt) || Date.now() - loginAt >= SESSION_MAX_MS) {
       clearEditorSession()
       return null
