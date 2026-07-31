@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './AdminLogin.css'
 import '../styles/admin-forms.css'
@@ -7,18 +8,47 @@ import {
   completeAdminLogin,
   getPendingAdminEmail,
   isAdminOtpPending,
+  isAdminSessionActive,
   requestAdminLoginCode,
 } from '../lib/adminAuth'
 
 function AdminLogin() {
   const navigate = useNavigate()
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    isAdminSessionActive().then((active) => {
+      if (!isMounted) return
+      if (active) {
+        navigate('/dashboard', { replace: true })
+        return
+      }
+      setCheckingSession(false)
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [navigate])
+
+  if (checkingSession) {
+    return (
+      <section className="admin-login-page">
+        <div className="admin-login-card admin-login-card--checking">
+          <p>Verificando sesion...</p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="admin-login-page">
       <div className="admin-login-card">
         <EmailOtpLogin
           title="Acceso administrativo"
-          subtitle="Ingresa tu correo autorizado. Te enviaremos un código de verificación."
+          subtitle="Ingresa tu correo autorizado. Te enviaremos un codigo de verificacion."
           checkEmail={async (email) => {
             await requestAdminLoginCode(email)
           }}

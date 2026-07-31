@@ -15,6 +15,7 @@ import Landing from './pages/Landing'
 import LandingAdmin from './pages/LandingAdmin'
 import PadronImport from './pages/PadronImport'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
+import { supabase } from './lib/supabaseClient'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
 import { isEditorSessionActiveAsync } from './lib/editorSession'
 import logoCIT, { applyBrandFavicon } from './lib/brandLogo.js'
@@ -167,19 +168,31 @@ function App() {
     prevPath.current = location.pathname
   }, [location.pathname])
 
-  /* Comprueba sesión admin */
+  /* Comprueba sesion admin y escucha cambios del token de Supabase */
   useEffect(() => {
+    let isMounted = true
+
     const checkSession = async () => {
       const [adminActive, editorActive] = await Promise.all([
         isAdminSessionActive(),
         isEditorSessionActiveAsync(),
       ])
+      if (!isMounted) return
       setIsAdminLogged(adminActive)
       setIsEditorLogged(editorActive)
       setIsCheckingSession(false)
     }
 
     checkSession()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      checkSession()
+    })
+
+    return () => {
+      isMounted = false
+      authListener.subscription.unsubscribe()
+    }
   }, [location.pathname])
 
   /* Cierra sesion admin tras 48 h aunque no cambie la ruta */
