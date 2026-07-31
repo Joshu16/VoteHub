@@ -7,11 +7,22 @@ export function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase()
 }
 
-export async function sendLoginCode(email) {
+function authRedirectUrl(path = '/') {
+  if (typeof window === 'undefined') return undefined
+  const base = String(import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/$/, '')
+  const route = path.startsWith('/') ? path : `/${path}`
+  return `${base}${route}`
+}
+
+export async function sendLoginCode(email, { redirectPath = '/' } = {}) {
   const em = normalizeEmail(email)
+  const emailRedirectTo = authRedirectUrl(redirectPath)
   const res = await supabase.auth.signInWithOtp({
     email: em,
-    options: { shouldCreateUser: true },
+    options: {
+      shouldCreateUser: true,
+      ...(emailRedirectTo ? { emailRedirectTo } : {}),
+    },
   })
   if (res.error) throw res.error
   return em

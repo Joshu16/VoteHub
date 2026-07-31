@@ -116,7 +116,7 @@ export async function requestEditorLoginCode(email) {
   if (!assignment?.partyId) {
     throw new Error('Este correo no tiene un partido asignado.')
   }
-  await sendLoginCode(em)
+  await sendLoginCode(em, { redirectPath: '/editor-login' })
   setPendingOtp(em, 'editor')
   return em
 }

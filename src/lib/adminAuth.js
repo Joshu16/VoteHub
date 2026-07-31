@@ -63,7 +63,7 @@ export async function requestAdminLoginCode(email) {
   if (!(await isAdminEmail(em))) {
     throw new Error('Este correo no tiene acceso administrativo.')
   }
-  await sendLoginCode(em)
+  await sendLoginCode(em, { redirectPath: '/admin-login' })
   setPendingOtp(em, 'admin')
   return em
 }
