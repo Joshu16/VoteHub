@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Login.css'
+import votandoImg from '../assets/Votando.jpg'
 import { validateVoterCedula } from '../lib/voterRegistry'
 import { voterDisplayName } from '../lib/voterParse'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
@@ -154,7 +155,7 @@ function Login() {
 
       <div className="login-right">
         {/* Foto lateral */}
-        <img src="src/assets/Votando.jpg" alt="Votación" />
+        <img src={votandoImg} alt="Votacion" />
         <div className="right-overlay"></div>
       </div>
 
