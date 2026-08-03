@@ -4,6 +4,28 @@ import './Login.css'
 import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
 import { setVoterElectionSnapshot, setVoterEligible } from '../lib/voterSession'
+import votandoImg from '../assets/Votando.jpg'
+import img1 from '../assets/imagenesinicio/img1.avif'
+import img2 from '../assets/imagenesinicio/img2.avif'
+import img3 from '../assets/imagenesinicio/img3.avif'
+import img4 from '../assets/imagenesinicio/img4.webp'
+import img5 from '../assets/imagenesinicio/img5.webp'
+import img6 from '../assets/imagenesinicio/img6.webp'
+import img7 from '../assets/imagenesinicio/img7.webp'
+import img8 from '../assets/imagenesinicio/img8.jpg'
+import img9 from '../assets/imagenesinicio/img9.webp'
+
+const LOGIN_HERO_IMAGES = [votandoImg, img1, img2, img3, img4, img5, img6, img7, img8, img9]
+const HERO_INTERVAL_MS = 4500
+
+function pickRandomIndex(exclude) {
+  if (LOGIN_HERO_IMAGES.length <= 1) return 0
+  let next = Math.floor(Math.random() * LOGIN_HERO_IMAGES.length)
+  while (next === exclude) {
+    next = Math.floor(Math.random() * LOGIN_HERO_IMAGES.length)
+  }
+  return next
+}
 
 /* Titulo tipo nombre propio */
 function toTitleCase(value) {
@@ -32,6 +54,17 @@ function Login() {
   /* Segundo paso nombre del padron y cedula pendiente */
   const [confirmVoterName, setConfirmVoterName] = useState('')
   const [pendingCedula, setPendingCedula] = useState('')
+  const [heroIndex, setHeroIndex] = useState(() =>
+    Math.floor(Math.random() * LOGIN_HERO_IMAGES.length),
+  )
+
+  /* Carrusel lateral: cambia de forma aleatoria con fade */
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeroIndex((current) => pickRandomIndex(current))
+    }, HERO_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [])
 
   /* Modal tras votar */
   useEffect(() => {
@@ -160,8 +193,16 @@ function Login() {
       </div>
 
       <div className="login-right">
-        {/* Foto lateral */}
-        <img src="src/assets/Votando.jpg" alt="Votación" />
+        {/* Fotos laterales con desvanecido aleatorio */}
+        {LOGIN_HERO_IMAGES.map((src, index) => (
+          <img
+            key={src}
+            src={src}
+            alt=""
+            aria-hidden={index !== heroIndex}
+            className={`login-hero-img${index === heroIndex ? ' is-active' : ''}`}
+          />
+        ))}
         <div className="right-overlay"></div>
       </div>
 
