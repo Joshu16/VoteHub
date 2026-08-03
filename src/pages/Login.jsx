@@ -6,7 +6,6 @@ import { validateVoterCedula } from '../lib/voterRegistry'
 import { voterDisplayName } from '../lib/voterParse'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
 import { setVoterElectionSnapshot, setVoterEligible } from '../lib/voterSession'
-import votandoImg from '../assets/Votando.jpg'
 import img1 from '../assets/imagenesinicio/img1.avif'
 import img2 from '../assets/imagenesinicio/img2.avif'
 import img3 from '../assets/imagenesinicio/img3.avif'
@@ -16,6 +15,8 @@ import img6 from '../assets/imagenesinicio/img6.webp'
 import img7 from '../assets/imagenesinicio/img7.webp'
 import img8 from '../assets/imagenesinicio/img8.jpg'
 import img9 from '../assets/imagenesinicio/img9.webp'
+
+
 
 const LOGIN_HERO_IMAGES = [votandoImg, img1, img2, img3, img4, img5, img6, img7, img8, img9]
 const HERO_INTERVAL_MS = 4500
@@ -188,7 +189,15 @@ function Login() {
 
       <div className="login-right">
         {/* Foto lateral */}
-        <img src={votandoImg} alt="Votacion" />
+        {LOGIN_HERO_IMAGES.map((image, index) => (
+          <img
+            key={`${image}-${index}`}
+            src={image}
+            alt={`Imagen de inicio ${index + 1}`}
+            className={`login-hero-img ${heroIndex === index ? 'is-active' : ''}`}
+            aria-hidden={heroIndex !== index}
+          />
+        ))}
         <div className="right-overlay"></div>
       </div>
 
