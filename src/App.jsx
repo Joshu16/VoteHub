@@ -2,18 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 import Dashboard from './pages/Dashboard'
-import Estadisticas from './pages/Estadisticas'
-import Registros from './pages/Registros'
+import Resultados from './pages/Resultados'
+import Administracion from './pages/Administracion'
 import Voting from './pages/Voting'
 import Login from './pages/Login'
 import AdminLogin from './pages/AdminLogin'
-import AdminSecurity from './pages/AdminSecurity'
 import EditorLogin from './pages/EditorLogin'
 import PartyEditor from './pages/PartyEditor'
 import Home from './pages/Home'
 import Landing from './pages/Landing'
-import LandingAdmin from './pages/LandingAdmin'
-import PadronImport from './pages/PadronImport'
 import { isAdminSessionActive, signOutAdmin } from './lib/adminAuth'
 import { supabase } from './lib/supabaseClient'
 import { clearVoterSession, isVoterSessionReady } from './lib/voterSession'
@@ -23,11 +20,8 @@ import logoCIT, { applyBrandFavicon } from './lib/brandLogo.js'
 /* Ítems menú lateral admin */
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
-  { to: '/informacion-publica', label: 'Información pública' },
-  { to: '/estadisticas', label: 'Estadísticas' },
-  { to: '/registros', label: 'Registros' },
-  { to: '/padron', label: 'Padrón electoral' },
-  { to: '/seguridad', label: 'Seguridad' },
+  { to: '/resultados', label: 'Resultados' },
+  { to: '/administracion', label: 'Administración' },
 ]
 
 /* Títulos de pestaña por ruta */
@@ -35,11 +29,13 @@ const pageTitles = {
   '/': 'VoteHub | Página Principal',
   '/menu': 'VoteHub | Menú',
   '/dashboard': 'VoteHub | Dashboard',
-  '/informacion-publica': 'VoteHub | Información pública',
-  '/estadisticas': 'VoteHub | Estadísticas',
-  '/registros': 'VoteHub | Registros',
-  '/padron': 'VoteHub | Padrón electoral',
-  '/seguridad': 'VoteHub | Seguridad',
+  '/resultados': 'VoteHub | Resultados',
+  '/resultados/estadisticas': 'VoteHub | Estadísticas',
+  '/resultados/registros': 'VoteHub | Registros',
+  '/administracion': 'VoteHub | Administración',
+  '/administracion/informacion-publica': 'VoteHub | Información pública',
+  '/administracion/padron': 'VoteHub | Padrón electoral',
+  '/administracion/seguridad': 'VoteHub | Seguridad',
   '/editor-login': 'VoteHub | Editor de partidos',
   '/editor-partidos': 'VoteHub | Editor de partidos',
   '/votacion': 'VoteHub | Votación',
@@ -47,9 +43,14 @@ const pageTitles = {
   '/admin-login': 'VoteHub | Login Admin',
 }
 
+/* Resuelve titulo de pestaña incluyendo rutas anidadas */
+function resolvePageTitle(pathname) {
+  return pageTitles[pathname] || 'VoteHub'
+}
+
 /* Sincroniza titulo de pestaña e icono con la ruta */
 function setPageMetadata(pathname) {
-  document.title = pageTitles[pathname] || 'VoteHub'
+  document.title = resolvePageTitle(pathname)
   applyBrandFavicon()
 }
 
@@ -58,10 +59,12 @@ function Navigation() {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  /* Cierra menu movil al cambiar de ruta */
   useEffect(() => {
     setMenuOpen(false)
   }, [location.pathname])
 
+  /* Bloquea scroll y escucha Escape con menu abierto */
   useEffect(() => {
     if (!menuOpen) return undefined
     const onKeyDown = (event) => {
@@ -148,11 +151,8 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = useState(true)
   const showSidebar =
     location.pathname === '/dashboard' ||
-    location.pathname === '/informacion-publica' ||
-    location.pathname === '/estadisticas' ||
-    location.pathname === '/registros' ||
-    location.pathname === '/padron' ||
-    location.pathname === '/seguridad'
+    location.pathname.startsWith('/resultados') ||
+    location.pathname.startsWith('/administracion')
 
   /* Metadatos al cambiar ruta */
   useEffect(() => {
@@ -195,7 +195,7 @@ function App() {
     }
   }, [location.pathname])
 
-  /* Cierra sesion admin tras 48 h aunque no cambie la ruta */
+  /* Cierra sesion admin tras 7 dias aunque no cambie la ruta */
   useEffect(() => {
     if (!isAdminLogged) {
       return undefined
@@ -211,6 +211,7 @@ function App() {
     return () => clearInterval(id)
   }, [isAdminLogged])
 
+  /* Cierra sesion editor tras expiracion aunque no cambie la ruta */
   useEffect(() => {
     if (!isEditorLogged) {
       return undefined
@@ -248,24 +249,62 @@ function App() {
               element={isAdminLogged ? <Dashboard /> : <Navigate to="/admin-login" replace />}
             />
             <Route
+              path="/resultados/*"
+              element={isAdminLogged ? <Resultados /> : <Navigate to="/admin-login" replace />}
+            />
+            <Route
+              path="/administracion/*"
+              element={isAdminLogged ? <Administracion /> : <Navigate to="/admin-login" replace />}
+            />
+            <Route
               path="/informacion-publica"
-              element={isAdminLogged ? <LandingAdmin /> : <Navigate to="/admin-login" replace />}
+              element={
+                isAdminLogged ? (
+                  <Navigate to="/administracion/informacion-publica" replace />
+                ) : (
+                  <Navigate to="/admin-login" replace />
+                )
+              }
             />
             <Route
               path="/estadisticas"
-              element={isAdminLogged ? <Estadisticas /> : <Navigate to="/admin-login" replace />}
+              element={
+                isAdminLogged ? (
+                  <Navigate to="/resultados/estadisticas" replace />
+                ) : (
+                  <Navigate to="/admin-login" replace />
+                )
+              }
             />
             <Route
               path="/registros"
-              element={isAdminLogged ? <Registros /> : <Navigate to="/admin-login" replace />}
+              element={
+                isAdminLogged ? (
+                  <Navigate to="/resultados/registros" replace />
+                ) : (
+                  <Navigate to="/admin-login" replace />
+                )
+              }
             />
             <Route
               path="/padron"
-              element={isAdminLogged ? <PadronImport /> : <Navigate to="/admin-login" replace />}
+              element={
+                isAdminLogged ? (
+                  <Navigate to="/administracion/padron" replace />
+                ) : (
+                  <Navigate to="/admin-login" replace />
+                )
+              }
             />
             <Route
               path="/seguridad"
-              element={isAdminLogged ? <AdminSecurity /> : <Navigate to="/admin-login" replace />}
+              element={
+                isAdminLogged ? (
+                  <Navigate to="/administracion/seguridad" replace />
+                ) : (
+                  <Navigate to="/admin-login" replace />
+                )
+              }
             />
             <Route
               path="/editor-login"

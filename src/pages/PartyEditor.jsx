@@ -10,6 +10,7 @@ import { clearEditorSession, getEditorSession, validateEditorSession } from '../
 import { getEditorAssignment } from '../lib/partyEditors'
 import { AccordionChevron } from '../components/AdminUI'
 
+/* Panel del editor de partido asignado al estudiante */
 function PartyEditor() {
   const navigate = useNavigate()
   const currentYear = new Date().getFullYear()
@@ -24,6 +25,7 @@ function PartyEditor() {
   const [isSavingParty, setIsSavingParty] = useState(false)
   const electionYear = Number(election?.year ?? currentYear)
 
+  /* Redirige a login si no hay sesion o asignacion invalida */
   useEffect(() => {
     const s = getEditorSession()
     if (!s) {
@@ -39,6 +41,7 @@ function PartyEditor() {
     })
   }, [navigate])
 
+  /* Carga partido asignado y datos de la eleccion activa */
   useEffect(() => {
     if (!session) return
     const load = async () => {
@@ -76,6 +79,7 @@ function PartyEditor() {
     load()
   }, [session, currentYear])
 
+  /* Guarda cambios del partido en Supabase */
   const handleSaveParty = () => {
     const nombre = formState.partyName.trim()
     if (!nombre) {
@@ -107,6 +111,7 @@ function PartyEditor() {
       .finally(() => setIsSavingParty(false))
   }
 
+  /* Cierra sesion del editor */
   const handleLogout = () => {
     clearEditorSession()
     navigate('/editor-login', { replace: true })

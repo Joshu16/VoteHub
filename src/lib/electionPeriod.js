@@ -1,3 +1,4 @@
+/* Formatea año escolar como periodo (ej. 2026-2027) */
 export function formatElectionPeriod(year) {
   const baseYear = Number(year)
   if (!Number.isInteger(baseYear)) {
@@ -6,6 +7,7 @@ export function formatElectionPeriod(year) {
   return `${baseYear}-${baseYear + 1}`
 }
 
+/* Convierte fecha ISO a texto legible en español */
 export function formatDisplayDate(value) {
   if (!value) return ''
   const date = new Date(`${value}T12:00:00`)
@@ -17,6 +19,7 @@ export function formatDisplayDate(value) {
   })
 }
 
+/* Une fecha inicio y fin en un rango legible */
 export function formatDateRange(startDate, endDate) {
   const start = formatDisplayDate(startDate)
   const end = formatDisplayDate(endDate)

@@ -6,6 +6,7 @@ let activeElectionCache = null
 let activeElectionLoaded = false
 let activeElectionInflight = null
 
+/* Invalida cache en memoria de eleccion activa */
 export function invalidateActiveElectionCache() {
   activeElectionCache = null
   activeElectionLoaded = false
@@ -13,35 +14,43 @@ export function invalidateActiveElectionCache() {
 }
 
 /* Error si falta columna en partidos (mensaje de Postgres/Supabase) */
+/* Detecta error por columna faltante en partidos */
 function noHayColumna(err, columnName) {
   const texto = `${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`.toLowerCase()
   return texto.includes(String(columnName).toLowerCase())
 }
 
+/* Detecta error por columna image_url faltante */
 function noHayColumnaImagen(err) {
   return noHayColumna(err, 'image_url')
 }
 
+/* Detecta error por columna mascot_url faltante */
 function noHayColumnaMascota(err) {
   return noHayColumna(err, 'mascot_url')
 }
 
+/* Detecta error por columna de fecha faltante */
 function noHayColumnaFecha(err, col) {
   return noHayColumna(err, col)
 }
 
+/* Detecta error por columna is_visible faltante */
 function noHayColumnaVisibilidad(err) {
   return noHayColumna(err, 'is_visible')
 }
 
+/* Detecta violacion de clave unica en Postgres */
 function esClaveDuplicada(err) {
   return String(err?.code || '') === '23505'
 }
 
+/* Detecta nombre reservado de voto nulo */
 function esVotoNuloNombre(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Detecta error por columna officers_json faltante */
 function noHayColumnaOficiales(err) {
   if (noHayColumna(err, 'officers_json')) {
     return true
@@ -61,6 +70,7 @@ const ELECTION_SELECTS = [
   'id, year, is_active',
 ]
 
+/* Consulta eleccion probando selects compatibles con esquema antiguo */
 async function seleccionarEleccion(queryFn) {
   let lastErr = null
   for (const sel of ELECTION_SELECTS) {
@@ -86,6 +96,7 @@ async function buscarEleccionPorAño(year) {
   )
 }
 
+/* Normaliza fila de partido con valores nulos por defecto */
 function normalizarFilaPartido(p) {
   return {
     ...p,
@@ -95,6 +106,7 @@ function normalizarFilaPartido(p) {
   }
 }
 
+/* Normaliza fila de eleccion con fechas y visibilidad */
 function normalizarEleccion(row) {
   if (!row) return null
   return {

@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 
+/* Valida cedula contra el padron electoral en Supabase */
 export async function validateVoterCedula(cedula) {
   const ced = String(cedula ?? '').replace(/\D/g, '')
   if (!ced) return null
@@ -11,12 +12,14 @@ export async function validateVoterCedula(cedula) {
   return row ?? null
 }
 
+/* Obtiene el total de votantes en el padron */
 export async function getVotersCount() {
   const res = await supabase.rpc('get_voters_registry_stats')
   if (res.error) throw res.error
   return Number(res.data?.total ?? 0)
 }
 
+/* Obtiene total y desglose por grado del padron */
 export async function getVotersRegistryStats() {
   const res = await supabase.rpc('get_voters_registry_stats')
   if (res.error) throw res.error
@@ -26,6 +29,7 @@ export async function getVotersRegistryStats() {
   }
 }
 
+/* Reemplaza el padron completo con una nueva lista de votantes */
 export async function replaceVotersRegistry(voters) {
   const payload = voters.map((v) => ({
     cedula: v.cedula,

@@ -1,7 +1,9 @@
+/* Detecta si un partido es la opcion de voto nulo */
 function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Calcula ganador, empate o ausencia de votos de una eleccion */
 export function getElectionWinner(parties) {
   const lista = (parties || []).filter((p) => !esVotoNulo(p.name))
   if (lista.length === 0) {

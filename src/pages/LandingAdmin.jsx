@@ -10,6 +10,7 @@ const SECTIONS = [
   { id: 'extra', label: 'Datos extra' },
 ]
 
+/* Editor admin del contenido de la landing publica */
 function LandingAdmin() {
   const [activeSection, setActiveSection] = useState('hero')
   const [content, setContent] = useState(() => ({ ...DEFAULT_LANDING }))
@@ -17,6 +18,7 @@ function LandingAdmin() {
   const [isSaving, setIsSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
 
+  /* Carga contenido actual de la landing al montar */
   useEffect(() => {
     setIsLoading(true)
     getLandingContent()
@@ -27,10 +29,12 @@ function LandingAdmin() {
       .finally(() => setIsLoading(false))
   }, [])
 
+  /* Actualiza un campo simple del contenido */
   const updateField = (field, value) => {
     setContent((prev) => ({ ...prev, [field]: value }))
   }
 
+  /* Actualiza un item dentro de una lista editable */
   const updateListItem = (field, index, key, value) => {
     setContent((prev) => {
       const list = [...(prev[field] || [])]
@@ -39,6 +43,7 @@ function LandingAdmin() {
     })
   }
 
+  /* Agrega item vacio a una lista editable */
   const addListItem = (field, emptyItem) => {
     setContent((prev) => ({
       ...prev,
@@ -46,6 +51,7 @@ function LandingAdmin() {
     }))
   }
 
+  /* Elimina item de una lista editable por indice */
   const removeListItem = (field, index) => {
     setContent((prev) => ({
       ...prev,
@@ -53,6 +59,7 @@ function LandingAdmin() {
     }))
   }
 
+  /* Convierte imagen subida a data URL para el partido actual */
   const handleImageChange = (event) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -69,6 +76,7 @@ function LandingAdmin() {
     reader.readAsDataURL(file)
   }
 
+  /* Persiste cambios del contenido en Supabase */
   const handleSave = () => {
     setIsSaving(true)
     setFeedback('')

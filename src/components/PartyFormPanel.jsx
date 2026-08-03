@@ -9,6 +9,7 @@ import {
   loadImageFromFile,
 } from './AdminUI'
 
+/* Panel de formulario para crear o editar un partido */
 export function PartyFormPanel({
   partyName,
   setPartyName,
@@ -27,6 +28,7 @@ export function PartyFormPanel({
   saveLabel = 'Guardar',
   nameOnly = false,
 }) {
+  /* Formulario reducido solo con nombre del partido */
   if (nameOnly) {
     return (
       <div className="party-form-panel">
@@ -122,6 +124,7 @@ export function PartyFormPanel({
   )
 }
 
+/* Estado inicial vacio del formulario de partido */
 export function emptyPartyFormState() {
   return {
     partyName: '',

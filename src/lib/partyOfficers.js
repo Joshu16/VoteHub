@@ -1,5 +1,6 @@
 /* Cargos de mesa directiva del partido (JSON en columna officers_json) */
 
+/* Estado vacio de cargos de mesa directiva */
 export const EMPTY_PARTY_OFFICERS = {
   presidente: '',
   vicepresidente: '',
@@ -10,6 +11,7 @@ export const EMPTY_PARTY_OFFICERS = {
   fiscal2: '',
 }
 
+/* Definicion de campos de cargos para formularios */
 export const PARTY_OFFICER_FIELDS = [
   { key: 'presidente', label: 'Presidente', placeholder: 'Nombre del presidente', required: true },
   { key: 'vicepresidente', label: 'Vicepresidente', placeholder: 'Nombre del vicepresidente' },
@@ -20,6 +22,7 @@ export const PARTY_OFFICER_FIELDS = [
   { key: 'fiscal2', label: 'Fiscal 2', placeholder: 'Nombre del fiscal 2' },
 ]
 
+/* Convierte JSON o objeto de cargos a estructura normalizada */
 export function parsePartyOfficers(raw) {
   if (raw == null) {
     return { ...EMPTY_PARTY_OFFICERS }
@@ -44,6 +47,7 @@ export function parsePartyOfficers(raw) {
   return { ...EMPTY_PARTY_OFFICERS }
 }
 
+/* Serializa cargos a JSON omitiendo campos vacios */
 export function serializePartyOfficers(officers) {
   const trimmed = {
     presidente: (officers.presidente || '').trim(),
@@ -60,6 +64,7 @@ export function serializePartyOfficers(officers) {
   return JSON.stringify(trimmed)
 }
 
+/* Obtiene el nombre del presidente desde officers_json */
 export function getPresidenteNombre(officersJson) {
   const o = parsePartyOfficers(officersJson)
   const n = (o.presidente || '').trim()

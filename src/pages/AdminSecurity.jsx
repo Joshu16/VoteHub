@@ -13,10 +13,12 @@ import { addPartyEditor, listPartyEditors, removePartyEditor } from '../lib/part
 import { ensureElection, getActiveElection } from '../lib/electionsStore'
 import { AdminField, AdminInput, AdminSelect } from '../components/AdminUI'
 
+/* Detecta si un partido es voto nulo */
 function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Pagina de gestion de admins y editores de partidos */
 function AdminSecurity() {
   const currentYear = new Date().getFullYear()
   const [feedback, setFeedback] = useState('')
@@ -30,6 +32,7 @@ function AdminSecurity() {
   const [editorPartyId, setEditorPartyId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
+  /* Carga lista de administradores */
   const loadAdmins = async () => {
     try {
       const data = await listAdminUsers()
@@ -39,6 +42,7 @@ function AdminSecurity() {
     }
   }
 
+  /* Carga lista de editores de partidos */
   const loadEditors = async () => {
     try {
       const data = await listPartyEditors()
@@ -48,6 +52,7 @@ function AdminSecurity() {
     }
   }
 
+  /* Carga partidos disponibles para asignar editores */
   const loadParties = async () => {
     try {
       const election = (await getActiveElection()) || (await ensureElection(currentYear))
@@ -59,6 +64,7 @@ function AdminSecurity() {
     }
   }
 
+  /* Inicializa datos y comprueba si es admin principal */
   useEffect(() => {
     const init = async () => {
       setIsLoading(true)
@@ -70,6 +76,7 @@ function AdminSecurity() {
     init()
   }, [currentYear])
 
+  /* Agrega nuevo administrador por correo */
   const handleAddAdmin = async () => {
     const email = newAdminEmail.trim()
     if (!email) return
@@ -91,6 +98,7 @@ function AdminSecurity() {
     }
   }
 
+  /* Elimina un administrador no principal */
   const handleRemoveAdmin = async (id) => {
     try {
       await removeAdminUser(id)
@@ -101,6 +109,7 @@ function AdminSecurity() {
     }
   }
 
+  /* Asigna editor a un partido */
   const handleAddEditor = async () => {
     const email = editorEmail.trim()
     if (!email) return
@@ -124,6 +133,7 @@ function AdminSecurity() {
     }
   }
 
+  /* Elimina un editor de partido */
   const handleRemoveEditor = async (id) => {
     try {
       await removePartyEditor(id)

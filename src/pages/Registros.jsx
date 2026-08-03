@@ -5,22 +5,26 @@ import { deleteElectionByYear, getAllElections } from '../lib/electionsStore'
 import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 import { getElectionWinner } from '../lib/electionWinner'
 
+/* Detecta si un partido es voto nulo */
 function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Etiqueta de encabezado segun tipo de resultado */
 function winnerHeading(winner) {
   if (winner.type === 'tie') return 'Empate entre'
   if (winner.type === 'winner') return 'Ganador'
   return 'Resultado'
 }
 
+/* Historial de ediciones electorales con detalle expandible */
 function Registros() {
   const [elections, setElections] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [expandedYear, setExpandedYear] = useState(null)
   const [deletingYear, setDeletingYear] = useState(null)
 
+  /* Carga todas las elecciones del historial */
   const loadData = async () => {
     setIsLoading(true)
     try {
@@ -38,6 +42,7 @@ function Registros() {
     loadData()
   }, [])
 
+  /* Elimina una edicion tras confirmacion */
   const handleDeleteElection = (year) => {
     const shouldDelete = window.confirm(
       `Eliminar la eleccion del periodo ${formatElectionPeriod(year)}?`,
@@ -51,6 +56,7 @@ function Registros() {
       .finally(() => setDeletingYear(null))
   }
 
+  /* Expande o colapsa detalle de una edicion */
   const toggleEdition = (year) => {
     setExpandedYear((prev) => (prev === year ? null : year))
   }

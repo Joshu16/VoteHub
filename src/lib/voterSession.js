@@ -3,6 +3,7 @@ const KEY_NOMBRE = 'voterName'
 const KEY_ELECTION = 'votehub_voter_election'
 const KEY_ELIGIBLE = 'votehub_voter_eligible'
 
+/* Normaliza cedula dejando solo digitos */
 function normalizeCedula(value) {
   return String(value ?? '').replace(/\D/g, '')
 }

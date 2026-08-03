@@ -1,7 +1,9 @@
 import logoCIT from '../assets/LogoCIT.webp'
 
+/* Logo institucional del CIT */
 export default logoCIT
 
+/* Actualiza el favicon del navegador con el logo de marca */
 export function applyBrandFavicon() {
   let link = document.querySelector('link[rel="icon"]')
   if (!link) {

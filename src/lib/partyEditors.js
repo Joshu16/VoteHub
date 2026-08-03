@@ -10,18 +10,27 @@ import {
 
 const KEY_EDITOR_SESSION = 'votehub_editor_session'
 const KEY_EDITOR_LOGIN_AT = 'votehub_editor_login_at'
-const SESSION_MAX_MS = 48 * 60 * 60 * 1000
+const SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000
 
+/* Detecta si falta la tabla party_editors */
 function noHayTabla(err) {
   const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
   return texto.includes('party_editors') && (texto.includes('does not exist') || texto.includes('schema cache'))
 }
 
+/* Detecta error por columna editor_email faltante (esquema legacy) */
 function noHayColumnaEmail(err) {
   const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
   return texto.includes('editor_email')
 }
 
+/* La BD antigua exige voter_cedula NOT NULL aunque el login sea por correo */
+function requiereVoterCedulaLegacy(err) {
+  const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
+  return texto.includes('voter_cedula') && texto.includes('null')
+}
+
+/* Lista editores con nombre de partido asociado */
 export async function listPartyEditors() {
   const selects = [
     'id, editor_email, voter_name, party_id, created_at, parties(name)',
@@ -45,6 +54,7 @@ export async function listPartyEditors() {
   return []
 }
 
+/* Asigna un editor a un partido solo por correo */
 export async function addPartyEditor(email, name, partyId) {
   const editor_email = normalizeEmail(email)
   const voter_name = String(name || '').trim()
@@ -53,6 +63,7 @@ export async function addPartyEditor(email, name, partyId) {
   if (!party_id) return { ok: false, reason: 'NO_PARTY' }
 
   let res = await supabase.from('party_editors').insert({ editor_email, voter_name, party_id })
+
   if (res.error && noHayColumnaEmail(res.error)) {
     res = await supabase.from('party_editors').insert({
       voter_cedula: editor_email,
@@ -60,6 +71,16 @@ export async function addPartyEditor(email, name, partyId) {
       party_id,
     })
   }
+
+  if (res.error && requiereVoterCedulaLegacy(res.error)) {
+    res = await supabase.from('party_editors').insert({
+      editor_email,
+      voter_cedula: editor_email,
+      voter_name,
+      party_id,
+    })
+  }
+
   if (res.error) {
     if (String(res.error.code) === '23505') return { ok: false, reason: 'DUPLICATE' }
     if (noHayTabla(res.error)) return { ok: false, reason: 'NO_TABLE' }
@@ -68,11 +89,13 @@ export async function addPartyEditor(email, name, partyId) {
   return { ok: true }
 }
 
+/* Elimina un editor de partido */
 export async function removePartyEditor(id) {
   const res = await supabase.from('party_editors').delete().eq('id', id)
   if (res.error && !noHayTabla(res.error)) throw res.error
 }
 
+/* Busca editor por correo en columnas nuevas o legacy */
 async function buscarEditorPorEmail(email) {
   const em = normalizeEmail(email)
   if (!em) return null
@@ -97,6 +120,7 @@ async function buscarEditorPorEmail(email) {
   return null
 }
 
+/* Obtiene partido asignado a un editor por correo */
 export async function getEditorAssignment(email) {
   const row = await buscarEditorPorEmail(email)
   if (!row) return null
@@ -110,6 +134,7 @@ export async function getEditorAssignment(email) {
   }
 }
 
+/* Envia codigo OTP al editor tras validar asignacion */
 export async function requestEditorLoginCode(email) {
   const em = normalizeEmail(email)
   const assignment = await getEditorAssignment(em)
@@ -121,6 +146,7 @@ export async function requestEditorLoginCode(email) {
   return em
 }
 
+/* Completa login del editor verificando OTP y asignacion */
 export async function completeEditorLogin(email, code) {
   const pending = getPendingOtp()
   const em = normalizeEmail(email)
@@ -136,16 +162,19 @@ export async function completeEditorLogin(email, code) {
   clearPendingOtp()
 }
 
+/* Correo pendiente de verificacion OTP de editor */
 export function getPendingEditorEmail() {
   const pending = getPendingOtp()
   if (pending?.role === 'editor') return pending.email
   return ''
 }
 
+/* Indica si hay OTP de editor pendiente */
 export function isEditorOtpPending() {
   return getPendingOtp()?.role === 'editor'
 }
 
+/* Guarda sesion del editor en localStorage */
 export function setEditorSession(email, name, partyId) {
   localStorage.setItem(
     KEY_EDITOR_SESSION,
@@ -158,6 +187,7 @@ export function setEditorSession(email, name, partyId) {
   localStorage.setItem(KEY_EDITOR_LOGIN_AT, String(Date.now()))
 }
 
+/* Cierra sesion del editor y limpia Supabase Auth */
 export async function clearEditorSession() {
   localStorage.removeItem(KEY_EDITOR_SESSION)
   localStorage.removeItem(KEY_EDITOR_LOGIN_AT)
@@ -165,6 +195,7 @@ export async function clearEditorSession() {
   await supabase.auth.signOut()
 }
 
+/* Lee sesion del editor validando expiracion de 7 dias */
 export function getEditorSession() {
   const raw = localStorage.getItem(KEY_EDITOR_SESSION)
   if (!raw) return null
@@ -182,10 +213,12 @@ export function getEditorSession() {
   }
 }
 
+/* Comprueba si hay sesion de editor activa localmente */
 export function isEditorSessionActive() {
   return Boolean(getEditorSession())
 }
 
+/* Valida que el editor siga asignado a un partido en servidor */
 export async function validateEditorSession() {
   const session = getEditorSession()
   if (!session?.email) return false
@@ -203,6 +236,7 @@ export async function validateEditorSession() {
   }
 }
 
+/* Comprueba sesion de editor con validacion en servidor */
 export async function isEditorSessionActiveAsync() {
   if (!getEditorSession()) return false
   return validateEditorSession()

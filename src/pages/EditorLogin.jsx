@@ -11,6 +11,7 @@ import {
 } from '../lib/partyEditors'
 import { clearPendingOtp } from '../lib/emailOtpAuth'
 
+/* Pagina de login para editores de partidos con OTP */
 function EditorLogin() {
   const navigate = useNavigate()
 

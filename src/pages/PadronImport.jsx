@@ -5,6 +5,7 @@ import '../styles/admin-forms.css'
 import { parseVoterRegistryFile } from '../lib/voterParse'
 import { getVotersRegistryStats, replaceVotersRegistry } from '../lib/voterRegistry'
 
+/* Pagina de importacion del padron electoral desde Excel/CSV */
 function PadronImport() {
   const fileInputRef = useRef(null)
   const [stats, setStats] = useState({ total: 0, byGrado: {} })
@@ -16,6 +17,7 @@ function PadronImport() {
   const [isParsing, setIsParsing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
 
+  /* Carga estadisticas del padron actual */
   const loadStats = async () => {
     try {
       const data = await getVotersRegistryStats()
@@ -29,6 +31,7 @@ function PadronImport() {
     loadStats().finally(() => setIsLoading(false))
   }, [])
 
+  /* Parsea archivo seleccionado y muestra vista previa */
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0]
     setFeedback('')
@@ -51,6 +54,7 @@ function PadronImport() {
     }
   }
 
+  /* Reemplaza padron completo con datos del archivo */
   const handleImport = async () => {
     if (!preview?.voters?.length) return
 
@@ -84,6 +88,7 @@ function PadronImport() {
     }
   }
 
+  /* Cancela vista previa y limpia input de archivo */
   const handleClearPreview = () => {
     setPreview(null)
     setFileName('')

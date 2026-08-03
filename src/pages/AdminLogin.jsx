@@ -12,10 +12,12 @@ import {
   requestAdminLoginCode,
 } from '../lib/adminAuth'
 
+/* Pagina de login administrativo con OTP por correo */
 function AdminLogin() {
   const navigate = useNavigate()
   const [checkingSession, setCheckingSession] = useState(true)
 
+  /* Redirige al dashboard si ya hay sesion activa */
   useEffect(() => {
     let isMounted = true
 

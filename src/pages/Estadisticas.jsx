@@ -20,12 +20,15 @@ import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 
 const CHART_COLORS = ['#00bec9', '#23c8d1', '#4fd4db', '#7ce0e5', '#0d9ea8', '#16a34a', '#d97706']
 
+/* Orden preferido de grados en graficos */
 const GRADO_ORDER = ['decimo', 'undecimo', 'duodecimo']
 
+/* Detecta si un partido es voto nulo */
 function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Ordena grados segun orden escolar o alfabeticamente */
 function sortGrados(a, b) {
   const la = a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const lb = b.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -37,6 +40,7 @@ function sortGrados(a, b) {
   return a.localeCompare(b, 'es')
 }
 
+/* Agrupa votos por grado con padron y abstenciones */
 function buildGradoStats(rows, votersByGrado) {
   const map = {}
 
@@ -73,6 +77,7 @@ function buildGradoStats(rows, votersByGrado) {
     .sort((a, b) => sortGrados(a.grado, b.grado))
 }
 
+/* Prepara datos para graficos de barras y torta */
 function buildChartData(parties, enrolled) {
   const barras = parties.map((p) => ({ nombre: p.name, votos: p.votes }))
   const totalVotes = barras.reduce((s, b) => s + b.votos, 0)
@@ -89,6 +94,7 @@ function buildChartData(parties, enrolled) {
   return { barras, totalVotes, abstentions, participationPercent, pieData }
 }
 
+/* Grafico de barras de votos por partido */
 function VotesBarChart({ data }) {
   return (
     <div className="recharts-wrap">
@@ -122,6 +128,7 @@ function VotesBarChart({ data }) {
   )
 }
 
+/* Grafico circular de distribucion de votos */
 function VotesPieChart({ data }) {
   return (
     <div className="recharts-wrap recharts-wrap--pie">
@@ -149,6 +156,7 @@ function VotesPieChart({ data }) {
   )
 }
 
+/* Pagina de estadisticas con KPIs y graficos por grado */
 function Estadisticas() {
   const [activeElection, setActiveElection] = useState(null)
   const [allElections, setAllElections] = useState([])
@@ -158,6 +166,7 @@ function Estadisticas() {
   const [selectedGrado, setSelectedGrado] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
+  /* Carga datos y escucha refrescos automaticos cada 5s */
   useEffect(() => {
     let isMounted = true
 
@@ -226,6 +235,7 @@ function Estadisticas() {
     [votesByGradoRows, voterStats.byGrado],
   )
 
+  /* Selecciona grado activo al cambiar la lista */
   useEffect(() => {
     if (gradoStats.length === 0) {
       setSelectedGrado('')

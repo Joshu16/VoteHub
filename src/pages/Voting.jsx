@@ -9,6 +9,7 @@ import {
   setVoterElectionSnapshot,
 } from '../lib/voterSession'
 
+/* Etiqueta corta cuando el partido no tiene logo */
 function etiquetaSinImagenPartido(nombrePartido) {
   const n = (nombrePartido || '').trim().toLowerCase()
   if (n === 'voto nulo') {
@@ -17,10 +18,12 @@ function etiquetaSinImagenPartido(nombrePartido) {
   return (nombrePartido || '').slice(0, 3).toUpperCase()
 }
 
+/* Detecta si la opcion es voto nulo */
 function esVotoNulo(nombrePartido) {
   return String(nombrePartido || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Ordena partidos dejando voto nulo al final */
 function ordenarPartidosParaVoto(parties) {
   return [...(parties || [])].sort((a, b) => {
     const aNulo = esVotoNulo(a.name)
@@ -33,6 +36,7 @@ function ordenarPartidosParaVoto(parties) {
 
 const FONDO_IMAGEN_CARD = '#ffffff'
 
+/* Carga imagen desde URL, data URL o blob */
 async function cargarImagen(src) {
   if (src.startsWith('data:') || src.startsWith('blob:')) {
     return new Promise((resolve, reject) => {
@@ -59,6 +63,7 @@ async function cargarImagen(src) {
   }
 }
 
+/* Obtiene color del pixel superior izquierdo para fondo de tarjeta */
 function colorEsquinaSuperiorIzquierda(img) {
   const ancho = img.naturalWidth
   const alto = img.naturalHeight
@@ -75,6 +80,7 @@ function colorEsquinaSuperiorIzquierda(img) {
   return `rgb(${r}, ${g}, ${b})`
 }
 
+/* Deriva color de fondo desde la imagen del partido */
 async function obtenerFondoDesdeImagen(src) {
   try {
     const img = await cargarImagen(src)
@@ -84,6 +90,7 @@ async function obtenerFondoDesdeImagen(src) {
   }
 }
 
+/* Tarjeta de logo con fondo adaptado al color de la imagen */
 function PartyImageBox({ src, alt }) {
   const [fondo, setFondo] = useState(FONDO_IMAGEN_CARD)
 
