@@ -1,13 +1,16 @@
 import { supabase } from './supabaseClient'
 import { normalizeEmail } from './emailOtpAuth'
 
-export const PRINCIPAL_ADMIN_EMAIL = 'jsaborio1604@gmail.com'
+/* Correo del administrador principal del sistema */
+export const PRINCIPAL_ADMIN_EMAIL = 'ctpcit0@gmail.com'
 
+/* Detecta si falta la tabla admin_users en Supabase */
 function noHayTabla(err) {
   const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
   return texto.includes('admin_users') && (texto.includes('does not exist') || texto.includes('schema cache'))
 }
 
+/* Comprueba si un correo tiene rol de administrador */
 export async function isAdminEmail(email) {
   const em = normalizeEmail(email)
   if (!em) return false
@@ -21,6 +24,7 @@ export async function isAdminEmail(email) {
   return Boolean(res.data)
 }
 
+/* Comprueba si el correo es administrador principal */
 export async function isPrincipalAdminEmail(email) {
   const em = normalizeEmail(email)
   if (em === normalizeEmail(PRINCIPAL_ADMIN_EMAIL)) return true
@@ -38,6 +42,7 @@ export async function isPrincipalAdminEmail(email) {
   return Boolean(res.data?.is_principal)
 }
 
+/* Lista todos los administradores registrados */
 export async function listAdminUsers() {
   const res = await supabase
     .from('admin_users')
@@ -52,6 +57,7 @@ export async function listAdminUsers() {
   return res.data || []
 }
 
+/* Agrega un nuevo administrador por correo */
 export async function addAdminUser(email) {
   const em = normalizeEmail(email)
   if (!em) return { ok: false, reason: 'EMPTY' }
@@ -66,6 +72,7 @@ export async function addAdminUser(email) {
   return { ok: true }
 }
 
+/* Elimina un administrador (excepto el principal) */
 export async function removeAdminUser(id) {
   const res = await supabase.from('admin_users').delete().eq('id', id).eq('is_principal', false)
   if (res.error) {

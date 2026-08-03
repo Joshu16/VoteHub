@@ -3,6 +3,7 @@ import '../styles/admin-forms.css'
 import { AdminField, AdminInput } from './AdminUI'
 import { sendLoginCode } from '../lib/emailOtpAuth'
 
+/* Formulario reutilizable de login por correo y codigo OTP */
 export function EmailOtpLogin({
   title,
   subtitle,
@@ -21,6 +22,7 @@ export function EmailOtpLogin({
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  /* Restaura paso de codigo si hay OTP pendiente */
   useEffect(() => {
     if (isPending && pendingEmail) {
       setStep('code')
@@ -28,6 +30,7 @@ export function EmailOtpLogin({
     }
   }, [isPending, pendingEmail])
 
+  /* Envia correo y pasa al paso de codigo */
   const handleEmailSubmit = async (event) => {
     event.preventDefault()
     setError('')
@@ -44,6 +47,7 @@ export function EmailOtpLogin({
     }
   }
 
+  /* Verifica codigo OTP ingresado */
   const handleCodeSubmit = async (event) => {
     event.preventDefault()
     setError('')
@@ -57,6 +61,7 @@ export function EmailOtpLogin({
     }
   }
 
+  /* Reenvia codigo OTP al mismo correo */
   const handleResend = async () => {
     setError('')
     setIsLoading(true)
@@ -73,6 +78,7 @@ export function EmailOtpLogin({
     }
   }
 
+  /* Vuelve al paso de correo y cancela OTP pendiente */
   const handleBack = () => {
     onCancel?.()
     setStep('email')

@@ -103,6 +103,12 @@
   font-size: 14px;
 }
 
+.admin-login-card--checking {
+  text-align: center;
+  color: #51607c;
+  font-weight: 600;
+}
+
 .admin-login-back {
   border: none;
   background: transparent;

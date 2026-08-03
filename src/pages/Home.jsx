@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import logoCIT from '../lib/brandLogo.js'
 import './Home.css'
 
+/* Hub de accesos: votacion, admin, editores y landing */
 function Home() {
   return (
     <div className="home-page">

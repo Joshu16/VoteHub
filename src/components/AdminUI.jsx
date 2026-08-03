@@ -1,5 +1,6 @@
 import '../styles/admin-forms.css'
 
+/* Icono chevron para acordeones abiertos/cerrados */
 export function AccordionChevron({ isOpen }) {
   return (
     <span className={`accordion-chevron${isOpen ? ' is-open' : ''}`} aria-hidden>
@@ -10,6 +11,7 @@ export function AccordionChevron({ isOpen }) {
   )
 }
 
+/* Campo de formulario admin con etiqueta y hints */
 export function AdminField({ label, hint, required, optional, children }) {
   return (
     <label className="admin-field">
@@ -23,10 +25,12 @@ export function AdminField({ label, hint, required, optional, children }) {
   )
 }
 
+/* Input de texto estilizado para formularios admin */
 export function AdminInput({ className = '', ...props }) {
   return <input className={`admin-input ${className}`.trim()} {...props} />
 }
 
+/* Select estilizado para formularios admin */
 export function AdminSelect({ className = '', children, ...props }) {
   return (
     <select className={`admin-input admin-select ${className}`.trim()} {...props}>
@@ -35,6 +39,7 @@ export function AdminSelect({ className = '', children, ...props }) {
   )
 }
 
+/* Toggle switch con etiqueta y descripcion */
 export function AdminSwitch({ label, description, checked, onChange }) {
   return (
     <div className="admin-switch-row">
@@ -50,6 +55,7 @@ export function AdminSwitch({ label, description, checked, onChange }) {
   )
 }
 
+/* Zona de carga de archivo con vista previa de imagen */
 export function AdminFileUpload({ label, optional, accept, onFile, preview, previewAlt }) {
   return (
     <div className="admin-file-upload">
@@ -74,6 +80,7 @@ export function AdminFileUpload({ label, optional, accept, onFile, preview, prev
   )
 }
 
+/* Lee archivo de imagen y devuelve data URL via callback */
 export function loadImageFromFile(file, onDone, onError) {
   if (!file) return
   const isValidType = file.type === 'image/png' || file.type === 'image/jpeg'

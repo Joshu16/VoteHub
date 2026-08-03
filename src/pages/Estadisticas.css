@@ -224,6 +224,124 @@
   min-height: 220px;
 }
 
+.dot-muted {
+  background: #d1d5db;
+}
+
+.stats-grado-section {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 190, 201, 0.2);
+}
+
+.stats-grado-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.stats-grado-section-head h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  color: var(--soft-ink);
+}
+
+.stats-grado-section-head p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.stats-grado-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #51607c;
+}
+
+.stats-grado-select select {
+  border: 1px solid #c8d7ea;
+  border-radius: 10px;
+  height: 38px;
+  padding: 0 10px;
+  font-weight: 600;
+  min-width: 160px;
+}
+
+.stats-grado-kpis {
+  margin-bottom: 0;
+}
+
+.stats-grado-table-card {
+  overflow: hidden;
+}
+
+.stats-grado-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stats-grado-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.stats-grado-table th,
+.stats-grado-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.stats-grado-table th {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.stats-grado-table td {
+  color: var(--soft-ink);
+}
+
+.stats-grado-table td:first-child .stats-grado-party-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-grado-table td:not(:first-child) {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stats-grado-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.stats-grado-table-abstention td {
+  color: #64748b;
+}
+
+.stats-grado-table tfoot td {
+  font-weight: 800;
+  border-bottom: none;
+  background: #eefbfd;
+  color: var(--soft-ink);
+}
+
+.abstention-list--compact li {
+  font-size: 16px;
+}
+
 @media (max-width: 1080px) {
   .stats-layout {
     grid-template-columns: 1fr;
@@ -269,6 +387,15 @@
     padding: 14px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .stats-grado-section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-grado-select select {
+    flex: 1;
   }
 
   .bar-chart {

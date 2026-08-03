@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Login.css'
-import { validateVoterCedulaFromExcel } from '../lib/voterExcel'
+import votandoImg from '../assets/Votando.jpg'
+import { validateVoterCedula } from '../lib/voterRegistry'
+import { voterDisplayName } from '../lib/voterParse'
 import { getActiveElection, hasVotedInElection } from '../lib/electionsStore'
 import { setVoterElectionSnapshot, setVoterEligible } from '../lib/voterSession'
 import votandoImg from '../assets/Votando.jpg'
@@ -89,24 +91,20 @@ function Login() {
       }
 
       /* Comprueba si esta en el padron */
-      const voter = await validateVoterCedulaFromExcel(normalizedCedula)
+      const voter = await validateVoterCedula(normalizedCedula)
 
       if (!voter) {
         setError('Cédula no encontrada.')
         return
       }
 
-      const voterName = toTitleCase(voter.nombre || 'Estudiante')
+      const voterName = toTitleCase(voterDisplayName(voter))
       setPendingCedula(normalizedCedula)
       setConfirmVoterName(voterName)
       return
 
     } catch (error) {
       const message = String(error?.message || '')
-      if (message.includes('Excel')) {
-        setError('No se pudo validar con el archivo de cédulas.')
-        return
-      }
       setError('No se pudo validar la cédula en este momento.')
     } finally {
       setIsLoading(false)
@@ -153,10 +151,6 @@ function Login() {
       navigate('/votacion')
     } catch (error) {
       const message = String(error?.message || '')
-      if (message.includes('Excel')) {
-        setError('No se pudo validar con el archivo de cédulas.')
-        return
-      }
       setError('No se pudo validar la cédula en este momento.')
     } finally {
       setIsLoading(false)
@@ -193,16 +187,8 @@ function Login() {
       </div>
 
       <div className="login-right">
-        {/* Fotos laterales con desvanecido aleatorio */}
-        {LOGIN_HERO_IMAGES.map((src, index) => (
-          <img
-            key={src}
-            src={src}
-            alt=""
-            aria-hidden={index !== heroIndex}
-            className={`login-hero-img${index === heroIndex ? ' is-active' : ''}`}
-          />
-        ))}
+        {/* Foto lateral */}
+        <img src={votandoImg} alt="Votacion" />
         <div className="right-overlay"></div>
       </div>
 

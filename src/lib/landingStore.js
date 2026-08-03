@@ -1,40 +1,42 @@
 import { supabase } from './supabaseClient'
 
+/* Contenido por defecto de la landing publica */
 export const DEFAULT_LANDING = {
   hero_title: 'Elecciones Estudiantiles CIT',
   hero_subtitle:
-    'Conoce el proceso electoral del Complejo Educativo CIT: la mesa en funciones, las fechas clave y la informacion que necesitas antes de votar.',
+    'Conoce el proceso electoral del Complejo Educativo CIT: la mesa en funciones, las fechas clave y la información que necesitas antes de votar.',
   hero_cta_label: 'Ir a votar',
   current_party_name: 'Luma',
   current_party_description:
-    'Luma lidera la mesa directiva del estudiantado en el periodo actual. Su enfoque combina representacion estudiantil, actividades formativas y espacios de participacion para todos los niveles del colegio.',
+    'Luma lidera la mesa directiva del estudiantado en el período actual. Su enfoque combina representación estudiantil, actividades formativas y espacios de participación para todos los niveles del colegio.',
   current_party_image: null,
   current_party_members: [],
   important_dates: [],
   extra_sections: [
     {
-      title: 'Quien puede votar',
+      title: 'Quién puede votar',
       content:
-        'Pueden participar los estudiantes registrados en el padron electoral del colegio. La validacion se realiza con el numero de cedula al ingresar al sistema.',
+        'Pueden participar los estudiantes registrados en el padrón electoral del colegio. La validación se realiza con el número de cédula al ingresar al sistema.',
     },
     {
-      title: 'Como funciona el voto',
+      title: 'Cómo funciona el voto',
       content:
-        'Cada estudiante tiene derecho a un solo voto por periodo electoral. El sistema registra la participacion de forma anonima y muestra los resultados al cierre del proceso.',
+        'Cada estudiante tiene derecho a un solo voto por período electoral. El sistema registra la participación de forma anónima y muestra los resultados al cierre del proceso.',
     },
     {
       title: 'Transparencia',
       content:
-        'Las mesas directivas, fechas y partidos participantes se publican en esta pagina para que toda la comunidad educativa tenga acceso a la misma informacion.',
+        'Las mesas directivas, fechas y partidos participantes se publican en esta página para que toda la comunidad educativa tenga acceso a la misma información.',
     },
     {
       title: 'Complejo Educativo CIT',
       content:
-        'VoteHub es la plataforma oficial de elecciones estudiantiles del CIT. Si tienes dudas sobre el proceso, consulta con tu docente orientador o la coordinacion estudiantil.',
+        'VoteHub es la plataforma oficial de elecciones estudiantiles del CIT. Si tienes dudas sobre el proceso, consulta con tu docente orientador o la coordinación estudiantil.',
     },
   ],
 }
 
+/* Parsea campo JSON a lista con fallback */
 function parseJsonList(raw, fallback = []) {
   if (raw == null || raw === '') return fallback
   if (Array.isArray(raw)) return raw
@@ -46,6 +48,7 @@ function parseJsonList(raw, fallback = []) {
   }
 }
 
+/* Usa fallback si el valor esta vacio o es nulo */
 function withDefault(value, fallback) {
   if (value == null) return fallback
   if (typeof value === 'string' && value.trim() === '') return fallback
@@ -53,6 +56,7 @@ function withDefault(value, fallback) {
   return value
 }
 
+/* Normaliza fila de Supabase al formato de la landing */
 function normalizeRow(row) {
   if (!row) return { ...DEFAULT_LANDING }
   return {
@@ -74,6 +78,7 @@ function normalizeRow(row) {
   }
 }
 
+/* Prepara payload para upsert en Supabase */
 function serializePayload(content) {
   return {
     id: 1,
@@ -90,12 +95,14 @@ function serializePayload(content) {
   }
 }
 
+/* Detecta si falta la tabla landing_content */
 function tablaNoExiste(err) {
   const code = String(err?.code || '')
   const texto = `${err?.message || ''} ${err?.details || ''}`.toLowerCase()
   return code === '42P01' || texto.includes('landing_content')
 }
 
+/* Lee contenido de la landing desde Supabase */
 export async function getLandingContent() {
   const res = await supabase.from('landing_content').select('*').eq('id', 1).maybeSingle()
   if (res.error) {
@@ -107,6 +114,7 @@ export async function getLandingContent() {
   return normalizeRow(res.data)
 }
 
+/* Guarda contenido de la landing en Supabase */
 export async function saveLandingContent(content) {
   const payload = serializePayload(content)
   const res = await supabase.from('landing_content').upsert(payload).select('*').single()

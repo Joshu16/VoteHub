@@ -4,10 +4,12 @@ import excelFileUrl from '../../cedula nombre por niveles 2026.xlsx?url'
 /* Lista de votantes en memoria una sola vez */
 let cache = null
 
+/* Extrae solo digitos de cedula */
 function soloDigitosCedula(v) {
   return String(v ?? '').replace(/\D/g, '')
 }
 
+/* Normaliza texto para comparacion */
 function textoNormalizado(v) {
   return String(v ?? '')
     .trim()
@@ -55,6 +57,7 @@ async function cargarTodo() {
   return lista
 }
 
+/* Valida nombre y cedula contra el Excel embebido */
 export async function validateVoterFromExcel(nombre, cedula) {
   const nom = textoNormalizado(nombre)
   const ced = soloDigitosCedula(cedula)
@@ -63,6 +66,7 @@ export async function validateVoterFromExcel(nombre, cedula) {
   return uno ?? null
 }
 
+/* Valida solo cedula contra el Excel embebido */
 export async function validateVoterCedulaFromExcel(cedula) {
   const ced = soloDigitosCedula(cedula)
   const lista = await cargarTodo()
@@ -70,6 +74,7 @@ export async function validateVoterCedulaFromExcel(cedula) {
   return uno ?? null
 }
 
+/* Cuenta votantes en el Excel embebido */
 export async function getVotersCountFromExcel() {
   const lista = await cargarTodo()
   return lista.length

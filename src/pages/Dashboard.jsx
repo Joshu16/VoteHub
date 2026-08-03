@@ -20,10 +20,12 @@ import { PartyFormPanel, emptyPartyFormState } from '../components/PartyFormPane
 import { AccordionChevron, AdminField, AdminInput, AdminSwitch } from '../components/AdminUI'
 import '../styles/admin-forms.css'
 
+/* Detecta si un partido es la opcion de voto nulo */
 function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Panel principal de control de elecciones y partidos */
 function Dashboard() {
   const currentYear = new Date().getFullYear()
   const [election, setElection] = useState(null)
@@ -50,6 +52,7 @@ function Dashboard() {
   const [isVisible, setIsVisible] = useState(true)
   const electionYear = Number(election?.year ?? currentYear)
 
+  /* Carga eleccion activa o crea una del año actual */
   const loadData = async ({ quiet = false } = {}) => {
     if (!quiet) setIsLoading(true)
     try {
@@ -73,10 +76,12 @@ function Dashboard() {
     }
   }
 
+  /* Carga inicial al montar el componente */
   useEffect(() => {
     loadData()
   }, [currentYear])
 
+  /* Bloquea scroll del body cuando hay modal abierto */
   useEffect(() => {
     if (!modalMode) {
       document.body.classList.remove('modal-open')
@@ -86,6 +91,7 @@ function Dashboard() {
     return () => document.body.classList.remove('modal-open')
   }, [modalMode])
 
+  /* Refresca datos y notifica a estadisticas */
   const handleRefreshData = async () => {
     setIsRefreshing(true)
     try {
@@ -99,6 +105,7 @@ function Dashboard() {
     }
   }
 
+  /* Inicia elecciones del año actual */
   const handleStartElection = () => {
     setIsStarting(true)
     startElection(currentYear)
@@ -113,6 +120,7 @@ function Dashboard() {
       .finally(() => setIsStarting(false))
   }
 
+  /* Detiene elecciones y muestra flujo de ganador/exportacion */
   const handleStopElection = () => {
     const targetElection = election
     if (!targetElection) return
@@ -135,6 +143,7 @@ function Dashboard() {
   const isTogglingElection = isStarting || isStopping
   const stopFlowWinner = getElectionWinner(stopFlowElection?.parties ?? election?.parties ?? [])
 
+  /* Abre modal de inicio o detencion segun estado actual */
   const handleToggleElection = () => {
     if (isElectionActive) {
       setModalMode('stop-election')
@@ -143,11 +152,13 @@ function Dashboard() {
     setModalMode('start-election')
   }
 
+  /* Cierra cualquier modal activo */
   const closeModal = () => {
     setModalMode('')
     setStopFlowElection(null)
   }
 
+  /* Cierra formulario de edicion de partido */
   const closeForm = () => {
     setExpandedId(null)
     setFormState(emptyPartyFormState())
@@ -155,6 +166,7 @@ function Dashboard() {
     setFormError('')
   }
 
+  /* Crea partido rapido solo con nombre */
   const handleQuickAddParty = () => {
     const nombre = quickPartyName.trim()
     if (!nombre) {
@@ -179,6 +191,7 @@ function Dashboard() {
       .finally(() => setIsQuickAdding(false))
   }
 
+  /* Expande o cierra acordeon de un partido */
   const toggleParty = (party) => {
     if (expandedId === party.id) {
       closeForm()
@@ -195,6 +208,7 @@ function Dashboard() {
     setFormError('')
   }
 
+  /* Guarda cambios del partido en edicion */
   const handleSaveParty = () => {
     const nombre = formState.partyName.trim()
     if (!nombre) {
@@ -228,6 +242,7 @@ function Dashboard() {
       .finally(() => setIsSavingParty(false))
   }
 
+  /* Elimina el partido seleccionado tras confirmacion */
   const handleDeleteParty = () => {
     if (!selectedParty) return
     const shouldDelete = window.confirm(`¿Eliminar ${selectedParty.name}?`)
@@ -243,6 +258,7 @@ function Dashboard() {
       .finally(() => setIsDeletingParty(false))
   }
 
+  /* Guarda fechas y visibilidad del periodo electoral */
   const handleSaveSettings = () => {
     setIsSavingSettings(true)
     updateElectionSettings(electionYear, {
@@ -260,6 +276,7 @@ function Dashboard() {
       .finally(() => setIsSavingSettings(false))
   }
 
+  /* Exporta resultados a CSV cuando la eleccion esta cerrada */
   const handleExportData = (targetElection = election) => {
     const parties = targetElection?.parties || []
     if (!targetElection || targetElection.isActive || !parties.length) return
@@ -280,6 +297,7 @@ function Dashboard() {
     setFeedback('Datos exportados.')
   }
 
+  /* Borra votos y partidos de una edicion */
   const handleCleanData = (year) => {
     setIsCleaningData(true)
     clearElectionData(year)

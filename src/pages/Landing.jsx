@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import './Landing.css'
 import logoCIT from '../lib/brandLogo.js'
-import heroInformacion from '../assets/hero-informacion.webp'
+import heroImage from '../assets/Hero.avif'
 import { getActiveElection } from '../lib/electionsStore'
 import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 import { getLandingContent } from '../lib/landingStore'
 import { parsePartyOfficers, PARTY_OFFICER_FIELDS } from '../lib/partyOfficers'
 
+/* Detecta si un partido es voto nulo */
 function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
+/* Extrae cargos con nombre desde officers_json del partido */
 function officerEntries(officersJson) {
   const officers = parsePartyOfficers(officersJson)
   return PARTY_OFFICER_FIELDS.map(({ key, label }) => {
@@ -20,6 +22,7 @@ function officerEntries(officersJson) {
   }).filter(Boolean)
 }
 
+/* Formatea fecha para mostrar en la landing */
 function formatDisplayDate(value) {
   if (!value) return ''
   const date = new Date(`${value}T12:00:00`)
@@ -31,6 +34,7 @@ function formatDisplayDate(value) {
   })
 }
 
+/* Numero de seccion segun bloques visibles */
 function sectionIndex(hasCurrentParty, slot) {
   let n = 1
   if (hasCurrentParty) {
@@ -44,12 +48,131 @@ function sectionIndex(hasCurrentParty, slot) {
   return String(n).padStart(2, '0')
 }
 
+/* Tarjeta de un partido candidato */
+function CandidateCard({ party }) {
+  const participants = officerEntries(party.officers_json)
+  const hasMascot = Boolean(party.mascot_url)
+  return (
+    <article className="landing-candidate">
+      <div
+        className={`landing-candidate-visual${hasMascot ? '' : ' landing-candidate-visual--solo'}`}
+      >
+        <div className="landing-candidate-logo">
+          {party.image_url ? (
+            <img src={party.image_url} alt={party.name} />
+          ) : (
+            <span>{party.name.slice(0, 3).toUpperCase()}</span>
+          )}
+        </div>
+        {hasMascot && (
+          <div className="landing-candidate-mascot" aria-hidden="true">
+            <img src={party.mascot_url} alt="" />
+          </div>
+        )}
+      </div>
+      <div className="landing-candidate-title">
+        <h3>{party.name}</h3>
+        {participants[0] && (
+          <p className="landing-candidate-lead">
+            {participants[0].role}: {participants[0].name}
+          </p>
+        )}
+      </div>
+      {participants.length > 1 ? (
+        <ul className="landing-candidate-team">
+          {participants.slice(1).map((item) => (
+            <li key={`${party.id}-${item.role}`}>
+              <span className="landing-candidate-team-role">{item.role}</span>
+              <span className="landing-candidate-team-name">{item.name}</span>
+            </li>
+          ))}
+        </ul>
+      ) : participants.length === 0 ? (
+        <p className="landing-empty landing-empty--roster">Indefinido</p>
+      ) : null}
+    </article>
+  )
+}
+
+/* Carrusel de partidos: muestra 2 por pagina con flechas */
+function CandidateCarousel({ parties }) {
+  const [page, setPage] = useState(0)
+  const [perPage, setPerPage] = useState(2)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    const sync = () => setPerPage(mq.matches ? 1 : 2)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  const totalPages = Math.max(1, Math.ceil(parties.length / perPage))
+
+  useEffect(() => {
+    setPage(0)
+  }, [parties.length, perPage])
+
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages - 1))
+  }, [totalPages])
+
+  const visible = parties.slice(page * perPage, page * perPage + perPage)
+  const showControls = parties.length > perPage
+
+  return (
+    <div className="landing-candidates-carousel">
+      <div className="landing-candidates-carousel-row">
+        <button
+          type="button"
+          className="landing-carousel-btn"
+          onClick={() => setPage((p) => p - 1)}
+          disabled={!showControls || page === 0}
+          aria-label="Ver partidos anteriores"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        <div className="landing-candidates-viewport">
+          <div className="landing-candidates" data-per-page={perPage}>
+            {visible.map((party) => (
+              <CandidateCard key={party.id} party={party} />
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="landing-carousel-btn"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={!showControls || page >= totalPages - 1}
+          aria-label="Ver siguientes partidos"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      {showControls && (
+        <p className="landing-carousel-status" aria-live="polite">
+          {page + 1} de {totalPages}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/* Pagina publica de informacion electoral */
 function Landing() {
   const [content, setContent] = useState(null)
   const [election, setElection] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  /* Carga contenido editable y eleccion activa */
   useEffect(() => {
     let alive = true
     Promise.all([getLandingContent(), getActiveElection()])
@@ -89,6 +212,7 @@ function Landing() {
     content?.current_party_image ||
     members.length > 0
 
+  /* Scroll en topbar y animaciones reveal al cargar */
   useEffect(() => {
     if (isLoading) return undefined
 
@@ -116,6 +240,7 @@ function Landing() {
     }
   }, [isLoading, hasCurrentParty, hasCandidates, dates.length, extras.length])
 
+  /* Bloquea scroll y escucha Escape con menu movil abierto */
   useEffect(() => {
     if (!menuOpen) return undefined
     const onKeyDown = (event) => {
@@ -142,7 +267,7 @@ function Landing() {
   if (isLoading) {
     return (
       <div className="landing-page">
-        <div className="landing-loading" aria-busy="true" aria-label="Cargando informacion electoral">
+        <div className="landing-loading" aria-busy="true" aria-label="Cargando información electoral">
           <div className="landing-loading-card">
             <div className="landing-skeleton landing-skeleton--logo" />
             <div className="landing-skeleton landing-skeleton--title" />
@@ -169,7 +294,7 @@ function Landing() {
           className={`landing-menu-toggle${menuOpen ? ' is-open' : ''}`}
           aria-expanded={menuOpen}
           aria-controls="landing-nav"
-          aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
           onClick={() => setMenuOpen((open) => !open)}
         >
           <span className="landing-menu-toggle-bar" aria-hidden />
@@ -179,7 +304,7 @@ function Landing() {
         <button
           type="button"
           className="landing-nav-backdrop"
-          aria-label="Cerrar menu"
+          aria-label="Cerrar menú"
           onClick={closeMenu}
           tabIndex={menuOpen ? 0 : -1}
         />
@@ -194,14 +319,14 @@ function Landing() {
 
       <section
         className="landing-hero"
-        style={{ backgroundImage: `url(${heroInformacion})` }}
+        style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="landing-hero-overlay" aria-hidden />
         <div className="landing-hero-content">
           {isElectionActive && isElectionVisible && (
             <span className="landing-status">
               <span className="landing-status-dot" aria-hidden />
-              Periodo {formatElectionPeriod(election.year)}
+              Período {formatElectionPeriod(election.year)}
               {(election.start_date || election.end_date) &&
                 ` · ${formatDateRange(election.start_date, election.end_date)}`}
               {' · Proceso en curso'}
@@ -233,7 +358,7 @@ function Landing() {
               <span className="landing-block-tag">{sectionIndex(true, 'partido')}</span>
               <div>
                 <h2>Partido en el poder</h2>
-                <p>Mesa directiva que representa al estudiantado en este periodo</p>
+                <p>Mesa directiva que representa al estudiantado en este período</p>
               </div>
             </header>
             <div className="landing-current">
@@ -275,48 +400,13 @@ function Landing() {
                 {hasCandidates
                   ? `Mesas directivas registradas para ${formatElectionPeriod(election.year)}`
                   : showElectionInfo
-                    ? 'Partidos que participaran cuando haya elecciones activas'
-                    : 'Informacion de candidatos no disponible'}
+                    ? 'Partidos que participarán cuando haya elecciones activas'
+                    : 'Información de candidatos no disponible'}
               </p>
             </div>
           </header>
           {hasCandidates ? (
-            <div className="landing-candidates">
-              {candidateParties.map((party) => {
-                const participants = officerEntries(party.officers_json)
-                return (
-                  <article key={party.id} className="landing-candidate">
-                    <div className="landing-candidate-logo">
-                      {party.image_url ? (
-                        <img src={party.image_url} alt={party.name} />
-                      ) : (
-                        <span>{party.name.slice(0, 3).toUpperCase()}</span>
-                      )}
-                    </div>
-                    <h3>{party.name}</h3>
-                    {party.mascot_url && (
-                      <img
-                        src={party.mascot_url}
-                        alt={`Mascota ${party.name}`}
-                        className="landing-candidate-mascot"
-                      />
-                    )}
-                    {participants.length > 0 ? (
-                      <dl className="landing-roster landing-roster--compact">
-                        {participants.map((item) => (
-                          <div key={`${party.id}-${item.role}`} className="landing-roster-item">
-                            <dt>{item.role}</dt>
-                            <dd>{item.name}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    ) : (
-                      <p className="landing-empty landing-empty--roster">Indefinido</p>
-                    )}
-                  </article>
-                )
-              })}
-            </div>
+            <CandidateCarousel parties={candidateParties} />
           ) : (
             <p className="landing-empty">Indefinido</p>
           )}
@@ -353,7 +443,7 @@ function Landing() {
             <header className="landing-block-head">
               <span className="landing-block-tag">{sectionIndex(hasCurrentParty, 'info')}</span>
               <div>
-                <h2>Informacion adicional</h2>
+                <h2>Información adicional</h2>
                 <p>Detalles y contexto del proceso</p>
               </div>
             </header>
@@ -370,8 +460,13 @@ function Landing() {
       </main>
 
       <footer className="landing-footer">
-        <img src={logoCIT} alt="Complejo Educativo CIT" />
-        <p>Complejo Educativo CIT · Proceso electoral estudiantil</p>
+        <div className="landing-footer-inner">
+          <img src={logoCIT} alt="Complejo Educativo CIT" />
+          <div className="landing-footer-copy">
+            <strong>Complejo Educativo CIT</strong>
+            <span>Proceso electoral estudiantil · VoteHub</span>
+          </div>
+        </div>
       </footer>
     </div>
   )
