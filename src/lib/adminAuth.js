@@ -79,7 +79,7 @@ export async function completeAdminLogin(email, code) {
   const pending = getPendingOtp()
   const em = normalizeEmail(email)
   if (!pending || pending.role !== 'admin' || pending.email !== em) {
-    throw new Error('Verificacion expirada. Vuelve a ingresar tu correo.')
+    throw new Error('Verificación expirada. Vuelve a ingresar tu correo.')
   }
   if (!(await isAdminEmail(em))) {
     throw new Error('Este correo ya no tiene acceso administrativo.')

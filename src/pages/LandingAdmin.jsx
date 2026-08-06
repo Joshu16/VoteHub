@@ -140,9 +140,9 @@ function LandingAdmin() {
           {activeSection === 'hero' && (
             <div className="landing-admin-section">
               <h2>Encabezado</h2>
-              <p className="landing-admin-hint">Titulo y descripcion principal de la pagina informativa.</p>
+              <p className="landing-admin-hint">Título y descripción principal de la página informativa.</p>
               <label className="landing-admin-field">
-                Titulo
+                Título
                 <input
                   type="text"
                   value={content.hero_title}
@@ -150,7 +150,7 @@ function LandingAdmin() {
                 />
               </label>
               <label className="landing-admin-field">
-                Subtitulo
+                Subtítulo
                 <textarea
                   rows={4}
                   value={content.hero_subtitle}
@@ -175,7 +175,7 @@ function LandingAdmin() {
                     />
                   </label>
                   <label className="landing-admin-field">
-                    Descripcion
+                    Descripción
                     <textarea
                       rows={5}
                       value={content.current_party_description}
@@ -268,7 +268,7 @@ function LandingAdmin() {
                     />
                   </label>
                   <label className="landing-admin-field">
-                    Titulo
+                    Título
                     <input
                       type="text"
                       value={item.title}
@@ -278,7 +278,7 @@ function LandingAdmin() {
                     />
                   </label>
                   <label className="landing-admin-field">
-                    Descripcion
+                    Descripción
                     <textarea
                       rows={2}
                       value={item.description}
@@ -316,7 +316,7 @@ function LandingAdmin() {
               {(content.extra_sections || []).map((item, index) => (
                 <article key={`extra-${index}`} className="landing-admin-card">
                   <label className="landing-admin-field">
-                    Titulo
+                    Título
                     <input
                       type="text"
                       value={item.title}

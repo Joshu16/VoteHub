@@ -89,7 +89,7 @@ function buildChartData(parties, enrolled) {
       value: item.votos,
       color: CHART_COLORS[i % CHART_COLORS.length],
     })),
-    ...(abstentions > 0 ? [{ name: 'Abstencion', value: abstentions, color: '#d1d5db' }] : []),
+    ...(abstentions > 0 ? [{ name: 'Abstención', value: abstentions, color: '#d1d5db' }] : []),
   ]
   return { barras, totalVotes, abstentions, participationPercent, pieData }
 }
@@ -254,11 +254,11 @@ function Estadisticas() {
   return (
     <section className="stats-page">
       <header className="stats-header">
-        <h1>Estadisticas Administrativas</h1>
+        <h1>Estadísticas administrativas</h1>
         {!isLoading && (
           <p>
             {displayElection
-              ? `Periodo ${formatElectionPeriod(displayElection.year)}${
+              ? `Período ${formatElectionPeriod(displayElection.year)}${
                   displayElection.isActive ? ' (activa)' : ''
                 }.`
               : 'No hay elecciones registradas.'}
@@ -269,7 +269,7 @@ function Estadisticas() {
       {!isLoading && allElections.length > 1 && (
         <div className="stats-edition-picker">
           <label>
-            Edicion
+            Edición
             <select
               value={selectedYear ?? ''}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -306,7 +306,7 @@ function Estadisticas() {
               <strong>{totalVoters}</strong>
             </article>
             <article className="kpi-card">
-              <span>Participacion</span>
+              <span>Participación</span>
               <strong>{general.participationPercent}%</strong>
             </article>
           </div>
@@ -320,7 +320,7 @@ function Estadisticas() {
         </div>
 
         <aside className="abstention-card">
-          <h2>Distribucion</h2>
+          <h2>Distribución</h2>
           <p className="abstention-voted">
             <span className="dot dot-accent"></span>
             Votaron: {general.totalVotes} de {totalVoters}
@@ -342,11 +342,11 @@ function Estadisticas() {
         <section className="stats-grado-section">
           <div className="stats-grado-section-head">
             <div>
-              <h2>Por generacion</h2>
+              <h2>Por generación</h2>
               <p>Selecciona un grado para ver su desglose de votos.</p>
             </div>
             <label className="stats-grado-select">
-              Generacion
+              Generación
               <select value={selectedGrado} onChange={(e) => setSelectedGrado(e.target.value)}>
                 {gradoStats.map((item) => (
                   <option key={item.grado} value={item.grado}>
@@ -367,7 +367,7 @@ function Estadisticas() {
               <strong>{activeGrado.enrolled}</strong>
             </article>
             <article className="kpi-card">
-              <span>Participacion</span>
+              <span>Participación</span>
               <strong>{gradoCharts.participationPercent}%</strong>
             </article>
             <article className="kpi-card">
@@ -424,7 +424,7 @@ function Estadisticas() {
                           <td>
                             <span className="stats-grado-party-cell">
                               <span className="dot dot-muted" />
-                              Abstencion
+                              Abstención
                             </span>
                           </td>
                           <td>{gradoCharts.abstentions}</td>

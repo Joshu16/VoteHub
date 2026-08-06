@@ -267,7 +267,7 @@ function Dashboard() {
       isVisible,
     })
       .then(() => {
-        setFeedback('Configuración del periodo guardada.')
+        setFeedback('Configuración del período guardada.')
         return loadData({ quiet: true })
       })
       .catch((error) =>
@@ -280,7 +280,7 @@ function Dashboard() {
   const handleExportData = (targetElection = election) => {
     const parties = targetElection?.parties || []
     if (!targetElection || targetElection.isActive || !parties.length) return
-    const rows = [['Periodo', 'Partido', 'Votos']]
+    const rows = [['Período', 'Partido', 'Votos']]
     for (const party of parties) {
       rows.push([formatElectionPeriod(targetElection.year), party.name, String(party.votes || 0)])
     }
@@ -318,13 +318,13 @@ function Dashboard() {
     <section className="dashboard-page">
       <header className="dashboard-header">
         <h1>Centro de Control</h1>
-        <p>Elecciones del periodo {formatElectionPeriod(electionYear)}</p>
+        <p>Elecciones del período {formatElectionPeriod(electionYear)}</p>
       </header>
 
       <section className="election-settings-card">
         <div className="election-settings-head">
           <div>
-            <h2>Periodo electoral</h2>
+            <h2>Período electoral</h2>
             <p className="election-settings-sub">
               {startDate || endDate
                 ? formatDateRange(startDate, endDate)
@@ -531,7 +531,7 @@ function Dashboard() {
               {modalMode === 'start-election' && (
                 <>
                   <p>
-                    Solo se pueden iniciar elecciones del año actual ({currentYear}). El periodo será{' '}
+                    Solo se pueden iniciar elecciones del año actual ({currentYear}). El período será{' '}
                     {formatElectionPeriod(currentYear)}.
                   </p>
                   <p className="season-pill">{formatElectionPeriod(currentYear)}</p>
@@ -553,7 +553,7 @@ function Dashboard() {
 
               {modalMode === 'stop-election' && (
                 <>
-                  <p>¿Finalizar elecciones del periodo {formatElectionPeriod(electionYear)}?</p>
+                  <p>¿Finalizar elecciones del período {formatElectionPeriod(electionYear)}?</p>
                   <div className="modal-actions">
                     <button type="button" className="icon-btn" onClick={closeModal}>
                       Cancelar
@@ -573,7 +573,7 @@ function Dashboard() {
               {modalMode === 'stop-winner' && (
                 <>
                   <p className="winner-modal-period">
-                    Periodo {formatElectionPeriod(stopFlowElection?.year ?? electionYear)}
+                    Período {formatElectionPeriod(stopFlowElection?.year ?? electionYear)}
                   </p>
                   <div className={`winner-modal-result winner-modal-result--${stopFlowWinner.type}`}>
                     {stopFlowWinner.type === 'winner' || stopFlowWinner.type === 'tie' ? (

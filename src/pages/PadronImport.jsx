@@ -59,7 +59,7 @@ function PadronImport() {
     if (!preview?.voters?.length) return
 
     const ok = window.confirm(
-      `Se reemplazara el padron actual (${stats.total} votantes) por ${preview.total} registros del archivo. Continuar?`,
+      `Se reemplazará el padrón actual (${stats.total} votantes) por ${preview.total} registros del archivo. ¿Continuar?`,
     )
     if (!ok) return
 
@@ -69,7 +69,7 @@ function PadronImport() {
 
     try {
       const result = await replaceVotersRegistry(preview.voters)
-      setFeedback(`Padron importado: ${result.inserted} votantes registrados.`)
+      setFeedback(`Padrón importado: ${result.inserted} votantes registrados.`)
       setPreview(null)
       setFileName('')
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -77,11 +77,11 @@ function PadronImport() {
     } catch (err) {
       const msg = String(err?.message || '')
       if (msg.includes('No autorizado')) {
-        setError('Sesion expirada. Vuelve a iniciar sesion como administrador.')
+        setError('Sesión expirada. Vuelve a iniciar sesión como administrador.')
       } else if (msg.includes('does not exist') || msg.includes('schema cache')) {
-        setError('Falta la tabla voters. Ejecuta la migracion 20260723120000_voters_registry.sql en Supabase.')
+        setError('Falta la tabla voters. Ejecuta la migración 20260723120000_voters_registry.sql en Supabase.')
       } else {
-        setError(msg || 'No se pudo importar el padron.')
+        setError(msg || 'No se pudo importar el padrón.')
       }
     } finally {
       setIsImporting(false)
@@ -103,11 +103,11 @@ function PadronImport() {
     <section className="padron-page">
       <header className="padron-header">
         <div>
-          <h1>Padron electoral</h1>
-          <p>Importa el listado de estudiantes desde CSV o Excel. Cada importacion reemplaza el padron completo.</p>
+          <h1>Padrón electoral</h1>
+          <p>Importa el listado de estudiantes desde CSV o Excel. Cada importación reemplaza el padrón completo.</p>
         </div>
         <Link to="/menu" className="padron-menu-link">
-          Volver al menu
+          Volver al menú
         </Link>
       </header>
 
@@ -115,7 +115,7 @@ function PadronImport() {
       {error && <p className="padron-error">{error}</p>}
 
       <article className="padron-card">
-        <h2>Padron actual</h2>
+        <h2>Padrón actual</h2>
         {isLoading ? (
           <p className="padron-muted">Cargando...</p>
         ) : stats.total === 0 ? (
@@ -140,7 +140,7 @@ function PadronImport() {
       <article className="padron-card">
         <h2>Importar archivo</h2>
         <p className="padron-desc">
-          Formato compatible con el Excel del colegio: columnas de identificacion, nombre, apellidos y especialidad.
+          Formato compatible con el Excel del colegio: columnas de identificación, nombre, apellidos y especialidad.
           En Excel cada hoja representa un grado; en CSV incluye una columna Grado o Nivel.
         </p>
 
@@ -155,7 +155,7 @@ function PadronImport() {
             </span>
             <span className="padron-upload-text">
               <strong>{isParsing ? 'Leyendo archivo...' : 'Seleccionar .csv o .xlsx'}</strong>
-              <span>Se borrara el padron anterior al confirmar la importacion</span>
+              <span>Se borrará el padrón anterior al confirmar la importación</span>
             </span>
             <input
               ref={fileInputRef}
@@ -192,7 +192,7 @@ function PadronImport() {
               onClick={handleImport}
               disabled={isImporting}
             >
-              {isImporting ? 'Importando...' : 'Confirmar importacion'}
+              {isImporting ? 'Importando...' : 'Confirmar importación'}
             </button>
           </div>
         )}

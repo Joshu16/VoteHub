@@ -97,7 +97,7 @@ function Navigation() {
           className={`admin-menu-toggle${menuOpen ? ' is-open' : ''}`}
           aria-expanded={menuOpen}
           aria-controls="admin-side-nav"
-          aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
+          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
           onClick={() => setMenuOpen((open) => !open)}
         >
           <span className="admin-menu-toggle-bar" aria-hidden />
@@ -108,7 +108,7 @@ function Navigation() {
       <button
         type="button"
         className={`admin-nav-backdrop${menuOpen ? ' is-open' : ''}`}
-        aria-label="Cerrar menu"
+        aria-label="Cerrar menú"
         onClick={closeMenu}
         tabIndex={menuOpen ? 0 : -1}
       />

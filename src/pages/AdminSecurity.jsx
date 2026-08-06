@@ -199,7 +199,7 @@ function AdminSecurity() {
       <article className="security-card">
         <h2>Editores de partidos</h2>
         <p className="security-desc">
-          Asigna un correo de estudiante a un partido. Ingresará con código por email.
+          Asigna un correo de estudiante a un partido. Ingresará con código por correo electrónico.
         </p>
 
         <div className="editor-add-form">

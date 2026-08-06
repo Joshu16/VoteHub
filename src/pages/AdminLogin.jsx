@@ -39,7 +39,7 @@ function AdminLogin() {
     return (
       <section className="admin-login-page">
         <div className="admin-login-card admin-login-card--checking">
-          <p>Verificando sesion...</p>
+          <p>Verificando sesión...</p>
         </div>
       </section>
     )
@@ -50,7 +50,7 @@ function AdminLogin() {
       <div className="admin-login-card">
         <EmailOtpLogin
           title="Acceso administrativo"
-          subtitle="Ingresa tu correo autorizado. Te enviaremos un codigo de verificacion."
+          subtitle="Ingresa tu correo autorizado. Te enviaremos un código de verificación."
           checkEmail={async (email) => {
             await requestAdminLoginCode(email)
           }}

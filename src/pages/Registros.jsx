@@ -45,14 +45,14 @@ function Registros() {
   /* Elimina una edicion tras confirmacion */
   const handleDeleteElection = (year) => {
     const shouldDelete = window.confirm(
-      `Eliminar la eleccion del periodo ${formatElectionPeriod(year)}?`,
+      `¿Eliminar la elección del período ${formatElectionPeriod(year)}?`,
     )
     if (!shouldDelete) return
 
     setDeletingYear(year)
     deleteElectionByYear(year)
       .then(loadData)
-      .catch(() => window.alert('No se pudo eliminar la eleccion.'))
+      .catch(() => window.alert('No se pudo eliminar la elección.'))
       .finally(() => setDeletingYear(null))
   }
 
@@ -136,7 +136,7 @@ function Registros() {
                   <div className="edition-card-body">
                     {(item.start_date || item.end_date) && (
                       <section className="edition-section">
-                        <h3 className="edition-section-title">Periodo electoral</h3>
+                        <h3 className="edition-section-title">Período electoral</h3>
                         <p className="edition-dates">{formatDateRange(item.start_date, item.end_date)}</p>
                       </section>
                     )}
@@ -202,7 +202,7 @@ function Registros() {
                     <section className="edition-section edition-section--danger">
                       <h3 className="edition-section-title">Zona de riesgo</h3>
                       <p className="edition-danger-hint">
-                        Eliminar una edicion borra sus partidos y votos. Esta accion no se puede deshacer.
+                        Eliminar una edición borra sus partidos y votos. Esta acción no se puede deshacer.
                       </p>
                       <div className="edition-actions">
                         <button
@@ -211,7 +211,7 @@ function Registros() {
                           onClick={() => handleDeleteElection(item.year)}
                           disabled={deletingYear === item.year}
                         >
-                          {deletingYear === item.year ? 'Eliminando...' : 'Eliminar edicion'}
+                          {deletingYear === item.year ? 'Eliminando...' : 'Eliminar edición'}
                         </button>
                       </div>
                     </section>
