@@ -162,6 +162,23 @@
   z-index: 2;
 }
 
+/* img4–img6: mild right crop */
+.login-right img.login-hero-img--crop-right {
+  object-position: 37.5% center;
+}
+
+/* img5: zoom + top */
+.login-right img.login-hero-img--zoom-top {
+  transform: scale(1.25);
+  transform-origin: center top;
+  object-position: 37.5% top;
+}
+
+/* img2: focus a bit more to the right */
+.login-right img.login-hero-img--focus-right {
+  object-position: 65% center;
+}
+
 .right-overlay {
   display: none;
 }
@@ -294,6 +311,20 @@
     object-position: center 20%;
     transform: scale(1.08);
   }
+
+  .login-right img.login-hero-img--crop-right {
+    object-position: 37.5% 20%;
+  }
+
+  .login-right img.login-hero-img--zoom-top {
+    transform: scale(1.25);
+    transform-origin: center top;
+    object-position: 37.5% top;
+  }
+
+  .login-right img.login-hero-img--focus-right {
+    object-position: 65% 20%;
+  }
 }
 
 @media (max-width: 768px) {
@@ -353,6 +384,20 @@
     transform: scale(1.03);
   }
 
+  .login-right img.login-hero-img--crop-right {
+    object-position: 37.5% 22%;
+  }
+
+  .login-right img.login-hero-img--zoom-top {
+    transform: scale(1.25);
+    transform-origin: center top;
+    object-position: 37.5% top;
+  }
+
+  .login-right img.login-hero-img--focus-right {
+    object-position: 65% 22%;
+  }
+
   .login-form input,
   .login-form button {
     min-height: 44px;
@@ -398,5 +443,19 @@
   .login-right img {
     object-position: center 18%;
     transform: scale(1);
+  }
+
+  .login-right img.login-hero-img--crop-right {
+    object-position: 37.5% 18%;
+  }
+
+  .login-right img.login-hero-img--zoom-top {
+    transform: scale(1.25);
+    transform-origin: center top;
+    object-position: 37.5% top;
+  }
+
+  .login-right img.login-hero-img--focus-right {
+    object-position: 65% 18%;
   }
 }

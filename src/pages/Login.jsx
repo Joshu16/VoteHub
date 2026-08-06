@@ -17,6 +17,9 @@ import img7 from '../assets/imagenesinicio/img7.webp'
 
 
 const LOGIN_HERO_IMAGES = [votandoImg, img1, img2, img3, img4, img5, img6, img7]
+const HERO_CROP_RIGHT_INDICES = new Set([4, 5, 6])
+const HERO_ZOOM_TOP_INDICES = new Set([5])
+const HERO_FOCUS_RIGHT_INDICES = new Set([2])
 const HERO_INTERVAL_MS = 4500
 
 /* Titulo tipo nombre propio */
@@ -153,7 +156,7 @@ function Login() {
         {/* Formulario cédula */}
         <div className="login-content">
           <h2 className="login-title">
-            ¿Estás listo para votar y
+            ¿Estás listo/a para votar y
             <br />
             hacer un cambio?
           </h2>
@@ -181,7 +184,7 @@ function Login() {
             key={`${image}-${index}`}
             src={image}
             alt={`Imagen de inicio ${index + 1}`}
-            className={`login-hero-img ${heroIndex === index ? 'is-active' : ''}`}
+            className={`login-hero-img${HERO_CROP_RIGHT_INDICES.has(index) ? ' login-hero-img--crop-right' : ''}${HERO_ZOOM_TOP_INDICES.has(index) ? ' login-hero-img--zoom-top' : ''}${HERO_FOCUS_RIGHT_INDICES.has(index) ? ' login-hero-img--focus-right' : ''}${heroIndex === index ? ' is-active' : ''}`}
             aria-hidden={heroIndex !== index}
           />
         ))}
