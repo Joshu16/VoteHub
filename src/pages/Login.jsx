@@ -9,26 +9,15 @@ import { setVoterElectionSnapshot, setVoterEligible } from '../lib/voterSession'
 import img1 from '../assets/imagenesinicio/img1.avif'
 import img2 from '../assets/imagenesinicio/img2.avif'
 import img3 from '../assets/imagenesinicio/img3.avif'
-import img4 from '../assets/imagenesinicio/img4.webp'
-import img5 from '../assets/imagenesinicio/img5.webp'
-import img6 from '../assets/imagenesinicio/img6.webp'
+import img4 from '../assets/imagenesinicio/img4.jpg'
+import img5 from '../assets/imagenesinicio/img5.jpg'
+import img6 from '../assets/imagenesinicio/img6.jpg'
 import img7 from '../assets/imagenesinicio/img7.webp'
-import img8 from '../assets/imagenesinicio/img8.jpg'
-import img9 from '../assets/imagenesinicio/img9.webp'
 
 
 
-const LOGIN_HERO_IMAGES = [votandoImg, img1, img2, img3, img4, img5, img6, img7, img8, img9]
+const LOGIN_HERO_IMAGES = [votandoImg, img1, img2, img3, img4, img5, img6, img7]
 const HERO_INTERVAL_MS = 4500
-
-function pickRandomIndex(exclude) {
-  if (LOGIN_HERO_IMAGES.length <= 1) return 0
-  let next = Math.floor(Math.random() * LOGIN_HERO_IMAGES.length)
-  while (next === exclude) {
-    next = Math.floor(Math.random() * LOGIN_HERO_IMAGES.length)
-  }
-  return next
-}
 
 /* Titulo tipo nombre propio */
 function toTitleCase(value) {
@@ -57,14 +46,12 @@ function Login() {
   /* Segundo paso nombre del padron y cedula pendiente */
   const [confirmVoterName, setConfirmVoterName] = useState('')
   const [pendingCedula, setPendingCedula] = useState('')
-  const [heroIndex, setHeroIndex] = useState(() =>
-    Math.floor(Math.random() * LOGIN_HERO_IMAGES.length),
-  )
+  const [heroIndex, setHeroIndex] = useState(0)
 
-  /* Carrusel lateral: cambia de forma aleatoria con fade */
+  /* Carrusel lateral: secuencial 1..N y reinicia */
   useEffect(() => {
     const id = setInterval(() => {
-      setHeroIndex((current) => pickRandomIndex(current))
+      setHeroIndex((current) => (current + 1) % LOGIN_HERO_IMAGES.length)
     }, HERO_INTERVAL_MS)
     return () => clearInterval(id)
   }, [])

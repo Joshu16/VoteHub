@@ -160,4 +160,19 @@
   .editor-add-form {
     grid-template-columns: 1fr;
   }
+
+  .editor-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .editor-item .icon-btn {
+    align-self: flex-end;
+  }
+
+  .editor-add-form--admins .editor-add-btn,
+  .editor-add-form .editor-add-btn {
+    width: 100%;
+  }
 }

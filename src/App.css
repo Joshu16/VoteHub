@@ -350,6 +350,29 @@ body:has(.home-page) {
     transform: translateX(0);
   }
 
+  .side-nav {
+    left: auto;
+  }
+
+  .page-container.with-sidebar {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .page-container:has(.editor-login-page) {
+    padding: 0;
+    min-height: 100dvh;
+  }
+
+  .page-container:has(.editor-login-page) .route-stage {
+    min-height: 100%;
+  }
+
+  .app-shell:has(.editor-login-page) {
+    min-height: 100dvh;
+  }
+
   .side-nav-links {
     display: flex;
     flex-direction: column;

@@ -1,0 +1,259 @@
+/* Mobile-only overrides for admin panel, resultados, administracion and logins.
+   Desktop styles are unchanged; rules apply at max-width breakpoints only. */
+
+@media (max-width: 780px) {
+  .page-container.with-sidebar .route-stage {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-hub {
+    gap: 18px;
+  }
+
+  .admin-hub-header p {
+    max-width: none;
+  }
+
+  /* Dashboard + party editor */
+  .dashboard-page .election-settings-head-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .party-accordion-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .party-accordion-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .party-form-panel {
+    padding: 0 14px 14px;
+  }
+
+  .party-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .party-form-actions-right {
+    margin-left: 0;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .party-form-actions .icon-btn,
+  .party-form-actions-right .icon-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Resultados: estadisticas */
+  .stats-edition-picker {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .stats-edition-picker label {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .stats-edition-picker select {
+    width: 100%;
+  }
+
+  .stats-date-range {
+    font-size: 13px;
+  }
+
+  .stats-grado-select {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stats-grado-select select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Resultados: registros */
+  .registros-header p {
+    max-width: none;
+  }
+
+  .edition-card-header {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .edition-card-body {
+    padding: 0 16px 16px;
+  }
+
+  .edition-actions {
+    justify-content: stretch;
+  }
+
+  .edition-delete-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Administracion: seguridad */
+  .security-page {
+    gap: 14px;
+  }
+
+  .security-card {
+    padding: 14px;
+  }
+
+  .security-header p,
+  .security-desc {
+    max-width: none;
+  }
+
+  .editor-add-form--admins {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-add-form .editor-add-btn,
+  .editor-add-form--admins .editor-add-btn {
+    width: 100%;
+  }
+
+  .editor-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .editor-item .icon-btn {
+    align-self: flex-end;
+  }
+
+  .admin-login-2fa-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .admin-login-2fa-actions .admin-login-back {
+    width: 100%;
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  /* Administracion: padron */
+  .padron-header p {
+    max-width: none;
+  }
+
+  .padron-card {
+    padding: 14px;
+  }
+
+  .padron-upload-zone {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .padron-preview-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .padron-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .padron-menu-link {
+    align-self: flex-start;
+  }
+
+  /* Logins OTP */
+  .editor-login-page {
+    min-height: 100dvh;
+    width: 100%;
+    box-sizing: border-box;
+    padding: max(20px, env(safe-area-inset-top)) 16px 24px;
+    align-content: start;
+    place-items: center;
+  }
+
+  .editor-login-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 20px;
+    box-sizing: border-box;
+  }
+
+  .editor-login-card h1 {
+    font-size: clamp(1.35rem, 5vw, 1.5rem);
+  }
+
+  .admin-login-page {
+    align-content: start;
+    place-items: center;
+  }
+
+  .admin-login-card {
+    max-width: min(100%, 420px);
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-hub {
+    gap: 14px;
+  }
+
+  .party-accordion-title {
+    font-size: 14px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .party-accordion-votes {
+    font-size: 12px;
+  }
+
+  .kpi-card {
+    padding: 12px;
+  }
+
+  .chart-card h2 {
+    font-size: 16px;
+  }
+
+  .editor-item .icon-btn {
+    width: 100%;
+    align-self: stretch;
+    text-align: center;
+  }
+
+  .security-desc strong {
+    word-break: break-all;
+  }
+
+  .landing-admin-tabs button {
+    min-width: 100px;
+    font-size: 13px;
+  }
+
+  .admin-login-card,
+  .editor-login-card {
+    padding: 24px 16px;
+  }
+}

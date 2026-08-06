@@ -238,3 +238,10 @@
   font-size: 14px;
   font-weight: 700;
 }
+
+.admin-login-2fa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
