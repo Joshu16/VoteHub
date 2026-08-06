@@ -179,21 +179,19 @@ function AdminSecurity() {
           ))}
         </ul>
 
-        {isPrincipal && (
-          <div className="editor-add-form editor-add-form--admins">
-            <AdminField label="Nuevo administrador">
-              <AdminInput
-                type="email"
-                value={newAdminEmail}
-                onChange={(e) => setNewAdminEmail(e.target.value)}
-                placeholder="correo@ejemplo.com"
-              />
-            </AdminField>
-            <button type="button" className="icon-btn editor-add-btn" onClick={handleAddAdmin}>
-              Agregar admin
-            </button>
-          </div>
-        )}
+        <div className="editor-add-form editor-add-form--admins">
+          <AdminField label="Nuevo administrador">
+            <AdminInput
+              type="email"
+              value={newAdminEmail}
+              onChange={(e) => setNewAdminEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+            />
+          </AdminField>
+          <button type="button" className="icon-btn editor-add-btn" onClick={handleAddAdmin}>
+            Agregar admin
+          </button>
+        </div>
       </article>
 
       <article className="security-card">
