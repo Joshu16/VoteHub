@@ -16,83 +16,13 @@ import './Estadisticas.css'
 import { getActiveElection, getAllElections, getVotesByGrado } from '../lib/electionsStore'
 import { VOTEHUB_REFRESH_EVENT } from '../lib/dataRefresh'
 import { getVotersRegistryStats } from '../lib/voterRegistry'
-import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
-
-const CHART_COLORS = ['#00bec9', '#23c8d1', '#4fd4db', '#7ce0e5', '#0d9ea8', '#16a34a', '#d97706']
-
-/* Orden preferido de grados en graficos */
-const GRADO_ORDER = ['decimo', 'undecimo', 'duodecimo']
-
-/* Detecta si un partido es voto nulo */
-function esVotoNulo(nombre) {
-  return String(nombre || '').trim().toLowerCase() === 'voto nulo'
-}
-
-/* Ordena grados segun orden escolar o alfabeticamente */
-function sortGrados(a, b) {
-  const la = a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const lb = b.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const ia = GRADO_ORDER.findIndex((g) => la.includes(g))
-  const ib = GRADO_ORDER.findIndex((g) => lb.includes(g))
-  if (ia !== -1 && ib !== -1) return ia - ib
-  if (ia !== -1) return -1
-  if (ib !== -1) return 1
-  return a.localeCompare(b, 'es')
-}
-
-/* Agrupa votos por grado con padron y abstenciones */
-function buildGradoStats(rows, votersByGrado) {
-  const map = {}
-
-  for (const [grado, count] of Object.entries(votersByGrado || {})) {
-    const key = grado || 'Sin grado'
-    map[key] = { grado: key, parties: [], enrolled: Number(count || 0) }
-  }
-
-  for (const row of rows || []) {
-    const key = row.grado || 'Sin grado'
-    if (!map[key]) {
-      map[key] = { grado: key, parties: [], enrolled: 0 }
-    }
-    map[key].parties.push({
-      id: row.party_id,
-      name: row.party_name,
-      votes: Number(row.votes || 0),
-    })
-  }
-
-  return Object.values(map)
-    .map((item) => {
-      const parties = item.parties
-        .filter((p) => !esVotoNulo(p.name))
-        .sort((a, b) => b.votes - a.votes)
-      const totalVotes = parties.reduce((s, p) => s + p.votes, 0)
-      return {
-        ...item,
-        parties,
-        totalVotes,
-        abstentions: Math.max(item.enrolled - totalVotes, 0),
-      }
-    })
-    .sort((a, b) => sortGrados(a.grado, b.grado))
-}
-
-/* Prepara datos para graficos de barras y torta */
-function buildChartData(parties, enrolled) {
-  const barras = parties.map((p) => ({ nombre: p.name, votos: p.votes }))
-  const totalVotes = barras.reduce((s, b) => s + b.votos, 0)
-  const abstentions = Math.max(enrolled - totalVotes, 0)
-  const participationPercent = enrolled ? ((totalVotes / enrolled) * 100).toFixed(1) : '0'
-  const pieData = [
-    ...barras.map((item, i) => ({
-      name: item.nombre,
-      value: item.votos,
-      color: CHART_COLORS[i % CHART_COLORS.length],
-    })),
-    ...(abstentions > 0 ? [{ name: 'Abstención', value: abstentions, color: '#d1d5db' }] : []),
-  ]
-  return { barras, totalVotes, abstentions, participationPercent, pieData }
-}
+import { formatElectionPeriod } from '../lib/electionPeriod'
+import {
+  CHART_COLORS,
+  buildChartData,
+  buildGradoStats,
+  esVotoNulo,
+} from '../lib/electionStats'
 
 /* Grafico de barras de votos por partido */
 function VotesBarChart({ data }) {
@@ -282,11 +212,6 @@ function Estadisticas() {
               ))}
             </select>
           </label>
-          {displayElection?.start_date || displayElection?.end_date ? (
-            <span className="stats-date-range">
-              {formatDateRange(displayElection.start_date, displayElection.end_date)}
-            </span>
-          ) : null}
         </div>
       )}
 
@@ -330,7 +255,7 @@ function Estadisticas() {
             <li>Abstenciones: {general.abstentions}</li>
             {barras.map((item, index) => (
               <li key={item.nombre}>
-                <span className={`dot tone-${(index % 4) + 1}`}></span>
+                <span className={`dot tone-${(index % 8) + 1}`}></span>
                 {item.nombre}: {item.votos} votos
               </li>
             ))}
@@ -462,7 +387,7 @@ function Estadisticas() {
               <ul className="abstention-list abstention-list--compact">
                 {activeGrado.parties.map((party, index) => (
                   <li key={party.id || party.name}>
-                    <span className={`dot tone-${(index % 4) + 1}`}></span>
+                    <span className={`dot tone-${(index % 8) + 1}`}></span>
                     {party.name}: {party.votes} votos
                   </li>
                 ))}

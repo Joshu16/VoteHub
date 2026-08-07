@@ -571,6 +571,12 @@
   overflow-wrap: anywhere;
 }
 
+.landing-roster-item.is-empty dd {
+  font-weight: 500;
+  color: #94a3b8;
+  font-style: italic;
+}
+
 .landing-roster--compact .landing-roster-item {
   grid-template-columns: 1fr;
   gap: 2px;
@@ -745,6 +751,13 @@
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.landing-candidate-lead.is-empty,
+.landing-candidate-team li.is-empty .landing-candidate-team-name {
+  color: #94a3b8;
+  font-weight: 500;
+  font-style: italic;
 }
 
 .landing-candidate-mascot {

@@ -12,13 +12,13 @@ import {
   stopElection,
   updateElectionSettings,
 } from '../lib/electionsStore'
-import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
+import { formatElectionPeriod } from '../lib/electionPeriod'
 import { notifyDataRefresh } from '../lib/dataRefresh'
 import { exportElectionData } from '../lib/exportElection'
 import { parsePartyOfficers, serializePartyOfficers } from '../lib/partyOfficers'
 import { getElectionWinner } from '../lib/electionWinner'
 import { PartyFormPanel, emptyPartyFormState } from '../components/PartyFormPanel'
-import { AccordionChevron, AdminField, AdminInput, AdminSwitch } from '../components/AdminUI'
+import { AccordionChevron, AdminInput, AdminSwitch } from '../components/AdminUI'
 import '../styles/admin-forms.css'
 
 /* Detecta si un partido es la opcion de voto nulo */
@@ -43,13 +43,11 @@ function Dashboard() {
   const [isDeletingParty, setIsDeletingParty] = useState(false)
   const [isCleaningData, setIsCleaningData] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [quickPartyName, setQuickPartyName] = useState('')
   const [isQuickAdding, setIsQuickAdding] = useState(false)
   const [quickFormError, setQuickFormError] = useState('')
   const [stopFlowElection, setStopFlowElection] = useState(null)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
   const [showParties, setShowParties] = useState(false)
   const [isSavingShowParties, setIsSavingShowParties] = useState(false)
   const electionYear = Number(election?.year ?? currentYear)
@@ -61,14 +59,10 @@ function Dashboard() {
       const activeElection = await getActiveElection({ force })
       if (activeElection) {
         setElection(activeElection)
-        setStartDate(activeElection.start_date || '')
-        setEndDate(activeElection.end_date || '')
         setShowParties(Boolean(activeElection.show_parties))
       } else {
         const existingElection = await ensureElection(currentYear)
         setElection(existingElection)
-        setStartDate(existingElection.start_date || '')
-        setEndDate(existingElection.end_date || '')
         setShowParties(Boolean(existingElection.show_parties))
       }
     } catch (error) {
@@ -107,14 +101,10 @@ function Dashboard() {
     }
   }
 
-  /* Inicia elecciones del periodo mostrado y guarda fechas/visibilidad */
+  /* Inicia elecciones del periodo mostrado */
   const handleStartElection = () => {
     setIsStarting(true)
-    startElection(electionYear, {
-      startDate: startDate || null,
-      endDate: endDate || null,
-      showParties,
-    })
+    startElection(electionYear, { showParties })
       .then(() => {
         setFeedback(`Elección iniciada: ${formatElectionPeriod(electionYear)}.`)
         closeModal()
@@ -269,25 +259,6 @@ function Dashboard() {
       .finally(() => setIsDeletingParty(false))
   }
 
-  /* Guarda fechas y visibilidad del periodo electoral */
-  const handleSaveSettings = () => {
-    setIsSavingSettings(true)
-    updateElectionSettings(electionYear, {
-      startDate: startDate || null,
-      endDate: endDate || null,
-      showParties,
-    })
-      .then(() => {
-        setFeedback('Configuración del período guardada.')
-        notifyDataRefresh()
-        return loadData({ quiet: true, force: true })
-      })
-      .catch((error) =>
-        setFeedback(`No se pudo guardar: ${error?.message || 'Error desconocido'}`),
-      )
-      .finally(() => setIsSavingSettings(false))
-  }
-
   /* Publica o oculta partidos en la pagina principal */
   const handleToggleShowParties = (checked) => {
     setShowParties(checked)
@@ -314,17 +285,24 @@ function Dashboard() {
       .finally(() => setIsSavingShowParties(false))
   }
 
-  /* Exporta resultados a CSV y PDF cuando la eleccion esta cerrada */
-  const handleExportData = (targetElection) => {
+  /* Exporta resultados a Excel y PDF cuando la eleccion esta cerrada */
+  const handleExportData = async (targetElection) => {
     const source = targetElection && typeof targetElection === 'object' && 'parties' in targetElection
       ? targetElection
       : election
-    const result = exportElectionData(source)
-    if (!result.ok) {
-      setFeedback('No se pueden exportar datos: la elección debe estar finalizada y tener partidos.')
-      return
+    setIsExporting(true)
+    try {
+      const result = await exportElectionData(source)
+      if (!result.ok) {
+        setFeedback('No se pueden exportar datos: la elección debe estar finalizada y tener partidos.')
+        return
+      }
+      setFeedback('Datos exportados (Excel y PDF).')
+    } catch (error) {
+      setFeedback(`No se pudo exportar: ${error?.message || 'Error desconocido'}`)
+    } finally {
+      setIsExporting(false)
     }
-    setFeedback('Datos exportados (CSV y PDF).')
   }
 
   /* Borra votos y partidos de una edicion */
@@ -356,9 +334,7 @@ function Dashboard() {
           <div>
             <h2>Período electoral</h2>
             <p className="election-settings-sub">
-              {startDate || endDate
-                ? formatDateRange(startDate, endDate)
-                : `Año lectivo ${formatElectionPeriod(electionYear)}`}
+              Año lectivo {formatElectionPeriod(electionYear)}
             </p>
           </div>
           <div className="election-settings-head-actions">
@@ -377,34 +353,6 @@ function Dashboard() {
                 />
               </svg>
             </button>
-            <button
-              type="button"
-              className="icon-btn election-settings-save"
-              onClick={handleSaveSettings}
-              disabled={isSavingSettings}
-            >
-              {isSavingSettings ? 'Guardando...' : 'Guardar'}
-            </button>
-          </div>
-        </div>
-        <div className="election-settings-body">
-          <div className="election-settings-dates">
-            <AdminField label="Inicio">
-              <AdminInput
-                type="date"
-                className="admin-input--date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </AdminField>
-            <AdminField label="Fin">
-              <AdminInput
-                type="date"
-                className="admin-input--date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </AdminField>
           </div>
         </div>
         <div className="election-settings-footer">
@@ -533,9 +481,13 @@ function Dashboard() {
         <button
           type="button"
           onClick={() => handleExportData()}
-          disabled={Boolean(election?.isActive) || (election?.parties || []).length === 0}
+          disabled={
+            isExporting ||
+            Boolean(election?.isActive) ||
+            (election?.parties || []).length === 0
+          }
         >
-          Exportar Datos
+          {isExporting ? 'Exportando...' : 'Exportar Datos'}
         </button>
         <button
           type="button"
@@ -563,10 +515,7 @@ function Dashboard() {
 
               {modalMode === 'start-election' && (
                 <>
-                  <p>
-                    Se iniciará la elección del período {formatElectionPeriod(electionYear)} y se
-                    guardarán las fechas y la visibilidad configuradas.
-                  </p>
+                  <p>¿Iniciar la elección del período {formatElectionPeriod(electionYear)}?</p>
                   <p className="season-pill">{formatElectionPeriod(electionYear)}</p>
                   <div className="modal-actions">
                     <button type="button" className="icon-btn" onClick={closeModal}>
@@ -645,12 +594,13 @@ function Dashboard() {
                     <button
                       type="button"
                       className="icon-btn"
-                      onClick={() => {
-                        handleExportData(stopFlowElection)
+                      disabled={isExporting}
+                      onClick={async () => {
+                        await handleExportData(stopFlowElection)
                         setModalMode('stop-clean')
                       }}
                     >
-                      Sí
+                      {isExporting ? 'Exportando...' : 'Sí'}
                     </button>
                   </div>
                 </>

@@ -3,7 +3,7 @@ import './Landing.css'
 import logoCIT from '../lib/brandLogo.js'
 import heroImage from '../assets/Hero.avif'
 import { getPublicElection } from '../lib/electionsStore'
-import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
+import { formatElectionPeriod } from '../lib/electionPeriod'
 import { getLandingContent } from '../lib/landingStore'
 import { parsePartyOfficers, PARTY_OFFICER_FIELDS } from '../lib/partyOfficers'
 import { VOTEHUB_REFRESH_EVENT } from '../lib/dataRefresh'
@@ -13,14 +13,17 @@ function esVotoNulo(nombre) {
   return String(nombre || '').trim().toLowerCase() === 'voto nulo'
 }
 
-/* Extrae cargos con nombre desde officers_json del partido */
+/* Extrae cargos del partido; si falta el nombre indica que no hay ese cargo */
 function officerEntries(officersJson) {
   const officers = parsePartyOfficers(officersJson)
   return PARTY_OFFICER_FIELDS.map(({ key, label }) => {
     const name = (officers[key] || '').trim()
-    if (!name) return null
-    return { role: label, name }
-  }).filter(Boolean)
+    return {
+      role: label,
+      name: name || `No hay ${label.toLowerCase()}`,
+      isEmpty: !name,
+    }
+  })
 }
 
 /* Formatea fecha para mostrar en la landing */
@@ -52,6 +55,8 @@ function sectionIndex(hasCurrentParty, slot) {
 /* Tarjeta de un partido candidato */
 function CandidateCard({ party }) {
   const participants = officerEntries(party.officers_json)
+  const lead = participants[0]
+  const rest = participants.slice(1)
   const hasMascot = Boolean(party.mascot_url)
   return (
     <article className="landing-candidate">
@@ -73,24 +78,20 @@ function CandidateCard({ party }) {
       </div>
       <div className="landing-candidate-title">
         <h3>{party.name}</h3>
-        {participants[0] && (
-          <p className="landing-candidate-lead">
-            {participants[0].role}: {participants[0].name}
+        {lead && (
+          <p className={`landing-candidate-lead${lead.isEmpty ? ' is-empty' : ''}`}>
+            {lead.isEmpty ? lead.name : `${lead.role}: ${lead.name}`}
           </p>
         )}
       </div>
-      {participants.length > 1 ? (
-        <ul className="landing-candidate-team">
-          {participants.slice(1).map((item) => (
-            <li key={`${party.id}-${item.role}`}>
-              <span className="landing-candidate-team-role">{item.role}</span>
-              <span className="landing-candidate-team-name">{item.name}</span>
-            </li>
-          ))}
-        </ul>
-      ) : participants.length === 0 ? (
-        <p className="landing-empty landing-empty--roster">Indefinido</p>
-      ) : null}
+      <ul className="landing-candidate-team">
+        {rest.map((item) => (
+          <li key={`${party.id}-${item.role}`} className={item.isEmpty ? 'is-empty' : undefined}>
+            <span className="landing-candidate-team-role">{item.role}</span>
+            <span className="landing-candidate-team-name">{item.name}</span>
+          </li>
+        ))}
+      </ul>
     </article>
   )
 }
@@ -345,8 +346,6 @@ function Landing() {
             <span className="landing-status">
               <span className="landing-status-dot" aria-hidden />
               Período {formatElectionPeriod(election.year)}
-              {(election.start_date || election.end_date) &&
-                ` · ${formatDateRange(election.start_date, election.end_date)}`}
               {' · Proceso en curso'}
             </span>
           )}
@@ -394,15 +393,25 @@ function Landing() {
                 {content.current_party_description && <p>{content.current_party_description}</p>}
                 {members.length > 0 ? (
                   <dl className="landing-roster">
-                    {members.map((member, index) => (
-                      <div key={`${member.role}-${index}`} className="landing-roster-item">
-                        <dt>{member.role}</dt>
-                        <dd>{member.name}</dd>
-                      </div>
-                    ))}
+                    {members.map((member, index) => {
+                      const role = String(member.role || '').trim() || 'Cargo'
+                      const name = String(member.name || '').trim()
+                      const displayName = name || `No hay ${role.toLowerCase()}`
+                      return (
+                        <div
+                          key={`${role}-${index}`}
+                          className={`landing-roster-item${name ? '' : ' is-empty'}`}
+                        >
+                          <dt>{role}</dt>
+                          <dd>{displayName}</dd>
+                        </div>
+                      )
+                    })}
                   </dl>
                 ) : (
-                  <p className="landing-empty landing-empty--roster">Indefinido</p>
+                  <p className="landing-empty landing-empty--roster">
+                    No hay miembros de la mesa directiva
+                  </p>
                 )}
               </div>
             </div>
@@ -450,7 +459,7 @@ function Landing() {
               ))}
             </ol>
           ) : (
-            <p className="landing-empty">Indefinido</p>
+            <p className="landing-empty">No hay fechas definidas</p>
           )}
         </section>
 

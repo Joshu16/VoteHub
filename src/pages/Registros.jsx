@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './Registros.css'
 import { AccordionChevron } from '../components/AdminUI'
 import { deleteElectionByYear, getAllElections } from '../lib/electionsStore'
-import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
+import { formatElectionPeriod } from '../lib/electionPeriod'
 import { getElectionWinner } from '../lib/electionWinner'
 
 /* Detecta si un partido es voto nulo */
@@ -65,7 +65,7 @@ function Registros() {
     <section className="registros-page">
       <header className="registros-header">
         <h1>Registros</h1>
-        <p>Historial de ediciones electorales. Abre una tarjeta para ver partidos, votos y fechas.</p>
+        <p>Historial de ediciones electorales. Abre una tarjeta para ver partidos y votos.</p>
       </header>
 
       <div className="edition-list">
@@ -131,13 +131,6 @@ function Registros() {
 
                 {isOpen && (
                   <div className="edition-card-body">
-                    {(item.start_date || item.end_date) && (
-                      <section className="edition-section">
-                        <h3 className="edition-section-title">Período electoral</h3>
-                        <p className="edition-dates">{formatDateRange(item.start_date, item.end_date)}</p>
-                      </section>
-                    )}
-
                     <section className="edition-section">
                       <h3 className="edition-section-title">Resultados por partido</h3>
                       <p className="edition-summary">
