@@ -62,31 +62,34 @@ export async function addPartyEditor(email, name, partyId) {
   if (!editor_email) return { ok: false, reason: 'EMPTY' }
   if (!party_id) return { ok: false, reason: 'NO_PARTY' }
 
-  let res = await supabase.from('party_editors').insert({ editor_email, voter_name, party_id })
+  const payloads = [
+    { editor_email, voter_name, party_id },
+    { editor_email, voter_cedula: editor_email, voter_name, party_id },
+    { voter_cedula: editor_email, voter_name, party_id },
+    { editor_email, voter_cedula: editor_email, voter_name },
+    { voter_cedula: editor_email, voter_name },
+  ]
 
-  if (res.error && noHayColumnaEmail(res.error)) {
-    res = await supabase.from('party_editors').insert({
-      voter_cedula: editor_email,
-      voter_name,
-      party_id,
-    })
-  }
-
-  if (res.error && requiereVoterCedulaLegacy(res.error)) {
-    res = await supabase.from('party_editors').insert({
-      editor_email,
-      voter_cedula: editor_email,
-      voter_name,
-      party_id,
-    })
-  }
-
-  if (res.error) {
+  let lastError = null
+  for (const payload of payloads) {
+    const res = await supabase.from('party_editors').insert(payload)
+    if (!res.error) return { ok: true }
+    lastError = res.error
     if (String(res.error.code) === '23505') return { ok: false, reason: 'DUPLICATE' }
     if (noHayTabla(res.error)) return { ok: false, reason: 'NO_TABLE' }
-    throw res.error
+    if (!noHayColumnaEmail(res.error) && !requiereVoterCedulaLegacy(res.error) && !noHayColumna(res.error)) {
+      break
+    }
   }
-  return { ok: true }
+
+  if (lastError) throw lastError
+  return { ok: false, reason: 'UNKNOWN' }
+}
+
+/* Detecta error generico por columna faltante */
+function noHayColumna(err) {
+  const texto = `${err?.message || ''} ${err?.details || ''} ${err?.hint || ''}`.toLowerCase()
+  return texto.includes('column') || texto.includes('schema cache') || String(err?.code || '') === 'PGRST204'
 }
 
 /* Elimina un editor de partido */

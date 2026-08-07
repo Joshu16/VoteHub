@@ -1,5 +1,6 @@
 .landing-page {
   --landing-accent: var(--accent);
+  --landing-secondary: var(--accent-secondary);
   --landing-header-h: 72px;
   --landing-gutter: clamp(20px, 4vw, 56px);
   --landing-content-w: min(1100px, 100%);
@@ -143,8 +144,8 @@
 
 .landing-nav a:hover,
 .landing-nav a:focus-visible {
-  background: rgba(0, 190, 201, 0.14);
-  color: var(--landing-accent);
+  background: var(--accent-secondary-soft);
+  color: var(--landing-secondary);
   outline: none;
 }
 
@@ -167,7 +168,7 @@
   border: 1px solid rgba(0, 190, 201, 0.35);
   border-radius: 12px;
   background: #fff;
-  color: var(--landing-accent);
+  color: var(--accent-secondary);
   cursor: pointer;
   flex-shrink: 0;
   transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -328,15 +329,16 @@
 }
 
 .landing-hero-cta--ghost {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(4px);
+  background: var(--accent-secondary);
+  color: #fff;
+  border: 1px solid var(--accent-secondary);
+  backdrop-filter: none;
 }
 
 .landing-hero-cta--ghost:hover,
 .landing-hero-cta--ghost:focus-visible {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--accent-secondary-hover);
+  border-color: var(--accent-secondary-hover);
   transform: translateY(-2px);
   outline: none;
 }
@@ -448,11 +450,11 @@
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: linear-gradient(145deg, var(--landing-accent), #00a8b2);
+  background: linear-gradient(145deg, var(--landing-secondary), var(--accent-secondary-hover));
   color: #fff;
   font-weight: 800;
   font-size: 0.85rem;
-  box-shadow: 0 4px 12px rgba(0, 190, 201, 0.28);
+  box-shadow: 0 4px 12px var(--accent-secondary-shadow);
 }
 
 .landing-block-head h2 {
@@ -603,7 +605,7 @@
   border: 1px solid rgba(0, 190, 201, 0.28);
   border-radius: 50%;
   background: #fff;
-  color: var(--landing-accent);
+  color: var(--accent-secondary);
   cursor: pointer;
   flex-shrink: 0;
   transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
@@ -617,7 +619,7 @@
 .landing-carousel-btn:hover:not(:disabled),
 .landing-carousel-btn:focus-visible:not(:disabled) {
   background: rgba(0, 190, 201, 0.1);
-  border-color: var(--landing-accent);
+  border-color: var(--accent-secondary);
   outline: none;
 }
 

@@ -40,6 +40,11 @@ function noHayColumnaVisibilidad(err) {
   return noHayColumna(err, 'is_visible')
 }
 
+/* Detecta error por columna show_parties faltante */
+function noHayColumnaMostrarPartidos(err) {
+  return noHayColumna(err, 'show_parties')
+}
+
 /* Detecta violacion de clave unica en Postgres */
 function esClaveDuplicada(err) {
   return String(err?.code || '') === '23505'
@@ -64,8 +69,10 @@ function noHayColumnaOficiales(err) {
 }
 
 const ELECTION_SELECTS = [
+  'id, year, is_active, start_date, end_date, is_visible, show_parties',
   'id, year, is_active, start_date, end_date, is_visible',
   'id, year, is_active, start_date, end_date',
+  'id, year, is_active, is_visible, show_parties',
   'id, year, is_active, is_visible',
   'id, year, is_active',
 ]
@@ -82,6 +89,7 @@ async function seleccionarEleccion(queryFn) {
         start_date: res.data.start_date ?? null,
         end_date: res.data.end_date ?? null,
         is_visible: res.data.is_visible ?? true,
+        show_parties: res.data.show_parties ?? null,
       }
     }
     lastErr = res.error
@@ -114,6 +122,7 @@ function normalizarEleccion(row) {
     start_date: row.start_date ?? null,
     end_date: row.end_date ?? null,
     is_visible: row.is_visible ?? true,
+    show_parties: row.show_parties ?? null,
   }
 }
 
@@ -283,9 +292,14 @@ export async function ensureElection(year) {
   return { ...normalizarEleccion(res.data), isActive: res.data.is_active, parties }
 }
 
-/* Activa un año y apaga el resto */
-export async function startElection(year) {
+/* Activa un año, apaga el resto y opcionalmente guarda fechas/visibilidad */
+export async function startElection(year, settings = null) {
   const election = await ensureElection(year)
+
+  if (settings) {
+    const saved = await updateElectionSettings(year, settings)
+    if (!saved?.ok) throw new Error('No se pudo guardar la configuración del período.')
+  }
 
   /* Desactiva todas menos la elegida */
   const off = await supabase.from('elections').update({ is_active: false }).neq('id', election.id)
@@ -379,10 +393,13 @@ async function fetchActiveElectionFromServer() {
 /* Eleccion activa en servidor con partidos (cache en memoria) */
 export async function getActiveElection(options = {}) {
   const force = options?.force === true
-  if (!force && activeElectionLoaded) {
+  if (force) {
+    activeElectionCache = null
+    activeElectionLoaded = false
+    activeElectionInflight = null
+  } else if (activeElectionLoaded) {
     return activeElectionCache
-  }
-  if (!force && activeElectionInflight) {
+  } else if (activeElectionInflight) {
     return activeElectionInflight
   }
 
@@ -399,6 +416,22 @@ export async function getActiveElection(options = {}) {
     })
 
   return activeElectionInflight
+}
+
+/* Eleccion por año con partidos (sin crear fila) */
+export async function getElectionByYear(year) {
+  const row = await buscarEleccionPorAño(year)
+  if (!row) return null
+  const parties = await listarPartidosDeEleccion(row.id)
+  return { ...normalizarEleccion(row), isActive: row.is_active, parties }
+}
+
+/* Eleccion para pagina publica: activa o del año actual */
+export async function getPublicElection(options = {}) {
+  const active = await getActiveElection(options)
+  if (active) return active
+  const year = options?.year ?? new Date().getFullYear()
+  return getElectionByYear(year)
 }
 
 /* Historial elecciones con partidos agrupados */
@@ -431,7 +464,7 @@ export async function getAllElections() {
 }
 
 /* Actualiza fechas y visibilidad de una eleccion */
-export async function updateElectionSettings(year, { startDate, endDate, isVisible }) {
+export async function updateElectionSettings(year, { startDate, endDate, isVisible, showParties }) {
   const row = await buscarEleccionPorAño(year)
   if (!row) return { ok: false }
 
@@ -439,22 +472,44 @@ export async function updateElectionSettings(year, { startDate, endDate, isVisib
   if (startDate !== undefined) patch.start_date = startDate || null
   if (endDate !== undefined) patch.end_date = endDate || null
   if (isVisible !== undefined) patch.is_visible = Boolean(isVisible)
+  if (showParties !== undefined) patch.show_parties = Boolean(showParties)
 
   let useStart = Object.prototype.hasOwnProperty.call(patch, 'start_date')
   let useEnd = Object.prototype.hasOwnProperty.call(patch, 'end_date')
   let useVisible = Object.prototype.hasOwnProperty.call(patch, 'is_visible')
+  let useShowParties = Object.prototype.hasOwnProperty.call(patch, 'show_parties')
+  const requestedShowParties = useShowParties
+  const onlyShowParties =
+    requestedShowParties && !useStart && !useEnd && !useVisible
+  let savedShowParties = false
 
-  for (let i = 0; i < 8; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const attempt = {}
     if (useStart) attempt.start_date = patch.start_date
     if (useEnd) attempt.end_date = patch.end_date
     if (useVisible) attempt.is_visible = patch.is_visible
+    if (useShowParties) attempt.show_parties = patch.show_parties
 
-    if (Object.keys(attempt).length === 0) return { ok: true }
+    if (Object.keys(attempt).length === 0) break
 
     const res = await supabase.from('elections').update(attempt).eq('id', row.id)
     if (!res.error) {
+      if (Object.prototype.hasOwnProperty.call(attempt, 'show_parties')) {
+        savedShowParties = true
+      }
       invalidateActiveElectionCache()
+      if (requestedShowParties && !savedShowParties) {
+        if (onlyShowParties) {
+          return {
+            ok: false,
+            error: 'Falta la columna show_parties en elections. Ejecuta la migración SQL.',
+          }
+        }
+        return {
+          ok: true,
+          warning: 'Falta la columna show_parties en elections. Ejecuta la migración SQL.',
+        }
+      }
       return { ok: true }
     }
     if (noHayColumnaFecha(res.error, 'start_date')) {
@@ -469,7 +524,18 @@ export async function updateElectionSettings(year, { startDate, endDate, isVisib
       useVisible = false
       continue
     }
+    if (noHayColumnaMostrarPartidos(res.error)) {
+      useShowParties = false
+      continue
+    }
     throw res.error
+  }
+
+  if (requestedShowParties && !savedShowParties) {
+    return {
+      ok: false,
+      error: 'Falta la columna show_parties en elections. Ejecuta la migración SQL.',
+    }
   }
 
   return { ok: true }

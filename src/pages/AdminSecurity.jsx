@@ -78,14 +78,20 @@ function AdminSecurity() {
 
   /* Agrega nuevo administrador por correo */
   const handleAddAdmin = async () => {
+    if (!isPrincipal) {
+      setFeedback('Solo el administrador principal puede añadir admins.')
+      return
+    }
     const email = newAdminEmail.trim()
     if (!email) return
     try {
-      const result = await addAdminUser(email)
+      const result = await addAdminUser(email, getAdminSessionEmail())
       if (!result.ok) {
         if (result.reason === 'DUPLICATE') setFeedback('Ese correo ya es administrador.')
         else if (result.reason === 'PRINCIPAL') setFeedback('Ese correo ya es el administrador principal.')
-        else if (result.reason === 'NO_TABLE') {
+        else if (result.reason === 'NOT_PRINCIPAL') {
+          setFeedback('Solo el administrador principal puede añadir admins.')
+        } else if (result.reason === 'NO_TABLE') {
           setFeedback('Falta la tabla admin_users. Ejecuta la migración 20260622140000.')
         }
         return
@@ -122,6 +128,8 @@ function AdminSecurity() {
       if (!result.ok) {
         if (result.reason === 'DUPLICATE') setFeedback('Ese correo ya está registrado.')
         else if (result.reason === 'NO_TABLE') setFeedback('Falta la tabla party_editors.')
+        else if (result.reason === 'NO_PARTY') setFeedback('Selecciona un partido.')
+        else setFeedback('No se pudo guardar el editor.')
         return
       }
       setEditorEmail('')
@@ -179,19 +187,24 @@ function AdminSecurity() {
           ))}
         </ul>
 
-        <div className="editor-add-form editor-add-form--admins">
-          <AdminField label="Nuevo administrador">
-            <AdminInput
-              type="email"
-              value={newAdminEmail}
-              onChange={(e) => setNewAdminEmail(e.target.value)}
-              placeholder="correo@ejemplo.com"
-            />
-          </AdminField>
-          <button type="button" className="icon-btn editor-add-btn" onClick={handleAddAdmin}>
-            Agregar admin
-          </button>
-        </div>
+        {isPrincipal && (
+          <div className="editor-add-form editor-add-form--admins">
+            <AdminField label="Nuevo administrador">
+              <AdminInput
+                type="email"
+                value={newAdminEmail}
+                onChange={(e) => setNewAdminEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+              />
+            </AdminField>
+            <button type="button" className="icon-btn editor-add-btn" onClick={handleAddAdmin}>
+              Agregar admin
+            </button>
+          </div>
+        )}
+        {!isPrincipal && (
+          <p className="security-desc">Solo el administrador principal puede añadir o quitar admins.</p>
+        )}
       </article>
 
       <article className="security-card">

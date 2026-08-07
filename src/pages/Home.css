@@ -47,7 +47,7 @@
 .home-link {
   display: block;
   text-decoration: none;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-secondary);
   border-radius: 12px;
   padding: 12px 16px;
   font-weight: 700;
@@ -57,13 +57,14 @@
 
 .home-link:hover,
 .home-link:focus-visible {
-  background: var(--accent);
+  background: var(--accent-secondary);
   color: #fff;
   outline: none;
 }
 
 .home-link--primary {
   background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 

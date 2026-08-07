@@ -37,30 +37,15 @@ function persistAdminSession(email) {
   localStorage.setItem(KEY_ADMIN_LOGIN_AT, String(Date.now()))
 }
 
+/* Limpia solo claves locales de admin (sin cerrar Supabase) */
+function clearAdminLocalSession() {
+  localStorage.removeItem(KEY_ADMIN_EMAIL)
+  localStorage.removeItem(KEY_ADMIN_LOGIN_AT)
+}
+
 /* Lee correo de sesion admin guardado localmente */
 export function getAdminSessionEmail() {
   return localStorage.getItem(KEY_ADMIN_EMAIL) || ''
-}
-
-/* Sincroniza sesion admin desde token de Supabase Auth */
-async function syncAdminSessionFromSupabase() {
-  const { data, error } = await supabase.auth.getSession()
-  if (error) throw error
-
-  const sessionEmail = data.session?.user?.email
-  if (!sessionEmail) return null
-
-  const em = normalizeEmail(sessionEmail)
-  if (!(await isAdminEmail(em))) return null
-
-  const storedEmail = getAdminSessionEmail()
-  if (!storedEmail || storedEmail !== em) {
-    persistAdminSession(em)
-  } else {
-    ensureLoginTimestamp()
-  }
-
-  return em
 }
 
 /* Envia codigo OTP al admin tras validar correo autorizado */
@@ -82,6 +67,8 @@ export async function completeAdminLogin(email, code) {
     throw new Error('Verificación expirada. Vuelve a ingresar tu correo.')
   }
   if (!(await isAdminEmail(em))) {
+    clearAdminLocalSession()
+    clearPendingOtp()
     throw new Error('Este correo ya no tiene acceso administrativo.')
   }
   await verifyLoginCode(em, code, { keepSession: true })
@@ -110,16 +97,37 @@ export function cancelAdminLogin() {
 /* Comprueba si hay sesion admin activa y valida expiracion */
 export async function isAdminSessionActive() {
   try {
-    const syncedEmail = await syncAdminSessionFromSupabase()
-    if (syncedEmail) {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw error
+
+    const sessionEmail = data.session?.user?.email
+    if (sessionEmail) {
+      const em = normalizeEmail(sessionEmail)
+      let ok = false
+      try {
+        ok = await isAdminEmail(em)
+      } catch {
+        clearAdminLocalSession()
+        return false
+      }
+
+      if (!ok) {
+        clearAdminLocalSession()
+        return false
+      }
+
       if (isLoginExpired()) {
         await signOutAdmin()
         return false
       }
+
+      const storedEmail = getAdminSessionEmail()
+      if (!storedEmail || storedEmail !== em) persistAdminSession(em)
+      else ensureLoginTimestamp()
       return true
     }
   } catch {
-    /* Sigue con la sesion guardada localmente */
+    /* Sin sesion de Supabase: intenta solo localStorage */
   }
 
   const email = getAdminSessionEmail()
@@ -134,17 +142,20 @@ export async function isAdminSessionActive() {
 
   try {
     const ok = await isAdminEmail(email)
-    if (!ok) await signOutAdmin()
-    return ok
-  } catch {
+    if (!ok) {
+      clearAdminLocalSession()
+      return false
+    }
     return true
+  } catch {
+    clearAdminLocalSession()
+    return false
   }
 }
 
 /* Cierra sesion admin y limpia Supabase Auth */
 export async function signOutAdmin() {
-  localStorage.removeItem(KEY_ADMIN_EMAIL)
-  localStorage.removeItem(KEY_ADMIN_LOGIN_AT)
+  clearAdminLocalSession()
   clearPendingOtp()
   await supabase.auth.signOut()
 }

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import './AdminLogin.css'
 import '../styles/admin-forms.css'
 import { EmailOtpLogin } from '../components/EmailOtpLogin'
@@ -8,38 +7,18 @@ import {
   completeAdminLogin,
   getPendingAdminEmail,
   isAdminOtpPending,
-  isAdminSessionActive,
   requestAdminLoginCode,
 } from '../lib/adminAuth'
 
 /* Pagina de login administrativo con OTP por correo */
 function AdminLogin() {
-  const navigate = useNavigate()
-  const [checkingSession, setCheckingSession] = useState(true)
+  const [loginDone, setLoginDone] = useState(false)
 
-  /* Redirige al dashboard si ya hay sesion activa */
-  useEffect(() => {
-    let isMounted = true
-
-    isAdminSessionActive().then((active) => {
-      if (!isMounted) return
-      if (active) {
-        navigate('/dashboard', { replace: true })
-        return
-      }
-      setCheckingSession(false)
-    })
-
-    return () => {
-      isMounted = false
-    }
-  }, [navigate])
-
-  if (checkingSession) {
+  if (loginDone) {
     return (
       <section className="admin-login-page">
         <div className="admin-login-card admin-login-card--checking">
-          <p>Verificando sesión...</p>
+          <p>Entrando al panel...</p>
         </div>
       </section>
     )
@@ -57,7 +36,10 @@ function AdminLogin() {
           onCodeSent={async () => {}}
           onVerify={async (email, code) => {
             await completeAdminLogin(email, code)
-            navigate('/dashboard')
+            setLoginDone(true)
+          }}
+          onResend={async (email) => {
+            await requestAdminLoginCode(email)
           }}
           pendingEmail={getPendingAdminEmail()}
           isPending={isAdminOtpPending()}

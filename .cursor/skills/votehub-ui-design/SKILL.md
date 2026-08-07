@@ -14,7 +14,7 @@ description: >-
 - React 19 + Vite, **no Tailwind**, **no animation libs yet** (plain CSS preferred).
 - Styles live in co-located `*.css` files per page.
 - Spanish UI copy; keep typography readable for long-form election content.
-- Brand accent: `var(--accent)` / `var(--landing-accent)` (teal/cyan family).
+- Brand accent: `var(--accent)` (teal) predominates — titles, brand, primary actions, structural borders. Secondary: `var(--accent-secondary)` (`#FF5E17`) only for secondary controls (ghost CTAs, icon buttons, switches, chevrons, section number tags, inactive nav outlines).
 
 ## Existing design language
 

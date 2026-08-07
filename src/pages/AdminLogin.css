@@ -67,7 +67,7 @@
 
 .admin-login-form input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-secondary);
 }
 
 .admin-login-form input::placeholder {

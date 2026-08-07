@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import './Landing.css'
 import logoCIT from '../lib/brandLogo.js'
 import heroImage from '../assets/Hero.avif'
-import { getActiveElection } from '../lib/electionsStore'
+import { getPublicElection } from '../lib/electionsStore'
 import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 import { getLandingContent } from '../lib/landingStore'
 import { parsePartyOfficers, PARTY_OFFICER_FIELDS } from '../lib/partyOfficers'
+import { VOTEHUB_REFRESH_EVENT } from '../lib/dataRefresh'
 
 /* Detecta si un partido es voto nulo */
 function esVotoNulo(nombre) {
@@ -172,33 +173,50 @@ function Landing() {
   const [isLoading, setIsLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  /* Carga contenido editable y eleccion activa */
+  /* Carga contenido editable y eleccion activa; refresca al recibir evento o cada 20s */
   useEffect(() => {
     let alive = true
-    Promise.all([getLandingContent(), getActiveElection()])
-      .then(([landing, activeElection]) => {
-        if (!alive) return
-        setContent(landing)
-        setElection(activeElection)
-      })
-      .catch(() => {
-        if (!alive) return
-        setContent(null)
-        setElection(null)
-      })
-      .finally(() => {
-        if (alive) setIsLoading(false)
-      })
+
+    const load = ({ quiet = false } = {}) => {
+      if (!quiet) setIsLoading(true)
+      return Promise.all([getLandingContent(), getPublicElection({ force: quiet })])
+        .then(([landing, activeElection]) => {
+          if (!alive) return
+          setContent(landing)
+          setElection(activeElection)
+        })
+        .catch(() => {
+          if (!alive) return
+          if (!quiet) {
+            setContent(null)
+            setElection(null)
+          }
+        })
+        .finally(() => {
+          if (alive && !quiet) setIsLoading(false)
+        })
+    }
+
+    load()
+
+    const onRefresh = () => {
+      load({ quiet: true })
+    }
+    window.addEventListener(VOTEHUB_REFRESH_EVENT, onRefresh)
+    const pollId = window.setInterval(() => load({ quiet: true }), 20000)
+
     return () => {
       alive = false
+      window.removeEventListener(VOTEHUB_REFRESH_EVENT, onRefresh)
+      window.clearInterval(pollId)
     }
   }, [])
 
   const isElectionActive = Boolean(election?.isActive)
-  const isElectionVisible = election?.is_visible !== false
   const candidateParties = (election?.parties || []).filter((p) => !esVotoNulo(p.name))
-  const hasCandidates = isElectionActive && isElectionVisible && candidateParties.length > 0
-  const showElectionInfo = isElectionVisible && election
+  const showPartiesEnabled =
+    election?.show_parties != null ? Boolean(election.show_parties) : isElectionActive
+  const hasCandidates = showPartiesEnabled && candidateParties.length > 0
   const members = (content?.current_party_members || []).filter(
     (member) => String(member?.role || '').trim() && String(member?.name || '').trim(),
   )
@@ -323,7 +341,7 @@ function Landing() {
       >
         <div className="landing-hero-overlay" aria-hidden />
         <div className="landing-hero-content">
-          {isElectionActive && isElectionVisible && (
+          {isElectionActive && (
             <span className="landing-status">
               <span className="landing-status-dot" aria-hidden />
               Período {formatElectionPeriod(election.year)}
@@ -332,7 +350,7 @@ function Landing() {
               {' · Proceso en curso'}
             </span>
           )}
-          {(!isElectionActive || !isElectionVisible) && (
+          {!isElectionActive && (
             <span className="landing-status landing-status--muted">Información general</span>
           )}
           <h1>{content?.hero_title || 'Elecciones Estudiantiles CIT'}</h1>
@@ -399,16 +417,14 @@ function Landing() {
               <p>
                 {hasCandidates
                   ? `Mesas directivas registradas para ${formatElectionPeriod(election.year)}`
-                  : showElectionInfo
-                    ? 'Partidos que participarán cuando haya elecciones activas'
-                    : 'Información de candidatos no disponible'}
+                  : 'No hay partidos candidatos'}
               </p>
             </div>
           </header>
           {hasCandidates ? (
             <CandidateCarousel parties={candidateParties} />
           ) : (
-            <p className="landing-empty">Indefinido</p>
+            <p className="landing-empty">No hay partidos candidatos</p>
           )}
         </section>
 

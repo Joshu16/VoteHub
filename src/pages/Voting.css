@@ -224,8 +224,8 @@
 }
 
 .vote-check-circle {
-  fill: #eefbfd;
-  stroke: var(--accent);
+  fill: var(--accent-secondary-soft);
+  stroke: var(--accent-secondary);
   stroke-width: 3;
   transform-origin: 60px 60px;
   animation: vote-check-pop 0.35s ease-out both;
@@ -233,7 +233,7 @@
 
 .vote-check-mark {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--accent-secondary);
   stroke-width: 9;
   stroke-linecap: round;
   stroke-linejoin: round;

@@ -30,8 +30,8 @@
   align-items: center;
   padding: 10px 16px;
   border-radius: 999px;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  border: 1px solid var(--accent-secondary);
+  color: var(--accent-secondary);
   font-weight: 600;
   font-size: 14px;
   text-decoration: none;
@@ -39,7 +39,7 @@
 }
 
 .padron-menu-link:hover {
-  background: var(--accent);
+  background: var(--accent-secondary);
   color: #fff;
 }
 
@@ -138,7 +138,7 @@
 
 .padron-upload-icon {
   display: flex;
-  color: var(--accent);
+  color: var(--accent-secondary);
 }
 
 .padron-upload-text {

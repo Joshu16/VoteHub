@@ -264,7 +264,7 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: var(--accent);
+  background: var(--accent-secondary);
   color: #fff;
   display: grid;
   place-items: center;
@@ -376,6 +376,20 @@
   background: #fff;
   border: 1px solid var(--accent);
   border-radius: 14px;
+}
+
+.party-show-card {
+  background: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.party-show-card__hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
 }
 
 .party-accordion-item {
@@ -624,12 +638,12 @@ tbody tr:hover {
 }
 
 .icon-btn {
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-secondary);
   background: #ffffff;
   border-radius: 10px;
   padding: 7px 11px;
   cursor: pointer;
-  color: var(--soft-blue);
+  color: var(--accent-secondary);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -641,12 +655,12 @@ tbody td:last-child {
 }
 
 .icon-btn:hover {
-  background: var(--accent);
+  background: var(--accent-secondary);
   color: #fff;
 }
 
 .icon-btn:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-secondary);
   outline-offset: 2px;
 }
 

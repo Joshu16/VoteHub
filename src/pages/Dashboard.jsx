@@ -14,6 +14,7 @@ import {
 } from '../lib/electionsStore'
 import { formatDateRange, formatElectionPeriod } from '../lib/electionPeriod'
 import { notifyDataRefresh } from '../lib/dataRefresh'
+import { exportElectionData } from '../lib/exportElection'
 import { parsePartyOfficers, serializePartyOfficers } from '../lib/partyOfficers'
 import { getElectionWinner } from '../lib/electionWinner'
 import { PartyFormPanel, emptyPartyFormState } from '../components/PartyFormPanel'
@@ -49,25 +50,26 @@ function Dashboard() {
   const [stopFlowElection, setStopFlowElection] = useState(null)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [isVisible, setIsVisible] = useState(true)
+  const [showParties, setShowParties] = useState(false)
+  const [isSavingShowParties, setIsSavingShowParties] = useState(false)
   const electionYear = Number(election?.year ?? currentYear)
 
   /* Carga eleccion activa o crea una del año actual */
-  const loadData = async ({ quiet = false } = {}) => {
+  const loadData = async ({ quiet = false, force = false } = {}) => {
     if (!quiet) setIsLoading(true)
     try {
-      const activeElection = await getActiveElection()
+      const activeElection = await getActiveElection({ force })
       if (activeElection) {
         setElection(activeElection)
         setStartDate(activeElection.start_date || '')
         setEndDate(activeElection.end_date || '')
-        setIsVisible(activeElection.is_visible !== false)
+        setShowParties(Boolean(activeElection.show_parties))
       } else {
         const existingElection = await ensureElection(currentYear)
         setElection(existingElection)
         setStartDate(existingElection.start_date || '')
         setEndDate(existingElection.end_date || '')
-        setIsVisible(existingElection.is_visible !== false)
+        setShowParties(Boolean(existingElection.show_parties))
       }
     } catch (error) {
       setFeedback(`No se pudo cargar la elección: ${error?.message || 'Error desconocido'}`)
@@ -95,7 +97,7 @@ function Dashboard() {
   const handleRefreshData = async () => {
     setIsRefreshing(true)
     try {
-      await loadData({ quiet: true })
+      await loadData({ quiet: true, force: true })
       notifyDataRefresh()
       setFeedback('Datos actualizados (panel y estadísticas).')
     } catch (error) {
@@ -105,14 +107,19 @@ function Dashboard() {
     }
   }
 
-  /* Inicia elecciones del año actual */
+  /* Inicia elecciones del periodo mostrado y guarda fechas/visibilidad */
   const handleStartElection = () => {
     setIsStarting(true)
-    startElection(currentYear)
+    startElection(electionYear, {
+      startDate: startDate || null,
+      endDate: endDate || null,
+      showParties,
+    })
       .then(() => {
-        setFeedback(`Elección iniciada: ${formatElectionPeriod(currentYear)}.`)
+        setFeedback(`Elección iniciada: ${formatElectionPeriod(electionYear)}.`)
         closeModal()
-        return loadData()
+        notifyDataRefresh()
+        return loadData({ force: true })
       })
       .catch((error) =>
         setFeedback(`No se pudo iniciar la elección: ${error?.message || 'Error desconocido'}`),
@@ -132,6 +139,7 @@ function Dashboard() {
         setStopFlowElection(freshElection)
         setFeedback(`Elección finalizada: ${formatElectionPeriod(targetElection.year)}.`)
         setModalMode('stop-winner')
+        notifyDataRefresh()
       })
       .catch((error) =>
         setFeedback(`No se pudo detener la elección: ${error?.message || 'Error desconocido'}`),
@@ -183,7 +191,8 @@ function Dashboard() {
         }
         setQuickPartyName('')
         setFeedback('Partido creado. Expándelo para añadir logo y datos.')
-        return loadData()
+        notifyDataRefresh()
+        return loadData({ force: true })
       })
       .catch((error) =>
         setQuickFormError(`No se pudo crear: ${error?.message || 'Error desconocido'}`),
@@ -234,7 +243,8 @@ function Dashboard() {
         const baseMsg = 'Partido editado.'
         setFeedback(baseMsg)
         closeForm()
-        return loadData()
+        notifyDataRefresh()
+        return loadData({ force: true })
       })
       .catch((error) =>
         setFormError(`No se pudo guardar el partido: ${error?.message || 'Error desconocido'}`),
@@ -252,7 +262,8 @@ function Dashboard() {
       .then(() => {
         setFeedback('Partido eliminado.')
         closeForm()
-        return loadData()
+        notifyDataRefresh()
+        return loadData({ force: true })
       })
       .catch((error) => setFormError(`No se pudo eliminar: ${error?.message || 'Error desconocido'}`))
       .finally(() => setIsDeletingParty(false))
@@ -264,11 +275,12 @@ function Dashboard() {
     updateElectionSettings(electionYear, {
       startDate: startDate || null,
       endDate: endDate || null,
-      isVisible,
+      showParties,
     })
       .then(() => {
         setFeedback('Configuración del período guardada.')
-        return loadData({ quiet: true })
+        notifyDataRefresh()
+        return loadData({ quiet: true, force: true })
       })
       .catch((error) =>
         setFeedback(`No se pudo guardar: ${error?.message || 'Error desconocido'}`),
@@ -276,25 +288,43 @@ function Dashboard() {
       .finally(() => setIsSavingSettings(false))
   }
 
-  /* Exporta resultados a CSV cuando la eleccion esta cerrada */
-  const handleExportData = (targetElection = election) => {
-    const parties = targetElection?.parties || []
-    if (!targetElection || targetElection.isActive || !parties.length) return
-    const rows = [['Período', 'Partido', 'Votos']]
-    for (const party of parties) {
-      rows.push([formatElectionPeriod(targetElection.year), party.name, String(party.votes || 0)])
+  /* Publica o oculta partidos en la pagina principal */
+  const handleToggleShowParties = (checked) => {
+    setShowParties(checked)
+    setIsSavingShowParties(true)
+    updateElectionSettings(electionYear, { showParties: checked })
+      .then((result) => {
+        if (!result?.ok) {
+          setShowParties(!checked)
+          setFeedback(result?.error || 'No se pudo actualizar la visibilidad de partidos.')
+          return null
+        }
+        setFeedback(
+          checked
+            ? 'Partidos visibles en la página pública.'
+            : 'Partidos ocultos en la página pública.',
+        )
+        notifyDataRefresh()
+        return loadData({ quiet: true, force: true })
+      })
+      .catch((error) => {
+        setShowParties(!checked)
+        setFeedback(`No se pudo actualizar: ${error?.message || 'Error desconocido'}`)
+      })
+      .finally(() => setIsSavingShowParties(false))
+  }
+
+  /* Exporta resultados a CSV y PDF cuando la eleccion esta cerrada */
+  const handleExportData = (targetElection) => {
+    const source = targetElection && typeof targetElection === 'object' && 'parties' in targetElection
+      ? targetElection
+      : election
+    const result = exportElectionData(source)
+    if (!result.ok) {
+      setFeedback('No se pueden exportar datos: la elección debe estar finalizada y tener partidos.')
+      return
     }
-    const csv = rows
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-      .join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `eleccion_${formatElectionPeriod(targetElection.year)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
-    setFeedback('Datos exportados.')
+    setFeedback('Datos exportados (CSV y PDF).')
   }
 
   /* Borra votos y partidos de una edicion */
@@ -376,17 +406,10 @@ function Dashboard() {
               />
             </AdminField>
           </div>
-          <AdminSwitch
-            label="Visible al público"
-            description="Mostrar candidatos y fechas en la página principal"
-            checked={isVisible}
-            onChange={(e) => setIsVisible(e.target.checked)}
-          />
         </div>
         <div className="election-settings-footer">
           <p className={`election-state-pill ${isElectionActive ? 'active' : 'inactive'}`}>
             {isElectionActive ? 'Elección activa' : 'Elección detenida'}
-            {!isVisible && ' · Oculta'}
           </p>
           <button
             type="button"
@@ -408,6 +431,16 @@ function Dashboard() {
       {feedback && <p className="dashboard-feedback">{feedback}</p>}
 
       <div className="party-accordion-list">
+        <div className="party-show-card">
+          <AdminSwitch
+            label="Mostrar partidos"
+            description="Si está activo, los partidos salen en la página pública aunque no haya elección en curso"
+            checked={showParties}
+            onChange={(e) => handleToggleShowParties(e.target.checked)}
+          />
+          {isSavingShowParties && <p className="party-show-card__hint">Guardando...</p>}
+        </div>
+
         {isLoading && <p className="party-accordion-loading">Cargando partidos...</p>}
 
         {!isLoading &&
@@ -499,7 +532,7 @@ function Dashboard() {
       <div className="bottom-actions">
         <button
           type="button"
-          onClick={handleExportData}
+          onClick={() => handleExportData()}
           disabled={Boolean(election?.isActive) || (election?.parties || []).length === 0}
         >
           Exportar Datos
@@ -531,10 +564,10 @@ function Dashboard() {
               {modalMode === 'start-election' && (
                 <>
                   <p>
-                    Solo se pueden iniciar elecciones del año actual ({currentYear}). El período será{' '}
-                    {formatElectionPeriod(currentYear)}.
+                    Se iniciará la elección del período {formatElectionPeriod(electionYear)} y se
+                    guardarán las fechas y la visibilidad configuradas.
                   </p>
-                  <p className="season-pill">{formatElectionPeriod(currentYear)}</p>
+                  <p className="season-pill">{formatElectionPeriod(electionYear)}</p>
                   <div className="modal-actions">
                     <button type="button" className="icon-btn" onClick={closeModal}>
                       Cancelar

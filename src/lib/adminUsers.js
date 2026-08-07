@@ -54,14 +54,25 @@ export async function listAdminUsers() {
     }
     throw res.error
   }
-  return res.data || []
+  const rows = res.data || []
+  const principalNorm = normalizeEmail(PRINCIPAL_ADMIN_EMAIL)
+  const hasPrincipal = rows.some(
+    (row) => row.is_principal || normalizeEmail(row.email) === principalNorm,
+  )
+  if (!hasPrincipal) {
+    return [{ id: 'principal', email: PRINCIPAL_ADMIN_EMAIL, is_principal: true }, ...rows]
+  }
+  return rows.map((row) =>
+    normalizeEmail(row.email) === principalNorm ? { ...row, is_principal: true } : row,
+  )
 }
 
-/* Agrega un nuevo administrador por correo */
-export async function addAdminUser(email) {
+/* Agrega un nuevo administrador por correo (solo principal) */
+export async function addAdminUser(email, actorEmail) {
   const em = normalizeEmail(email)
   if (!em) return { ok: false, reason: 'EMPTY' }
   if (em === normalizeEmail(PRINCIPAL_ADMIN_EMAIL)) return { ok: false, reason: 'PRINCIPAL' }
+  if (!(await isPrincipalAdminEmail(actorEmail))) return { ok: false, reason: 'NOT_PRINCIPAL' }
 
   const res = await supabase.from('admin_users').insert({ email: em, is_principal: false })
   if (res.error) {

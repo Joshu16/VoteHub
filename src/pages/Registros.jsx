@@ -100,9 +100,6 @@ function Registros() {
                         >
                           {item.isActive ? 'Activa' : 'Cerrada'}
                         </span>
-                        {item.is_visible === false && (
-                          <span className="edition-badge edition-badge--hidden">Oculta en landing</span>
-                        )}
                       </div>
                     </div>
 

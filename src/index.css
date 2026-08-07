@@ -4,6 +4,11 @@ html {
 
 :root {
   --accent: #00bec9;
+  --accent-secondary: #FF5E17;
+  --accent-secondary-hover: #E04F0F;
+  --accent-secondary-soft: rgba(255, 94, 23, 0.1);
+  --accent-secondary-border: rgba(255, 94, 23, 0.28);
+  --accent-secondary-shadow: rgba(255, 94, 23, 0.12);
   --ink: #1e2a44;
   --page-gutter: clamp(14px, 3vw, 26px);
   --bp-tablet: 780px;

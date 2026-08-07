@@ -174,7 +174,7 @@ function Estadisticas() {
       if (!quiet) setIsLoading(true)
       try {
         const [election, registry, history] = await Promise.all([
-          getActiveElection(),
+          getActiveElection({ force: quiet }),
           getVotersRegistryStats(),
           getAllElections(),
         ])
